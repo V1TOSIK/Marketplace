@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marketplace.Api", "Marketplace.Api\Marketplace.Api.csproj", "{5CEF47E2-3E83-4CFE-A8E4-A7A78EB347FC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthUserModule", "AuthUserModule", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthUserModule.Domain", "AuthUserModule\AuthUserModule.Domain\AuthUserModule.Domain.csproj", "{8E74EC77-01F6-45FE-94C5-B5737B77A097}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthUserModule.Application", "AuthUserModule\AuthUserModule.Application\AuthUserModule.Application.csproj", "{CC5105AC-BE9E-4763-A8AF-FD43D10A6827}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthUserModule.Persistence", "AuthUserModule\AuthUserModule.Persistence\AuthUserModule.Persistence.csproj", "{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthUserModule.Infrastructure", "AuthUserModule\AuthUserModule.Infrastructure\AuthUserModule.Infrastructure.csproj", "{36188DAE-AEF2-4CD9-8F75-29CEDB45B442}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5CEF47E2-3E83-4CFE-A8E4-A7A78EB347FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CEF47E2-3E83-4CFE-A8E4-A7A78EB347FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CEF47E2-3E83-4CFE-A8E4-A7A78EB347FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CEF47E2-3E83-4CFE-A8E4-A7A78EB347FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E74EC77-01F6-45FE-94C5-B5737B77A097}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E74EC77-01F6-45FE-94C5-B5737B77A097}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E74EC77-01F6-45FE-94C5-B5737B77A097}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E74EC77-01F6-45FE-94C5-B5737B77A097}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC5105AC-BE9E-4763-A8AF-FD43D10A6827}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC5105AC-BE9E-4763-A8AF-FD43D10A6827}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC5105AC-BE9E-4763-A8AF-FD43D10A6827}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC5105AC-BE9E-4763-A8AF-FD43D10A6827}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36188DAE-AEF2-4CD9-8F75-29CEDB45B442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36188DAE-AEF2-4CD9-8F75-29CEDB45B442}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36188DAE-AEF2-4CD9-8F75-29CEDB45B442}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36188DAE-AEF2-4CD9-8F75-29CEDB45B442}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8E74EC77-01F6-45FE-94C5-B5737B77A097} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{CC5105AC-BE9E-4763-A8AF-FD43D10A6827} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2BCDA098-8B8C-4CD2-8FB6-21A5027B2E4F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{36188DAE-AEF2-4CD9-8F75-29CEDB45B442} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3BC18320-D455-48DD-997F-CB0BE5663417}
+	EndGlobalSection
+EndGlobal

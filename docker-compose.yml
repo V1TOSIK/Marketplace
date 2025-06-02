@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Marketplace.Api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - CONNECTION_STRING=${CONNECTION_STRING}
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  db:
+    container_name: db
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  db_data:
