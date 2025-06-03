@@ -4,7 +4,7 @@ using AuthUserModule.Domain.ValueObjects;
 
 namespace AuthUserModule.Domain.Entities
 {
-    public class AuthUser
+    internal class AuthUser
     {
         private AuthUser() { }
 
@@ -32,6 +32,9 @@ namespace AuthUserModule.Domain.Entities
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
 
+        private List<UserBlock> _blocks = new();
+        public IReadOnlyCollection<UserBlock> Blocks => _blocks.AsReadOnly();
+        
         public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, UserRole role)
         {
             if (string.IsNullOrWhiteSpace(emailValue) && string.IsNullOrWhiteSpace(phoneNumberValue))
@@ -43,9 +46,25 @@ namespace AuthUserModule.Domain.Entities
             var phoneNumber = string.IsNullOrWhiteSpace(phoneNumberValue)
                 ? null
                 : new PhoneNumber(phoneNumberValue);
+
             var password = new Password(passwordValue);
 
             return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, role);
         }
+
+        public void AddBlock(UserBlock block)
+        {
+            if (block is null)
+                throw new ArgumentNullException(nameof(block));
+
+            _blocks.Add(block);
+        }
+
+        public void Unblock()
+        {
+            _blocks.Clear();
+        }
+
+        public bool IsBlocked() => _blocks.Any();
     }
 }

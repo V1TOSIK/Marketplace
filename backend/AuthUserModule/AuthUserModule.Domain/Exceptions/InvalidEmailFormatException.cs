@@ -1,6 +1,6 @@
 ﻿namespace AuthUserModule.Domain.Exceptions
 {
-    public class InvalidEmailFormatException : Exception
+    internal class InvalidEmailFormatException : Exception
     {
         public InvalidEmailFormatException() : base("Invalid email format")
         {

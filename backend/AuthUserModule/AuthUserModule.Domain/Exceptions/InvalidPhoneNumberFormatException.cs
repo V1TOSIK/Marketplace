@@ -1,6 +1,6 @@
 ﻿namespace AuthUserModule.Domain.Exceptions
 {
-    class InvalidPhoneNumberFormatException : Exception
+    internal class InvalidPhoneNumberFormatException : Exception
     {
         public InvalidPhoneNumberFormatException() : base("Invalid phone number format")
         {

@@ -1,6 +1,6 @@
 ﻿namespace AuthUserModule.Domain.Exceptions
 {
-    public class MissingAuthCredentialException : Exception
+    internal class MissingAuthCredentialException : Exception
     {
         public MissingAuthCredentialException()
             : base("At least one of email or phone number must be provided.") { }

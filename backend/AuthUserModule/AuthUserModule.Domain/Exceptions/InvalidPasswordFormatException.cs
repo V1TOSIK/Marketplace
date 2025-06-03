@@ -1,6 +1,6 @@
 ﻿namespace AuthUserModule.Domain.Exceptions
 {
-    class InvalidPasswordFormatException : Exception
+    internal class InvalidPasswordFormatException : Exception
     {
         public InvalidPasswordFormatException() : base("Invalid password format")
         {
