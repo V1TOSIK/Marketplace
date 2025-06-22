@@ -4,10 +4,9 @@ using AuthUserModule.Domain.ValueObjects;
 
 namespace AuthUserModule.Domain.Entities
 {
-    internal class AuthUser
+    public class AuthUser
     {
         private AuthUser() { }
-
         public AuthUser(Guid userId,
             Email? email,
             PhoneNumber? phoneNumber,
@@ -31,11 +30,10 @@ namespace AuthUserModule.Domain.Entities
         public Password Password { get; private set; }
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
-
-        private List<UserBlock> _blocks = new();
-        public IReadOnlyCollection<UserBlock> Blocks => _blocks.AsReadOnly();
+        public bool IsDeleted { get; private set; } = false;
+        public DateTime? DeletedAt { get; private set; }
         
-        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, UserRole role)
+        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, string roleText)
         {
             if (string.IsNullOrWhiteSpace(emailValue) && string.IsNullOrWhiteSpace(phoneNumberValue))
                 throw new MissingAuthCredentialException();
@@ -49,22 +47,28 @@ namespace AuthUserModule.Domain.Entities
 
             var password = new Password(passwordValue);
 
-            return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, role);
+            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
+                throw new InvalidUserRoleException($"Invalid user role: {roleText}");
+            
+            return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, parsedRole);
         }
-
-        public void AddBlock(UserBlock block)
+        public void MarkAsDeleted()
         {
-            if (block is null)
-                throw new ArgumentNullException(nameof(block));
+            if (IsDeleted)
+                throw new InvalidOperationException("User is already deleted.");
 
-            _blocks.Add(block);
+            IsDeleted = true;
+            DeletedAt = DateTime.UtcNow;
         }
 
-        public void Unblock()
+        public void Restore()
         {
-            _blocks.Clear();
+            if (!IsDeleted)
+                throw new InvalidOperationException("User is not deleted.");
+
+            IsDeleted = false;
+            DeletedAt = null;
         }
 
-        public bool IsBlocked() => _blocks.Any();
     }
 }

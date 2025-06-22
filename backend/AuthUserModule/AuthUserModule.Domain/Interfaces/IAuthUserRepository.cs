@@ -2,7 +2,7 @@
 
 namespace AuthUserModule.Domain.Interfaces
 {
-    internal interface IAuthRepository
+    public interface IAuthUserRepository
     {
         Task<bool> IsEmailRegisteredAsync(string email);
         Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber);
@@ -13,7 +13,9 @@ namespace AuthUserModule.Domain.Interfaces
         Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber);
         Task<AuthUser?> GetUserByIdAsync(Guid userId);
         Task UpdateUserAsync(AuthUser user);
-        Task DeleteUserAsync(Guid userId);
-        Task BlockUserAsync(Guid userId);
+        Task HardDeleteUserAsync(Guid userId);
+        Task SoftDeleteUserAsync(Guid userId);
+        Task RestoreUserAsync(Guid userId);
+
     }
 }

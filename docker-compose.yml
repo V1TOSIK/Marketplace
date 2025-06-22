@@ -1,22 +1,21 @@
-version: '3.8'
-
 services:
   backend:
-    container_name: backend
+    container_name: marketplace-backend
     build:
       context: ./backend
       dockerfile: Marketplace.Api/Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8080"
     environment:
-      - CONNECTION_STRING=${CONNECTION_STRING}
+      - ConnectionStrings__Postgres=${CONNECTION_STRING__Postgres}
+      - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - db
     env_file:
       - .env
 
   db:
-    container_name: db
+    container_name: marketplace-db
     image: postgres:latest
     ports:
       - "5432:5432"
@@ -26,6 +25,19 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  pgadmin:
+    container_name: marketplace-pgadmin
+    image: dpage/pgadmin4:latest
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - db
     env_file:
       - .env
 
