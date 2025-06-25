@@ -1,4 +1,4 @@
-﻿using AuthUserModule.Infrastructure.Options;
+﻿using AuthModule.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -10,8 +10,14 @@ namespace Marketplace.Api.Extentions
     {
         public static void AddApiAuthentication(
             this IServiceCollection services,
-            JwtOptions jwtOptions)
+            IConfiguration configuration)
         {
+            var jwtOptions = configuration.GetSection("JWT").Get<JwtOptions>();
+            if (jwtOptions == null || string.IsNullOrEmpty(jwtOptions.SecretKey))
+            {
+                throw new ArgumentException("JWT options are not configured properly.");
+            }
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

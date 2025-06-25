@@ -1,11 +1,10 @@
-using AuthUserModule.Persistence.DependencyInjection;
-using AuthUserModule.Application.DependencyInjection;
+using AuthModule.Persistence.DependencyInjection;
+using AuthModule.Application.DependencyInjection;
 using Marketplace.Api.Extentions;
-using AuthUserModule.Infrastructure.DependencyInjection;
-using Microsoft.Extensions.Options;
-using AuthUserModule.Infrastructure.Options;
-using AuthUserModule.Persistence;
+using AuthModule.Infrastructure.DependencyInjection;
+using AuthModule.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Marketplace.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +12,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var jwtOptions = builder.Configuration.GetSection("JWT").Get<JwtOptions>();
-
 builder.Services.AddAuthPersistence(builder.Configuration);
 builder.Services.AddAuthApplication(builder.Configuration);
 builder.Services.AddAuthInfrastructure(builder.Configuration);
-builder.Services.AddApiAuthentication(jwtOptions);
+builder.Services.AddApiAuthentication(builder.Configuration);
+//перенести всі ці di в один окремий який буде єдиною точкою входу в auth module + перейменувати AuthUserModule -> AuthModule
 
 var app = builder.Build();
 
@@ -33,20 +31,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Exception: " + ex);
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync("Server error: " + ex);
-    }
-});
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

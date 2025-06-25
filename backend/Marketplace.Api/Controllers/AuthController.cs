@@ -1,6 +1,6 @@
-﻿using AuthUserModule.Application.Dtos.Requests;
-using AuthUserModule.Application.Dtos.Responses;
-using AuthUserModule.Application.Interfaces;
+﻿using AuthModule.Application.Dtos.Requests;
+using AuthModule.Application.Dtos.Responses;
+using AuthModule.Application.Interfaces;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.Mvc;
 
@@ -80,19 +80,12 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("logout/{userId}")]
-        public async Task<IActionResult> Logout([FromRoute]Guid userId)
+        public async Task<IActionResult> Logout([FromRoute] Guid userId)
         {
-
-            try
-            {
-                await _authService.Logout(userId);
+            if (await _authService.Logout(userId))
                 return Ok("User logged out successfully");
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
 
+            return BadRequest("User cannot logged out");
+        }
     }
 }

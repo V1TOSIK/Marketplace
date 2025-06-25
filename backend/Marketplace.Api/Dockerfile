@@ -8,10 +8,10 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Marketplace.Api/Marketplace.Api.csproj", "Marketplace.Api/"]
-COPY ["AuthUserModule/AuthUserModule.Application/AuthUserModule.Application.csproj", "AuthUserModule/AuthUserModule.Application/"]
-COPY ["AuthUserModule/AuthUserModule.Domain/AuthUserModule.Domain.csproj", "AuthUserModule/AuthUserModule.Domain/"]
-COPY ["AuthUserModule/AuthUserModule.Persistence/AuthUserModule.Persistence.csproj", "AuthUserModule/AuthUserModule.Persistence/"]
-COPY ["AuthUserModule/AuthUserModule.Infrastructure/AuthUserModule.Infrastructure.csproj", "AuthUserModule/AuthUserModule.Infrastructure/"]
+COPY ["AuthModule/AuthModule.Application/AuthModule.Application.csproj", "AuthModule/AuthModule.Application/"]
+COPY ["AuthModule/AuthModule.Domain/AuthModule.Domain.csproj", "AuthModule/AuthModule.Domain/"]
+COPY ["AuthModule/AuthModule.Persistence/AuthModule.Persistence.csproj", "AuthModule/AuthModule.Persistence/"]
+COPY ["AuthModule/AuthModule.Infrastructure/AuthModule.Infrastructure.csproj", "AuthModule/AuthModule.Infrastructure/"]
 RUN dotnet restore "./Marketplace.Api/Marketplace.Api.csproj"
 COPY . .
 WORKDIR "/src/Marketplace.Api"
