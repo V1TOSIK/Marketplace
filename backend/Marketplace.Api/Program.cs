@@ -1,10 +1,7 @@
-using AuthModule.Persistence.DependencyInjection;
-using AuthModule.Application.DependencyInjection;
-using Marketplace.Api.Extentions;
-using AuthModule.Infrastructure.DependencyInjection;
 using AuthModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Marketplace.Api.Middleware;
+using AuthModule.Composition.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,11 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthPersistence(builder.Configuration);
-builder.Services.AddAuthApplication(builder.Configuration);
-builder.Services.AddAuthInfrastructure(builder.Configuration);
-builder.Services.AddApiAuthentication(builder.Configuration);
-//перенести всі ці di в один окремий який буде єдиною точкою входу в auth module + перейменувати AuthUserModule -> AuthModule
+builder.Services.AddAuthModule(builder.Configuration);
 
 var app = builder.Build();
 

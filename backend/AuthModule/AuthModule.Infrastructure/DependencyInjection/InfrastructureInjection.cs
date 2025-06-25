@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthModule.Infrastructure.DependencyInjection
 {
-    public static class DependencyInjection
+    public static class InfrastructureInjection
     {
         public static IServiceCollection AddAuthInfrastructure(
             this IServiceCollection services,

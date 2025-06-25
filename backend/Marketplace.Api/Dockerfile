@@ -12,6 +12,7 @@ COPY ["AuthModule/AuthModule.Application/AuthModule.Application.csproj", "AuthMo
 COPY ["AuthModule/AuthModule.Domain/AuthModule.Domain.csproj", "AuthModule/AuthModule.Domain/"]
 COPY ["AuthModule/AuthModule.Persistence/AuthModule.Persistence.csproj", "AuthModule/AuthModule.Persistence/"]
 COPY ["AuthModule/AuthModule.Infrastructure/AuthModule.Infrastructure.csproj", "AuthModule/AuthModule.Infrastructure/"]
+COPY ["AuthModule/AuthModule.Composition/AuthModule.Composition.csproj", "AuthModule/AuthModule.Composition/"]
 RUN dotnet restore "./Marketplace.Api/Marketplace.Api.csproj"
 COPY . .
 WORKDIR "/src/Marketplace.Api"

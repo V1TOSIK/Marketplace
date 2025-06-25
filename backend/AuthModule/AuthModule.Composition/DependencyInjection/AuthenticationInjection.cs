@@ -1,16 +1,17 @@
 ﻿using AuthModule.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace Marketplace.Api.Extentions
+namespace AuthModule.Composition.DependencyInjection
 {
-    public static class ApiExtension
+    public static class AuthenticationInjection
     {
-        public static void AddApiAuthentication(
-            this IServiceCollection services,
-            IConfiguration configuration)
+        public static void AddAuthentication(
+           this IServiceCollection services,
+           IConfiguration configuration)
         {
             var jwtOptions = configuration.GetSection("JWT").Get<JwtOptions>();
             if (jwtOptions == null || string.IsNullOrEmpty(jwtOptions.SecretKey))

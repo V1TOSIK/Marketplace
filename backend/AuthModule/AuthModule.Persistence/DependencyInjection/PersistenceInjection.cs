@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthModule.Persistence.DependencyInjection
 {
-    public static class DependencyInjection
+    public static class PersistenceInjection
     {
         public static IServiceCollection AddAuthPersistence(this IServiceCollection services, IConfiguration configuration)
         {

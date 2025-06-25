@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthModule.Application.DependencyInjection
 {
-    public static class DependencyInjection
+    public static class ApplicationInjection
     {
         public static IServiceCollection AddAuthApplication(this IServiceCollection services, IConfiguration configuration)
         {

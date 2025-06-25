@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthModule.Application\AuthModule.Application.csproj" />
+    <ProjectReference Include="..\AuthModule.Domain\AuthModule.Domain.csproj" />
+    <ProjectReference Include="..\AuthModule.Infrastructure\AuthModule.Infrastructure.csproj" />
+    <ProjectReference Include="..\AuthModule.Persistence\AuthModule.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>
