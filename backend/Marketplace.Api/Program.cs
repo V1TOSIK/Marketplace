@@ -1,6 +1,7 @@
 using Marketplace.Api.Middleware;
 using AuthModule.Composition.DependencyInjection;
 using Marketplace.Abstractions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,13 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddAuthModule(builder.Configuration);
 

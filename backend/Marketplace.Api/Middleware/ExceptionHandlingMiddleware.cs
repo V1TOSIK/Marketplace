@@ -6,9 +6,11 @@ namespace Marketplace.Api.Middleware
     public class ExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;
-        public ExceptionHandlingMiddleware(RequestDelegate next)
+        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task Invoke(HttpContext context)
@@ -19,11 +21,11 @@ namespace Marketplace.Api.Middleware
             }
             catch (Exception ex)
             {
-                await ExceptionMeddlewareHandler(context, ex);
+                await ExceptionMiddlewareHandler(context, ex);
             }
         }
 
-        private async Task ExceptionMeddlewareHandler(HttpContext context, Exception exception)
+        private async Task ExceptionMiddlewareHandler(HttpContext context, Exception exception)
         {
             int statusCode;
             string message = exception.Message;
@@ -45,6 +47,7 @@ namespace Marketplace.Api.Middleware
                 type = type
             });
 
+            _logger.LogError(exception, "An error occurred: {Message}", message);
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = statusCode;
             await context.Response.WriteAsync(result);

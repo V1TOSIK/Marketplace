@@ -3,15 +3,19 @@ using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using AuthModule.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AuthModule.Persistence.Repositories
 {
     public class AuthUserRepository : IAuthUserRepository
     {
         private readonly AuthDbContext _dbContext;
-        public AuthUserRepository(AuthDbContext dbContext)
+        private readonly ILogger<AuthUserRepository> _logger;
+        public AuthUserRepository(AuthDbContext dbContext,
+            ILogger<AuthUserRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
         public async Task AddUserAsync(AuthUser user)
         {
@@ -36,6 +40,7 @@ namespace AuthModule.Persistence.Repositories
 
             await _dbContext.AuthUsers.AddAsync(user);
             await _dbContext.SaveChangesAsync();
+            _logger.LogInformation("User with ID {UserId} added successfully.", user.UserId);
         }
 
         public async Task HardDeleteUserAsync(Guid userId)
@@ -46,6 +51,8 @@ namespace AuthModule.Persistence.Repositories
 
             if (deleteResult == 0)
                 throw new UserOperationException($"User with ID {userId} does not exist.");
+
+            _logger.LogInformation("User with ID {UserId} hard deleted successfully.", userId);
         }
 
         public async Task SoftDeleteUserAsync(Guid userId)
@@ -57,6 +64,8 @@ namespace AuthModule.Persistence.Repositories
 
             user.MarkAsDeleted();
             await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("User with ID {UserId} soft deleted successfully.", userId);
         }
 
         public async Task RestoreUserAsync(Guid userId)
@@ -68,6 +77,8 @@ namespace AuthModule.Persistence.Repositories
 
             user.Restore();
             await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("User with ID {UserId} restored successfully.", userId);
         }
 
         public async Task<AuthUser?> GetUserByEmailAsync(string email)
@@ -143,6 +154,8 @@ namespace AuthModule.Persistence.Repositories
         {
             _dbContext.AuthUsers.Update(user);
             await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("User with ID {UserId} updated successfully.", user.UserId);
         }
     }
 }
