@@ -9,6 +9,5 @@ namespace AuthModule.Domain.Interfaces
         Task AddAsync(RefreshToken token);
         Task RevokeAsync(Guid tokenId);
         Task RevokeAllAsync(Guid userId);
-        Task DeleteExpiredAsync();
     }
 }

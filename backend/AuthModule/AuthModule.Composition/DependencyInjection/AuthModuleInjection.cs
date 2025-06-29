@@ -3,6 +3,7 @@ using AuthModule.Infrastructure.DependencyInjection;
 using AuthModule.Application.DependencyInjection;
 using AuthModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using Marketplace.Abstractions;
 
 namespace AuthModule.Composition.DependencyInjection
 {
@@ -16,6 +17,8 @@ namespace AuthModule.Composition.DependencyInjection
             services.AddAuthApplication(configuration);
             services.AddAuthPersistence(configuration);
             services.AddAuthInfrastructure(configuration);
+
+            services.AddScoped<IModuleInitializer, AuthModuleInitializer>();
 
             return services;
         }

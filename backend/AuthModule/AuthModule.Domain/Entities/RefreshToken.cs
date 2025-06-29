@@ -5,13 +5,14 @@ namespace AuthModule.Domain.Entities
 {
     public class RefreshToken
     {
-        private RefreshToken(Guid userId)
+        private RefreshToken(Guid userId, Guid? replacedByTokenId)
         {
             if (userId == Guid.Empty)
                 throw new RefreshTokenException("User ID cannot be empty.");
             Id = Guid.NewGuid();
             UserId = userId;
-            ExpirationDate = DateTime.UtcNow.AddDays(30);
+            ExpirationDate = DateTime.UtcNow.AddDays(10);
+            ReplacedByTokenId = replacedByTokenId;
         }
 
         public Guid Id { get; private set; }
@@ -22,9 +23,11 @@ namespace AuthModule.Domain.Entities
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? RevokedAt { get; private set; }
 
-        public static RefreshToken Create(Guid userId)
+        public Guid? ReplacedByTokenId { get; set; }
+
+        public static RefreshToken Create(Guid userId, Guid? replacedByTokenId = null)
         {
-            return new RefreshToken(userId);
+            return new RefreshToken(userId, replacedByTokenId);
         }
 
         public void Revoke()

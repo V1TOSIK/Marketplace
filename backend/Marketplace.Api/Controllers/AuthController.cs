@@ -1,8 +1,9 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Interfaces;
-using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Marketplace.Api.Controllers
 {
@@ -21,7 +22,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AuthorizeUserRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request)
         {
             if (request == null)
             {
@@ -50,7 +51,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterRequest request)
         {
             if (request == null)
             {
@@ -76,16 +77,55 @@ namespace Marketplace.Api.Controllers
 
             response.AccessToken = _jwtProvider.GenerateAccessToken(response.UserId, response.Role);
 
-            return CreatedAtAction(nameof(Login), new { id = response.UserId }, response);
+            return Ok(response);
         }
 
-        [HttpPost("logout/{userId}")]
-        public async Task<IActionResult> Logout([FromRoute] Guid userId)
+        [Authorize]
+        [HttpPost("logout-all")]
+        public async Task<ActionResult> Logout()
         {
-            if (await _authService.Logout(userId))
-                return Ok("User logged out successfully");
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-            return BadRequest("User cannot logged out");
+            if (!Guid.TryParse(userIdString, out var userId))
+                return BadRequest("Invalid user ID format");
+
+            await _authService.LogoutFromAllDevices(userId);
+            
+            return Ok("User logged out successfully");
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<ActionResult> Logout([FromBody] LogoutRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return BadRequest("Invalid request");
+            }
+
+            await _authService.LogoutFromDevice(request.RefreshToken);
+            
+            return Ok("User logged out successfully");
+        }
+
+        [HttpPost("refresh")]
+        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens([FromBody] RefreshTokensRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return BadRequest("Invalid request");
+            }
+
+            var response = await _authService.RefreshTokens(request.RefreshToken);
+            if (response == null)
+            {
+                return Forbid("Invalid refresh token");
+            }
+
+            response.AccessToken = _jwtProvider.GenerateAccessToken(response.UserId, response.Role);
+
+            return Ok(response);
         }
     }
 }

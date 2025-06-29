@@ -21,7 +21,7 @@ namespace AuthModule.Application.Services
             _refreshTokenRepository = refreshTokenRepository;
         }
 
-        public async Task<AuthorizeUserResponse> Register(RegisterUserRequest request)
+        public async Task<AuthorizeResponse> Register(RegisterRequest request)
         {
             AuthUser user;
             var hashPassword = _passwordHasher.HashPassword(request.Password);
@@ -29,61 +29,26 @@ namespace AuthModule.Application.Services
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
                 var emailCheck = await _authUserRepository.IsEmailRegisteredAsync(request.Email);
-                if (emailCheck)
+                if (!emailCheck)
                 {
-                    user = await _authUserRepository.GetUserByEmailAsync(request.Email);
-
-                    if (user.IsDeleted)
-                    {
-                        if (_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
-                        {
-                            user.Restore();
-                            await _authUserRepository.UpdateUserAsync(user);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("Invalid password for existing user.");
-                        }
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Email {request.Email} is already registered.");
-                    }
-
+                    user = AuthUser.Create(request.Email, null, hashPassword, request.Role);
                 }
                 else
                 {
-                    user = AuthUser.Create(request.Email, null, hashPassword, request.Role);
+                    throw new InvalidOperationException($"Email {request.Email} is already registered.");
                 }
             }
             else if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
             {
                 var phoneCheck = await _authUserRepository.IsPhoneNumberRegisteredAsync(request.PhoneNumber);
 
-                if (phoneCheck)
+                if (!phoneCheck)
                 {
-                    user = await _authUserRepository.GetUserByPhoneNumberAsync(request.PhoneNumber);
-
-                    if (user.IsDeleted)
-                    {
-                        if (_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
-                        {
-                            user.Restore();
-                            await _authUserRepository.UpdateUserAsync(user);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException("Invalid password for existing user.");
-                        }
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Phone number {request.PhoneNumber} is already registered.");
-                    }
+                    user = AuthUser.Create(null, request.PhoneNumber, hashPassword, request.Role);
                 }
                 else
                 {
-                    user = AuthUser.Create(null, request.PhoneNumber, hashPassword, request.Role);
+                    throw new InvalidOperationException($"Phone number {request.PhoneNumber} is already registered.");
                 }
             }
             else
@@ -97,7 +62,7 @@ namespace AuthModule.Application.Services
             var refreshToken = RefreshToken.Create(user.UserId);
             await _refreshTokenRepository.AddAsync(refreshToken);
 
-            return new AuthorizeUserResponse
+            return new AuthorizeResponse
             {
                 UserId = user.UserId,
                 Role = user.Role.ToString(),
@@ -105,7 +70,7 @@ namespace AuthModule.Application.Services
             }; 
         }
 
-        public async Task<AuthorizeUserResponse> Login(AuthorizeUserRequest request)
+        public async Task<AuthorizeResponse> Login(LoginRequest request)
         {
             AuthUser? user = null;
             if (!string.IsNullOrWhiteSpace(request.Email))
@@ -136,7 +101,7 @@ namespace AuthModule.Application.Services
             var refreshToken = RefreshToken.Create(user.UserId);
             await _refreshTokenRepository.AddAsync(refreshToken);
 
-            return new AuthorizeUserResponse
+            return new AuthorizeResponse
             {
                 UserId = user.UserId,
                 Role = user.Role.ToString(),
@@ -145,15 +110,61 @@ namespace AuthModule.Application.Services
             };
         }
 
-        public async Task<bool> Logout(Guid userId)
+        public async Task LogoutFromAllDevices(Guid userId)
         {
             var userExists = await _authUserRepository.IsUserExistsAsync(userId);
             if (!userExists)
                 throw new InvalidOperationException($"User with ID {userId} does not exist.");
 
             await _refreshTokenRepository.RevokeAllAsync(userId);
+        }
 
-            return true;
+        public async Task LogoutFromDevice(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                throw new ArgumentException("RefreshToken is not valid");
+
+            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+
+            if (token == null)
+                throw new InvalidOperationException("Refresh token not found or already revoked.");
+
+            await _refreshTokenRepository.RevokeAsync(token.Id);
+        }
+
+        public async Task<AuthorizeResponse> RefreshTokens(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                throw new ArgumentException("RefreshToken is not valid");
+
+            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+            
+            if (token == null || token.IsRevoked)
+                throw new InvalidOperationException("Refresh token not found or already revoked.");
+            
+            if (token.ExpirationDate < DateTime.UtcNow)
+            {
+                await _refreshTokenRepository.RevokeAsync(token.Id);
+                throw new InvalidOperationException("Refresh token has expired.");
+            }
+            
+            var user = await _authUserRepository.GetUserByIdAsync(token.UserId);
+            
+            if (user == null || user.IsDeleted)
+                throw new InvalidOperationException("User not found or deleted.");
+            
+            var newRefreshToken = RefreshToken.Create(user.UserId, token.Id);
+            
+            await _refreshTokenRepository.AddAsync(newRefreshToken);
+
+            await _refreshTokenRepository.RevokeAsync(token.Id);
+
+            return new AuthorizeResponse
+            {
+                UserId = user.UserId,
+                Role = user.Role.ToString(),
+                RefreshToken = newRefreshToken.Token
+            };
         }
     }
 }

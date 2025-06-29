@@ -1,6 +1,6 @@
 ﻿namespace AuthModule.Application.Dtos.Responses
 {
-    public class AuthorizeUserResponse
+    public class AuthorizeResponse
     {
         public Guid UserId { get; set; }
         public string Role { get; set; } = "Guest";

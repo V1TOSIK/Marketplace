@@ -18,7 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AuthModule\AuthModule.Application\AuthModule.Application.csproj" />
     <ProjectReference Include="..\AuthModule\AuthModule.Composition\AuthModule.Composition.csproj" />
-    <ProjectReference Include="..\AuthModule\AuthModule.Persistence\AuthModule.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

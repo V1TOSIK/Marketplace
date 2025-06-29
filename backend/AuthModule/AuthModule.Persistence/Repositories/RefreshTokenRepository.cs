@@ -17,7 +17,7 @@ namespace AuthModule.Persistence.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task DeleteExpiredAsync()
+        public async Task RevokeExpiredAsync()
         {
             var deleteResult = await _dbContext.RefreshTokens
                 .Where(rt => rt.ExpirationDate < DateTime.UtcNow)
@@ -66,5 +66,6 @@ namespace AuthModule.Persistence.Repositories
 
             await _dbContext.SaveChangesAsync();
         }
+
     }
 }

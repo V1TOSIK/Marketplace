@@ -5,8 +5,10 @@ namespace AuthModule.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthorizeUserResponse> Login(AuthorizeUserRequest request);
-        Task<AuthorizeUserResponse> Register(RegisterUserRequest request);
-        Task<bool> Logout(Guid userId);
+        Task<AuthorizeResponse> Login(LoginRequest request);
+        Task<AuthorizeResponse> Register(RegisterRequest request);
+        Task LogoutFromAllDevices(Guid userId);
+        Task LogoutFromDevice(string refreshToken);
+        Task<AuthorizeResponse> RefreshTokens(string refreshToken);
     }
 }

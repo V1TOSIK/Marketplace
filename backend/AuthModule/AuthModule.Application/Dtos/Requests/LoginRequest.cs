@@ -1,6 +1,6 @@
 ﻿namespace AuthModule.Application.Dtos.Requests
 {
-    public class AuthorizeUserRequest
+    public class LoginRequest
     {
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
