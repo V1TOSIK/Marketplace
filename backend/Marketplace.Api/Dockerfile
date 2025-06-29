@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Marketplace.Api/Marketplace.Api.csproj", "Marketplace.Api/"]
+COPY ["SharedKernel/SharedKernel.csproj", "SharedKernel/"]
 COPY ["Marketplace.Abstractions/Marketplace.Abstractions.csproj", "Marketplace.Abstractions/"]
 COPY ["AuthModule/AuthModule.Application/AuthModule.Application.csproj", "AuthModule/AuthModule.Application/"]
 COPY ["AuthModule/AuthModule.Domain/AuthModule.Domain.csproj", "AuthModule/AuthModule.Domain/"]

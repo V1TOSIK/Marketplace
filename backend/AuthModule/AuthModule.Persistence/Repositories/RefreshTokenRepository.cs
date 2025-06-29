@@ -1,4 +1,5 @@
 ﻿using AuthModule.Domain.Entities;
+using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +25,7 @@ namespace AuthModule.Persistence.Repositories
                 .ExecuteDeleteAsync();
 
             if (deleteResult == 0)
-                throw new InvalidOperationException("No expired refresh tokens found to delete.");
+                throw new RefreshTokenOperationException("No expired refresh tokens found to delete.");
         }
 
         public async Task<RefreshToken?> GetByTokenAsync(string token)
@@ -60,7 +61,7 @@ namespace AuthModule.Persistence.Repositories
                 .FirstOrDefaultAsync(rt => rt.Id == tokenId && !rt.IsRevoked);
 
             if (token == null)
-                throw new InvalidOperationException($"Refresh token with ID {tokenId} does not exist or is already revoked.");
+                throw new RefreshTokenOperationException($"Refresh token with ID {tokenId} does not exist or is already revoked.");
             
             token.Revoke();
 

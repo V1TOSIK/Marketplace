@@ -1,4 +1,5 @@
 ﻿using AuthModule.Application.Interfaces;
+using AuthModule.Infrastructure.Exceptions;
 
 namespace AuthModule.Infrastructure.Services
 {
@@ -7,7 +8,7 @@ namespace AuthModule.Infrastructure.Services
         public string HashPassword(string password)
         {
             if (string.IsNullOrWhiteSpace(password))
-                throw new ArgumentException("Password cannot be null or empty.", nameof(password));
+                throw new NullablePasswordException("Password cannot be null or empty.");
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
@@ -17,10 +18,10 @@ namespace AuthModule.Infrastructure.Services
         public bool VerifyHashedPassword(string hashedPassword, string password)
         {
             if (string.IsNullOrWhiteSpace(hashedPassword))
-                throw new ArgumentException("Hashed password cannot be null or empty.", nameof(hashedPassword));
+                throw new NullablePasswordException("Hashed password cannot be null or empty.");
 
             if (string.IsNullOrWhiteSpace(password))
-                throw new ArgumentException("Password cannot be null or empty.", nameof(password));
+                throw new NullablePasswordException("Password cannot be null or empty.");
 
             var isVerified = BCrypt.Net.BCrypt.Verify(password, hashedPassword);
 

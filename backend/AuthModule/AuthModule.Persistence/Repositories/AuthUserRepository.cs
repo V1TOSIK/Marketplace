@@ -1,4 +1,5 @@
 ﻿using AuthModule.Domain.Entities;
+using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using AuthModule.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -15,14 +16,14 @@ namespace AuthModule.Persistence.Repositories
         public async Task AddUserAsync(AuthUser user)
         {
             if (user == null)
-                throw new ArgumentNullException(nameof(user));
+                throw new NullableUserException();
 
             if (user.Email is not null)
             {
                 var emailExist = await _dbContext.AuthUsers
                     .AnyAsync(u => u.Email!.Equals(user.Email));
                 if (emailExist)
-                    throw new InvalidOperationException($"User with email {user.Email.Value} already exists.");
+                    throw new EmailAlreadyExistsException($"User with email {user.Email.Value} already exists.");
             }
 
             if (user.PhoneNumber is not null)
@@ -30,7 +31,7 @@ namespace AuthModule.Persistence.Repositories
                 var phoneExist = await _dbContext.AuthUsers
                     .AnyAsync(u => u.PhoneNumber!.Equals(user.PhoneNumber));
                 if (phoneExist)
-                    throw new InvalidOperationException($"User with phone number {user.PhoneNumber.Value} already exists.");
+                    throw new PhoneNumberAlreadyExistsException($"User with phone number {user.PhoneNumber.Value} already exists.");
             }
 
             await _dbContext.AuthUsers.AddAsync(user);
@@ -44,7 +45,7 @@ namespace AuthModule.Persistence.Repositories
                 .ExecuteDeleteAsync();
 
             if (deleteResult == 0)
-                throw new InvalidOperationException($"User with ID {userId} does not exist.");
+                throw new UserOperationException($"User with ID {userId} does not exist.");
         }
 
         public async Task SoftDeleteUserAsync(Guid userId)
@@ -52,7 +53,7 @@ namespace AuthModule.Persistence.Repositories
             var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null)
-                throw new InvalidOperationException($"User with ID {userId} does not exist.");
+                throw new UserOperationException($"User with ID {userId} does not exist.");
 
             user.MarkAsDeleted();
             await _dbContext.SaveChangesAsync();
@@ -63,7 +64,7 @@ namespace AuthModule.Persistence.Repositories
             var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null)
-                throw new InvalidOperationException($"User with ID {userId} does not exist.");
+                throw new NullableUserException($"User with ID {userId} does not exist.");
 
             user.Restore();
             await _dbContext.SaveChangesAsync();
@@ -71,8 +72,10 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task<AuthUser?> GetUserByEmailAsync(string email)
         {
+            var emailValue = new Email(email);
+            
             var user = await _dbContext.AuthUsers
-                .Where(u => u.Email != null && u.Email.Equals(new Email(email)) && !u.IsDeleted)
+                .Where(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted)
                 .FirstOrDefaultAsync();
 
             return user;
@@ -80,8 +83,10 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber)
         {
+            var phoneNumberValue = new PhoneNumber(phoneNumber);
+
             var user = await _dbContext.AuthUsers
-                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumber) && !u.IsDeleted)
+                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted)
                 .FirstOrDefaultAsync();
 
             return user;
@@ -98,15 +103,19 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task<bool> IsEmailRegisteredAsync(string email)
         {
+            var emailValue = new Email(email);
+
             return await _dbContext.AuthUsers
-                .Where(u => u.Email != null && u.Email.Equals(new Email(email)) && !u.IsDeleted)
+                .Where(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted)
                 .AnyAsync();
         }
 
         public async Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber)
         {
+            var phonenumberValue = new PhoneNumber(phoneNumber);
+
             return await _dbContext.AuthUsers
-                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumber) && !u.IsDeleted)
+                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phonenumberValue) && !u.IsDeleted)
                 .AnyAsync();
         }
 
@@ -119,11 +128,14 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task<bool> IsUserExistsAsync(string email, string phoneNumber)
         {
+            var emailValue = new Email(email);
+            var phoneNumberValue = new PhoneNumber(phoneNumber);
+
             return await _dbContext.AuthUsers
                 .Where(u => !u.IsDeleted)
                 .AnyAsync(u =>
-                    (u.Email != null && u.Email.Equals(new Email(email))) ||
-                    (u.PhoneNumber != null && u.PhoneNumber.Equals(new PhoneNumber(phoneNumber)))
+                    (u.Email != null && u.Email.Equals(emailValue)) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue))
                 );
         }
 

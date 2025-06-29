@@ -1,14 +1,15 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
+using AuthModule.Application.Models;
 
 namespace AuthModule.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthorizeResponse> Login(LoginRequest request);
-        Task<AuthorizeResponse> Register(RegisterRequest request);
+        Task<AuthResult> Login(LoginRequest request);
+        Task<AuthResult> Register(RegisterRequest request);
         Task LogoutFromAllDevices(Guid userId);
         Task LogoutFromDevice(string refreshToken);
-        Task<AuthorizeResponse> RefreshTokens(string refreshToken);
+        Task<AuthResult> RefreshTokens(string refreshToken);
     }
 }

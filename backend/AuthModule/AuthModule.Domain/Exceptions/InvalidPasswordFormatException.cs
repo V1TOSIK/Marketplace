@@ -1,17 +1,22 @@
-﻿namespace AuthModule.Domain.Exceptions
+﻿using SharedKernel.Exceptions;
+using System.Net;
+
+namespace AuthModule.Domain.Exceptions
 {
-    internal class InvalidPasswordFormatException : Exception
+    public class InvalidPasswordFormatException : BaseException
     {
-        public InvalidPasswordFormatException() : base("Invalid password format")
-        {
-        }
+        public override HttpStatusCode StatusCode => HttpStatusCode.BadRequest;
 
-        public InvalidPasswordFormatException(string? message) : base(message)
-        {
-        }
+        public InvalidPasswordFormatException(string message)
+            : base(message) { }
 
-        public InvalidPasswordFormatException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
+        public InvalidPasswordFormatException(string message, Exception innerException)
+            : base(message, innerException) { }
+
+        public InvalidPasswordFormatException()
+            : base("Password is not in a valid format.") { }
+
+        public InvalidPasswordFormatException(Exception innerException)
+            : base("Password is not in a valid format.", innerException) { }
     }
 }

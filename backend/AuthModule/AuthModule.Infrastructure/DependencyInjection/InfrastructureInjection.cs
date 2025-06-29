@@ -14,6 +14,8 @@ namespace AuthModule.Infrastructure.DependencyInjection
         {
             services.Configure<JwtOptions>(configuration.GetSection("JWT"));
 
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICookieService, CookieService>();
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
 

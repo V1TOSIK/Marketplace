@@ -13,41 +13,15 @@ namespace Marketplace.Api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IJwtProvider _jwtProvider;
+        private readonly ICookieService _cookieService;
         public AuthController(
             IAuthService authService,
-            IJwtProvider jwtProvider)
+            IJwtProvider jwtProvider,
+            ICookieService cookieService)
         {
             _authService = authService;
             _jwtProvider = jwtProvider;
-        }
-
-        [HttpPost("login")]
-        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request)
-        {
-            if (request == null)
-            {
-                return BadRequest("Request cannot be null");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Password))
-            {
-                return BadRequest("Password cannot be empty or null");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                return BadRequest("Either email or phone number must be provided");
-            }
-
-            var response = await _authService.Login(request);
-            if (response == null)
-            {
-                return Unauthorized("Invalid credentials");
-            }
-
-            response.AccessToken = _jwtProvider.GenerateAccessToken(response.UserId, response.Role);
-
-            return Ok(response);
+            _cookieService = cookieService;
         }
 
         [HttpPost("register")]
@@ -68,21 +42,54 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Either email or phone number must be provided");
             }
 
-            var response = await _authService.Register(request);
+            var result = await _authService.Register(request);
 
-            if (response == null)
+            if (result == null)
             {
                 return BadRequest("Registration failed. User already exists.");
             }
 
-            response.AccessToken = _jwtProvider.GenerateAccessToken(response.UserId, response.Role);
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
 
-            return Ok(response);
+            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+
+            return Ok(result.Response);
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request cannot be null");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest("Password cannot be empty or null");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
+            {
+                return BadRequest("Either email or phone number must be provided");
+            }
+
+            var result = await _authService.Login(request);
+            if (result == null)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+
+            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+
+            return Ok(result.Response);
         }
 
         [Authorize]
         [HttpPost("logout-all")]
-        public async Task<ActionResult> Logout()
+        public async Task<ActionResult> LogoutAll()
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userRole = User.FindFirstValue(ClaimTypes.Role);
@@ -91,41 +98,51 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Invalid user ID format");
 
             await _authService.LogoutFromAllDevices(userId);
-            
+
+            _cookieService.Delete("refreshToken");
+
             return Ok("User logged out successfully");
         }
 
         [Authorize]
         [HttpPost("logout")]
-        public async Task<ActionResult> Logout([FromBody] LogoutRequest request)
+        public async Task<ActionResult> Logout()
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            var refreshToken = _cookieService.Get("refreshToken");
+
+            if (refreshToken == null)
             {
                 return BadRequest("Invalid request");
             }
 
-            await _authService.LogoutFromDevice(request.RefreshToken);
-            
+            await _authService.LogoutFromDevice(refreshToken);
+
+            _cookieService.Delete("refreshToken");
+
             return Ok("User logged out successfully");
         }
 
         [HttpPost("refresh")]
-        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens([FromBody] RefreshTokensRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens()
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            var refreshToken = _cookieService.Get("refreshToken");
+
+            if (refreshToken == null)
             {
                 return BadRequest("Invalid request");
             }
 
-            var response = await _authService.RefreshTokens(request.RefreshToken);
-            if (response == null)
+            var result = await _authService.RefreshTokens(refreshToken);
+            if (result == null)
             {
                 return Forbid("Invalid refresh token");
             }
 
-            response.AccessToken = _jwtProvider.GenerateAccessToken(response.UserId, response.Role);
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
 
-            return Ok(response);
+            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+
+            return Ok(result.Response);
         }
     }
 }

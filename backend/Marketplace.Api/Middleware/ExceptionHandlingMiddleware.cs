@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using SharedKernel.Exceptions;
+using System.Text.Json;
 
 namespace Marketplace.Api.Middleware
 {
@@ -24,21 +25,30 @@ namespace Marketplace.Api.Middleware
 
         private async Task ExceptionMeddlewareHandler(HttpContext context, Exception exception)
         {
-            var statusCode = exception switch
+            int statusCode;
+            string message = exception.Message;
+            string type = exception.GetType().Name;
+
+            if (exception is BaseException baseException)
             {
-                ArgumentException => StatusCodes.Status400BadRequest,
-                _ => StatusCodes.Status404NotFound
-            };
+                statusCode = (int)baseException.StatusCode;
+            }
+            else
+            {
+                statusCode = StatusCodes.Status500InternalServerError;
+                message = "An unexpected error occurred.";
+            }
 
             var result = JsonSerializer.Serialize(new
             {
-                error = exception.Message,
-                type = exception.GetType().Name
+                error = message,
+                type = type
             });
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = statusCode;
             await context.Response.WriteAsync(result);
         }
+
     }
 }
