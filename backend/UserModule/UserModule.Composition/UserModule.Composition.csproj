@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\UserModule.Application\UserModule.Application.csproj" />
+    <ProjectReference Include="..\UserModule.Domain\UserModule.Domain.csproj" />
+    <ProjectReference Include="..\UserModule.Infrastructure\UserModule.Infrastructure.csproj" />
+    <ProjectReference Include="..\UserModule.Persistence\UserModule.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>
