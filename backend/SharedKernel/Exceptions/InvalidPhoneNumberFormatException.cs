@@ -1,7 +1,6 @@
-﻿using SharedKernel.Exceptions;
-using System.Net;
+﻿using System.Net;
 
-namespace AuthModule.Domain.Exceptions
+namespace SharedKernel.Exceptions
 {
     public class InvalidPhoneNumberFormatException : BaseException
     {

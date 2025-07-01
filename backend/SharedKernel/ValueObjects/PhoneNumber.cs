@@ -1,11 +1,11 @@
-﻿using AuthModule.Domain.Exceptions;
+﻿using SharedKernel.Exceptions;
 using System.Text.RegularExpressions;
 
-namespace AuthModule.Domain.ValueObjects
+namespace SharedKernel.ValueObjects
 {
-    public record PhoneNumber
+    public class PhoneNumber : ValueObject
     {
-        public string Value { get; private set; }
+        public string Value { get; }
 
         private static readonly Regex phoneNumberRegex = new(
             @"^\+?\d{10,15}$",
@@ -19,11 +19,20 @@ namespace AuthModule.Domain.ValueObjects
                 throw new InvalidPhoneNumberFormatException("Phone number cannot be empty or null");
 
             if (!phoneNumberRegex.IsMatch(value))
-                throw new InvalidPhoneNumberFormatException();
+                throw new InvalidPhoneNumberFormatException("Phone number format is invalid");
 
             Value = value;
         }
 
+        protected override IEnumerable<object?> GetEqualityComponents()
+        {
+            yield return Value;
+        }
+
         public override string ToString() => Value;
+
+        public static implicit operator string(PhoneNumber phoneNumber) => phoneNumber.Value;
+
+        public static explicit operator PhoneNumber(string value) => new(value);
     }
 }

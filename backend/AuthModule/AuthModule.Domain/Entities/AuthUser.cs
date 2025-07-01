@@ -1,6 +1,8 @@
 ﻿using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.ValueObjects;
+using SharedKernel.Exceptions;
+using SharedKernel.ValueObjects;
 
 namespace AuthModule.Domain.Entities
 {

@@ -4,6 +4,7 @@ using AuthModule.Domain.Interfaces;
 using AuthModule.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SharedKernel.ValueObjects;
 
 namespace AuthModule.Persistence.Repositories
 {
