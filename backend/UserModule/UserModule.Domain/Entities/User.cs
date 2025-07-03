@@ -63,6 +63,13 @@ namespace UserModule.Domain.Entities
             _phoneNumbers.Add(phoneNumber);
         }
 
+        public IEnumerable<UserPhoneNumber> GetPhoneNumbers()
+        {
+            if (IsDeleted)
+                throw new InvalidUserOperationException("Cannot retrieve phone numbers of a deleted user.");
+            return _phoneNumbers;
+        }
+
         public void RemovePhoneNumber(int phoneNumberId)
         {
             if (IsDeleted)
@@ -83,9 +90,9 @@ namespace UserModule.Domain.Entities
             var block = UserBlock.Create(Id, blockedUserId);
             _blocks.Add(block);
         }
-        public void UnblockUser(int blockId)
+        public void UnblockUser(Guid blockedUserId)
         {
-            var block = _blocks.FirstOrDefault(b => b.Id == blockId);
+            var block = _blocks.FirstOrDefault(b => b.BlockedUserId == blockedUserId);
             if (block == null)
                 throw new BlockNotFoundException("Block not found");
             block.Unblock();

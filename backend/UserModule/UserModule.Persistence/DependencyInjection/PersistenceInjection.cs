@@ -8,7 +8,7 @@ namespace UserModule.Persistence.DependencyInjection
 {
     public static class PersistenceInjection
     {
-        public static IServiceCollection AddAuthPersistence(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddPersistenceInjection(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<UserDbContext>(options =>
             {
