@@ -13,7 +13,6 @@ namespace UserModule.Domain.Exceptions
         public UserNotFoundException(string message, Exception innerException)
             : base(message, innerException) { }
         public UserNotFoundException(Exception innerException)
-            : base("A user-related operation failed because the user was not found.", innerException)
-        {
+            : base("A user-related operation failed because the user was not found.", innerException) { }
     }
 }

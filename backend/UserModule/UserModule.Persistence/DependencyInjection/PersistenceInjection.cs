@@ -17,6 +17,7 @@ namespace UserModule.Persistence.DependencyInjection
             });
 
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IUserBlockRepository, UserBlockRepository>();
 
 
             return services;

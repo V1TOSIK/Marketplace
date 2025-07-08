@@ -5,37 +5,37 @@ using UserModule.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using UserModule.Domain.Entities;
 using UserModule.Domain.Exceptions;
+using SharedKernel.Interfaces;
+using UserModule.Application.Exceptions;
 
 namespace UserModule.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IUserManager _userManager;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<UserService> _logger;
         public UserService(IUserRepository userRepository,
+            IUserManager userManager,
+            IUnitOfWork unitOfWork,
             ILogger<UserService> logger)
         {
             _userRepository = userRepository;
+            _userManager = userManager;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
         public async Task<UserResponse> GetProfile(Guid userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                _logger.LogError($"User with ID {userId} not found.");
-                throw new NullableUserException($"User with ID {userId} not found.");
-            }
-            var phoneNumbers = user.GetPhoneNumbers();
+            var user = await _userRepository.GetByIdAsync(userId, false);
+            var phoneNumbers = await _userRepository.GetPhoneNumbersAsync(userId);
             var response = new UserResponse
             {
                 Name = user.Name,
                 Location = user.Location,
-                IsDeleted = user.IsDeleted,
-                PhoneNumbers = user.GetPhoneNumbers()
-                    .Select(p => p.PhoneNumber.Value)
-                    .ToList()
+                PhoneNumbers = phoneNumbers
             };
             _logger.LogInformation($"Profile retrieved for user {user.Name} with ID {userId}.");
             return response;
@@ -44,17 +44,11 @@ namespace UserModule.Application.Services
         public async Task<IEnumerable<UserResponse>> GetAllUsers()
         {
             var users = await _userRepository.GetAllAsync();
-            if (users == null || !users.Any())
-            {
-                _logger.LogInformation("No users found.");
-                return Enumerable.Empty<UserResponse>();
-            }
             var userResponses = users.Select(user => new UserResponse
             {
                 Name = user.Name,
                 Location = user.Location,
-                IsDeleted = user.IsDeleted,
-                PhoneNumbers = user.GetPhoneNumbers()
+                PhoneNumbers = user.PhoneNumbers
                     .Select(p => p.PhoneNumber.Value)
                     .ToList()
             }).ToList();
@@ -67,7 +61,7 @@ namespace UserModule.Application.Services
             if (request == null)
             {
                 _logger.LogError("CreateUserRequest cannot be null.");
-                throw new ArgumentNullException(nameof(request), "CreateUserRequest cannot be null.");
+                throw new BadRequestException("CreateUserRequest cannot be null.");
             }
             var user = User.Create(userId, request.Name, request.Location);
             foreach (var phone in request.PhoneNumbers)
@@ -75,108 +69,101 @@ namespace UserModule.Application.Services
                 user.AddPhoneNumber(phone);
             }
             await _userRepository.AddAsync(user);
+            await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation($"New profile created for user {user.Name} with ID {userId}.");
         }
 
         public async Task UpdateProfile(Guid userId, UpdateUserRequest request)
         {
-
-        }
-
-        public async Task SoftDeleteProfile(Guid userId)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, false);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found for soft delete.");
                 throw new NullableUserException($"User with ID {userId} not found.");
             }
-            await _userRepository.SoftDeleteAsync(userId);
-            _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been soft deleted.");
+
+            if (!string.IsNullOrWhiteSpace(request.Name))
+                user.UpdateName(request.Name);
+            if (!string.IsNullOrWhiteSpace(request.Location))
+                user.UpdateLocation(request.Location);
+            if (request.PhoneNumbers != null && request.PhoneNumbers.Any())
+            {
+                foreach (var phone in request.PhoneNumbers)
+                {
+                    if (!string.IsNullOrWhiteSpace(phone) && !user.GetPhoneNumbers().Any(p => p.PhoneNumber.Value == phone))
+                    {
+                        user.AddPhoneNumber(phone);
+                    }
+                }
+            }
+            await _unitOfWork.SaveChangesAsync();
+            _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been updated.");
+        }
+
+        public async Task SoftDeleteProfile(Guid userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId, false);
+            if (user == null)
+            {
+                _logger.LogError($"User with ID {userId} not found for soft delete.");
+                throw new NullableUserException($"User with ID {userId} not found.");
+            }
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _userRepository.SoftDeleteAsync(userId);
+                await _userManager.SoftDeleteUser(userId);
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been soft deleted.");
+            });
         }
 
         public async Task HardDeleteProfile(Guid userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, false);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found for hard delete.");
                 throw new NullableUserException($"User with ID {userId} not found.");
             }
-            await _userRepository.HardDeleteAsync(userId);
-            _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been hard deleted.");
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _userRepository.HardDeleteAsync(userId);
+                await _userManager.HardDeleteUser(userId);
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been hard deleted.");
+            });
         }
 
-        public async Task BlockUser(Guid userId, Guid blockedUserId)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                _logger.LogError($"User with ID {userId} not found for blocking.");
-                throw new NullableUserException($"User with ID {userId} not found.");
-            }
-            await _userRepository.BlockUserAsync(userId, blockedUserId);
-            _logger.LogInformation($"User with ID {blockedUserId} has been blocked by user {user.Name} with ID {userId}.");
-        }
-
-        public async Task UnblockUser(Guid userId, Guid blockedUserId)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                _logger.LogError($"User with ID {userId} not found for unblocking.");
-                throw new NullableUserException($"User with ID {userId} not found.");
-            }
-            await _userRepository.UnblockUserAsync(userId, blockedUserId);
-            _logger.LogInformation($"User with ID {blockedUserId} has been unblocked by user {user.Name} with ID {userId}.");
-        }
-
-        public async Task<IEnumerable<UserResponse>> GetBlockedUsers(Guid userId)
-        {
-            var blokedUsers = await _userRepository.GetBlockedUsersAsync(userId);
-            if (blokedUsers == null || !blokedUsers.Any())
-            {
-                _logger.LogInformation($"No blocked users found for user with ID {userId}.");
-                return Enumerable.Empty<UserResponse>();
-            }
-            var blockedUserResponses = blokedUsers.Select(user => new UserResponse
-            {
-                Name = user.Name,
-                Location = user.Location,
-                IsDeleted = user.IsDeleted,
-                PhoneNumbers = user.GetPhoneNumbers()
-                    .Select(p => p.PhoneNumber.Value)
-                    .ToList()
-            }).ToList();
-            _logger.LogInformation($"Retrieved {blockedUserResponses.Count} blocked users for user with ID {userId}.");
-            return blockedUserResponses;
-        }
+        
 
         public async Task AddPhoneNumber(Guid userId, string phone)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, false);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found for adding phone number.");
                 throw new NullableUserException($"User with ID {userId} not found.");
             }
-            if (await _userRepository.PhoneNumberExistsAsync(phone))
+            if (await _userRepository.(phone))
             {
                 _logger.LogError($"Phone number {phone} already exists.");
                 throw new PhoneNumberIsAlreadyAddedException($"Phone number {phone} already exists.");
             }
             user.AddPhoneNumber(phone);
+            await _userRepository.UpdateAsync(user);
+            _logger.LogInformation($"Phone number {phone} has been added to user {user.Name} with ID {userId}.");
         }
 
         public async Task RemovePhoneNumber(Guid userId, int phoneId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId, false);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found for removing phone number.");
                 throw new NullableUserException($"User with ID {userId} not found.");
             }
             user.RemovePhoneNumber(phoneId);
+            await _userRepository.UpdateAsync(user);
             _logger.LogInformation($"Phone number with ID {phoneId} has been removed from user {user.Name} with ID {userId}.");
         }
     }

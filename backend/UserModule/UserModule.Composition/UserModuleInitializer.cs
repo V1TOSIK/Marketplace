@@ -9,7 +9,6 @@ namespace UserModule.Composition
     {
         public async Task InitializeAsync(IServiceProvider serviceProvider)
         {
-
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<UserDbContext>();
             await context.Database.MigrateAsync();

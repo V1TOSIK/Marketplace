@@ -11,9 +11,6 @@ namespace UserModule.Application.Interfaces
         Task UpdateProfile(Guid userId, UpdateUserRequest request);
         Task HardDeleteProfile(Guid userId);
         Task SoftDeleteProfile(Guid userId);
-        Task BlockUser(Guid userId, Guid blockedUserId);
-        Task UnblockUser(Guid userId, Guid blockedUserId);
-        Task<IEnumerable<UserResponse>> GetBlockedUsers(Guid userId);
         Task AddPhoneNumber(Guid userId, string phone);
         Task RemovePhoneNumber(Guid userId, int phoneId);
     }

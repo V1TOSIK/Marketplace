@@ -20,6 +20,11 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("user_id")
                 .IsRequired();
 
+            builder.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ub => ub.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Property(ub => ub.BlockedUserId)
                 .HasColumnName("blocked_user_id")
                 .IsRequired();
@@ -32,9 +37,8 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("unblocked_at")
                 .IsRequired(false);
 
-            builder.HasIndex(ub => new { ub.UserId, ub.BlockedUserId })
-                .IsUnique()
-                .HasDatabaseName("IX_UserBlocks_UserId_BlockedUserId");
+            builder.HasIndex(ub => new { ub.UserId, ub.BlockedUserId }).IsUnique();
+
         }
     }
 }
