@@ -50,6 +50,13 @@ namespace AuthModule.Persistence.Configurations
             builder.Property(rt => rt.ReplacedByTokenId)
                 .HasColumnName("replaced_by_token_id")
                 .IsRequired(false);
+
+            builder.Property(rt => rt.Device)
+                .HasColumnName("device");
+
+            builder.Property(rt => rt.IpAddress)
+                .HasColumnName("ip_address")
+                .IsRequired();
         }
     }
 }

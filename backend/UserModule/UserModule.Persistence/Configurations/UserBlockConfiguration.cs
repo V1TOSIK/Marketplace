@@ -37,7 +37,7 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("unblocked_at")
                 .IsRequired(false);
 
-            builder.HasIndex(ub => new { ub.UserId, ub.BlockedUserId }).IsUnique();
+            builder.HasIndex(ub => new { ub.UserId, ub.BlockedUserId, ub.UnblockedAt }).IsUnique();
 
         }
     }

@@ -15,9 +15,12 @@ namespace Marketplace.Api.Controllers
     {
 
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private readonly IUserBlockService _userBlockService;
+        public UserController(IUserService userService,
+            IUserBlockService userBlockService)
         {
             _userService = userService;
+            _userBlockService = userBlockService;
         }
 
         [Authorize]
@@ -35,22 +38,6 @@ namespace Marketplace.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize]
-        [HttpGet("my-blocked")]
-        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
-
-            var blockedUsers = await _userService.GetBlockedUsers(parsedUserId);
-
-            if (blockedUsers == null || !blockedUsers.Any())
-                return NotFound();
-            return Ok(blockedUsers);
-        }
-
         [HttpGet("{userId}")]
         public async Task<ActionResult<UserResponse>> GetUserAccount(Guid userId)
         {
@@ -62,6 +49,20 @@ namespace Marketplace.Api.Controllers
                 return NotFound();
 
             return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("my-blocked")]
+        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userId, out Guid parsedUserId))
+                return BadRequest();
+
+            var blockedUsers = await _userBlockService.GetBlockedUsers(parsedUserId);
+
+            return Ok(blockedUsers);
         }
 
         [Authorize]
@@ -86,9 +87,11 @@ namespace Marketplace.Api.Controllers
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
                 return BadRequest();
+
             if (userId == Guid.Empty || userId == parsedCurrentUserId)
                 return BadRequest("Invalid user ID");
-            await _userService.BlockUser(parsedCurrentUserId, userId);
+
+            await _userBlockService.BlockUser(parsedCurrentUserId, userId);
             return Ok();
         }
 
@@ -99,9 +102,11 @@ namespace Marketplace.Api.Controllers
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
                 return BadRequest();
+
             if (userId == Guid.Empty || userId == parsedCurrentUserId)
                 return BadRequest("Invalid user ID");
-            await _userService.UnblockUser(parsedCurrentUserId, userId);
+
+            await _userBlockService.UnblockUser(parsedCurrentUserId, userId);
             return Ok();
         }
 
@@ -127,6 +132,7 @@ namespace Marketplace.Api.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
+
             await _userService.HardDeleteProfile(parsedUserId);
             return Ok();
         }
@@ -138,6 +144,7 @@ namespace Marketplace.Api.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
+
             await _userService.SoftDeleteProfile(parsedUserId);
             return Ok();
         }

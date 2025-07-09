@@ -77,7 +77,7 @@ namespace AuthModule.Domain.Entities
         public void Ban()
         {
             if (IsBaned)
-                throw new UserOperationException("User is already blocked.");
+                throw new UserOperationException("User is already baned.");
             IsBaned = true;
             BanedAt = DateTime.UtcNow;
         }
@@ -85,7 +85,7 @@ namespace AuthModule.Domain.Entities
         public void Unban()
         {
             if (!IsBaned)
-                throw new UserOperationException("User is not blocked.");
+                throw new UserOperationException("User is not baned.");
             IsBaned = false;
             BanedAt = null;
         }
@@ -109,7 +109,7 @@ namespace AuthModule.Domain.Entities
         }
         public void UpdateRole(string roleText)
         {
-            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
+            if (!Enum.TryParse<UserRole>(roleText.ToLower(), true, out var parsedRole))
                 throw new InvalidUserRoleException($"Invalid user role: {roleText}");
             Role = parsedRole;
         }

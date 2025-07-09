@@ -5,7 +5,8 @@ namespace UserModule.Domain.Interfaces
     public interface IUserBlockRepository
     {
         Task<UserBlock> GetByIdAsync(int id);
-        Task<UserBlock> GetAsync(Guid userId, Guid blockedUserId);
+        Task<UserBlock> GetActiveBlockAsync(Guid userId, Guid blockedUserId);
+        Task<UserBlock> GetAnyBlockAsync(Guid userId, Guid blockedUserId);
         Task AddAsync(UserBlock block);
         Task RemoveAsync(Guid userId, Guid blockedUserId);
         Task<bool> ExistsAsync(Guid userId, Guid blockedUserId);

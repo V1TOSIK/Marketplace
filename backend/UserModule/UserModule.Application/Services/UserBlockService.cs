@@ -50,7 +50,7 @@ namespace UserModule.Application.Services
                 _logger.LogError("User is not blocked");
                 throw new BlockExistException("User is not blocked");
             }
-            var block = await _userBlockRepository.GetAsync(userId, blockedUserId);
+            var block = await _userBlockRepository.GetActiveBlockAsync(userId, blockedUserId);
             block.Unblock();
             await _unitOfWork.SaveChangesAsync();
         }

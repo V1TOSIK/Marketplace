@@ -26,13 +26,22 @@ namespace UserModule.Persistence.Repositories
 
             return result;
         }
+        public async Task<UserBlock> GetActiveBlockAsync(Guid userId, Guid blockedUserId)
+        {
+            var result = await _dbContext.UserBlocks
+                .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId && ub.UnblockedAt == null);
+            if (result == null)
+                throw new BlockNotFoundException($"Active block not found for user: {blockedUserId}");
 
-        public async Task<UserBlock> GetAsync(Guid userId, Guid blockedUserId)
+            return result;
+        }
+
+        public async Task<UserBlock> GetAnyBlockAsync(Guid userId, Guid blockedUserId)
         {
             var result = await _dbContext.UserBlocks
                 .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId);
             if (result == null)
-                throw new BlockNotFoundException($"Blocked user: {blockedUserId} not found");
+                throw new BlockNotFoundException($"Block not found for user: {blockedUserId}");
 
             return result;
         }

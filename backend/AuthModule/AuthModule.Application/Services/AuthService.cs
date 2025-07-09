@@ -16,20 +16,23 @@ namespace AuthModule.Application.Services
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly ILogger<AuthService> _logger;
         private readonly IUserRestorer _userRestorer;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<AuthService> _logger;
         public AuthService(
             IAuthUserRepository authUserRepository,
             IPasswordHasher passwordHasher,
             IRefreshTokenRepository refreshTokenRepository,
-            ILogger<AuthService> logger,
-            IUserRestorer userRestorer)
+            IUserRestorer userRestorer,
+            IUnitOfWork unitOfWork,
+            ILogger<AuthService> logger)
         {
             _authUserRepository = authUserRepository;
             _passwordHasher = passwordHasher;
             _refreshTokenRepository = refreshTokenRepository;
-            _logger = logger;
             _userRestorer = userRestorer;
+            _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public async Task<AuthResult> Register(RegisterRequest request)
@@ -79,15 +82,17 @@ namespace AuthModule.Application.Services
                 }
                 else
                 {
-                    existingUser.Restore();
-                    existingUser.UpdatePassword(hashPassword);
-                    existingUser.UpdateRole(request.Role);
-                    if (email != null) existingUser.UpdateEmail(email);
-                    if (phone != null) existingUser.UpdatePhoneNumber(phone);
+                    await _unitOfWork.ExecuteInTransactionAsync(async () =>
+                    {
+                        existingUser.Restore();
+                        existingUser.UpdatePassword(hashPassword);
+                        existingUser.UpdateRole(request.Role);
+                        if (email != null) existingUser.UpdateEmail(email);
+                        if (phone != null) existingUser.UpdatePhoneNumber(phone);
 
-                    await _authUserRepository.UpdateUserAsync(existingUser);
-
-                    await _userRestorer.RestoreUserAsync(existingUser.UserId);
+                        await _authUserRepository.UpdateUserAsync(existingUser);
+                        await _userRestorer.RestoreUserAsync(existingUser.UserId);
+                    });
 
                     var refreshToken = RefreshToken.Create(existingUser.UserId);
                     await _refreshTokenRepository.AddAsync(refreshToken);

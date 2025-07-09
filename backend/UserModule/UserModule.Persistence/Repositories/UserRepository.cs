@@ -37,7 +37,7 @@ namespace UserModule.Persistence.Repositories
         {
             var user = await _context.Users
                 .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == includeDeleted);
+                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found.");
