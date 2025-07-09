@@ -29,11 +29,6 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("is_deleted")
                 .HasDefaultValue(false);
 
-            builder.HasMany<UserBlock>()
-                .WithOne()
-                .HasForeignKey(ub => ub.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             builder.HasMany<UserPhoneNumber>()
                 .WithOne()
                 .HasForeignKey(upn => upn.UserId)

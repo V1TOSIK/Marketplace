@@ -12,7 +12,7 @@ namespace UserModule.Domain.Entities
         }
         public int Id { get; private set; }
         public Guid UserId { get; private set; }
-        public PhoneNumber PhoneNumber { get; private set; }
+        public PhoneNumber PhoneNumber { get; private set; } 
 
         public static UserPhoneNumber Create(Guid userId, string phoneNumberValue)
         {

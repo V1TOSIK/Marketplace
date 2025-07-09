@@ -7,6 +7,7 @@ using AuthModule.Domain.Entities;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
+using SharedKernel.Interfaces;
 
 namespace AuthModule.Application.Services
 {
@@ -15,16 +16,22 @@ namespace AuthModule.Application.Services
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IUserRestorer _userRestorer;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AuthService> _logger;
         public AuthService(
             IAuthUserRepository authUserRepository,
             IPasswordHasher passwordHasher,
             IRefreshTokenRepository refreshTokenRepository,
+            IUserRestorer userRestorer,
+            IUnitOfWork unitOfWork,
             ILogger<AuthService> logger)
         {
             _authUserRepository = authUserRepository;
             _passwordHasher = passwordHasher;
             _refreshTokenRepository = refreshTokenRepository;
+            _userRestorer = userRestorer;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -45,16 +52,16 @@ namespace AuthModule.Application.Services
 
             if (email is not null)
             {
-                existingUser = await _authUserRepository.GetUserByEmailAsync(email);
+                existingUser = await _authUserRepository.GetUserByEmailAsync(email, true);
             }
             else if (phone is not null)
             {
-                existingUser = await _authUserRepository.GetUserByPhoneNumberAsync(phone);
+                existingUser = await _authUserRepository.GetUserByPhoneNumberAsync(phone, true);
             }
 
             if (existingUser != null)
             {
-                if (existingUser.IsBlocked)
+                if (existingUser.IsBaned)
                 {
                     _logger.LogWarning($"User with {email ?? phone} is blocked.");
                     throw new UserOperationException("User is blocked.");
@@ -75,13 +82,17 @@ namespace AuthModule.Application.Services
                 }
                 else
                 {
-                    existingUser.Restore();
-                    existingUser.UpdatePassword(hashPassword);
-                    existingUser.UpdateRole(request.Role);
-                    if (email != null) existingUser.UpdateEmail(email);
-                    if (phone != null) existingUser.UpdatePhoneNumber(phone);
+                    await _unitOfWork.ExecuteInTransactionAsync(async () =>
+                    {
+                        existingUser.Restore();
+                        existingUser.UpdatePassword(hashPassword);
+                        existingUser.UpdateRole(request.Role);
+                        if (email != null) existingUser.UpdateEmail(email);
+                        if (phone != null) existingUser.UpdatePhoneNumber(phone);
 
-                    await _authUserRepository.UpdateUserAsync(existingUser);
+                        await _authUserRepository.UpdateUserAsync(existingUser);
+                        await _userRestorer.RestoreUserAsync(existingUser.UserId);
+                    });
 
                     var refreshToken = RefreshToken.Create(existingUser.UserId);
                     await _refreshTokenRepository.AddAsync(refreshToken);
@@ -133,7 +144,7 @@ namespace AuthModule.Application.Services
                 throw new UserOperationException("User is deleted.");
             }
 
-            if (user.IsBlocked)
+            if (user.IsBaned)
             {
                 _logger.LogWarning($"User with ID {user.UserId} is blocked.");
                 throw new UserOperationException("User is blocked.");
@@ -164,7 +175,7 @@ namespace AuthModule.Application.Services
         {
             if (!string.IsNullOrWhiteSpace(email))
             {
-                var user = await _authUserRepository.GetUserByEmailAsync(email);
+                var user = await _authUserRepository.GetUserByEmailAsync(email, false);
                 if (user == null)
                 {
                     throw new UserNotFoundException($"User with email {email} is not registered.");
@@ -175,7 +186,7 @@ namespace AuthModule.Application.Services
 
             if (!string.IsNullOrWhiteSpace(phone))
             {
-                var user = await _authUserRepository.GetUserByPhoneNumberAsync(phone);
+                var user = await _authUserRepository.GetUserByPhoneNumberAsync(phone, false);
                 if (user == null)
                     throw new UserNotFoundException($"User with phone {phone} is not registered.");
                 return user;
@@ -263,5 +274,7 @@ namespace AuthModule.Application.Services
                 RefreshToken = newRefreshToken
             };
         }
+
+       
     }
 }

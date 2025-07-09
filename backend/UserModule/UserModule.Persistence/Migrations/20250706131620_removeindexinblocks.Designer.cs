@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UserModule.Persistence;
@@ -11,9 +12,11 @@ using UserModule.Persistence;
 namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    partial class UserDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706131620_removeindexinblocks")]
+    partial class removeindexinblocks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,10 +79,14 @@ namespace UserModule.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<Guid?>("UserId1")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "BlockedUserId", "UnblockedAt")
-                        .IsUnique();
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("user_blocks", (string)null);
                 });
@@ -122,6 +129,10 @@ namespace UserModule.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("UserModule.Domain.Entities.User", null)
+                        .WithMany("Blocks")
+                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("UserModule.Domain.Entities.UserPhoneNumber", b =>
@@ -139,6 +150,8 @@ namespace UserModule.Persistence.Migrations
 
             modelBuilder.Entity("UserModule.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Blocks");
+
                     b.Navigation("PhoneNumbers");
                 });
 #pragma warning restore 612, 618

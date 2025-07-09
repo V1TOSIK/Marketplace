@@ -2,6 +2,7 @@ using Marketplace.Api.Middleware;
 using AuthModule.Composition.DependencyInjection;
 using Marketplace.Abstractions;
 using Serilog;
+using UserModule.Composition.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.Services.AddAuthModule(builder.Configuration);
+builder.Services.AddUserModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -60,7 +62,12 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Marketplace API v1");
+        options.RoutePrefix = "swagger";
+        options.ConfigObject.AdditionalItems["persistAuthorization"] = true;
+    });
 }
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

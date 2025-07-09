@@ -46,14 +46,11 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task HardDeleteUserAsync(Guid userId)
         {
-            var deleteResult = await _dbContext.AuthUsers
-                .Where(u => u.UserId == userId)
-                .ExecuteDeleteAsync();
+            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+                throw new NullableUserException();
 
-            if (deleteResult == 0)
-                throw new UserOperationException($"User with ID {userId} does not exist.");
-
-            _logger.LogInformation("User with ID {UserId} hard deleted successfully.", userId);
+            _dbContext.AuthUsers.Remove(user);
         }
 
         public async Task SoftDeleteUserAsync(Guid userId)
@@ -64,7 +61,6 @@ namespace AuthModule.Persistence.Repositories
                 throw new UserOperationException($"User with ID {userId} does not exist.");
 
             user.MarkAsDeleted();
-            await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("User with ID {UserId} soft deleted successfully.", userId);
         }
@@ -82,23 +78,23 @@ namespace AuthModule.Persistence.Repositories
             _logger.LogInformation("User with ID {UserId} restored successfully.", userId);
         }
 
-        public async Task<AuthUser?> GetUserByEmailAsync(string email)
+        public async Task<AuthUser?> GetUserByEmailAsync(string email, bool canBeDeleted)
         {
             var emailValue = new Email(email);
             
             var user = await _dbContext.AuthUsers
-                .Where(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted)
+                .Where(u => u.Email != null && u.Email.Equals(emailValue) && u.IsDeleted == canBeDeleted)
                 .FirstOrDefaultAsync();
 
             return user;
         }
 
-        public async Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber)
+        public async Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber, bool canBeDeleted)
         {
             var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             var user = await _dbContext.AuthUsers
-                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted)
+                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && u.IsDeleted == canBeDeleted)
                 .FirstOrDefaultAsync();
 
             return user;

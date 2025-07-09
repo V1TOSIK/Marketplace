@@ -19,9 +19,6 @@ namespace UserModule.Domain.Entities
         private readonly List<UserPhoneNumber> _phoneNumbers = [];
         public IReadOnlyCollection<UserPhoneNumber> PhoneNumbers => _phoneNumbers.AsReadOnly();
 
-        private readonly List<UserBlock> _blocks = [];
-        public IReadOnlyCollection<UserBlock> Blocks => _blocks.AsReadOnly();
-
         public static User Create(Guid id, string name, string location)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -50,6 +47,20 @@ namespace UserModule.Domain.Entities
             Location = location;
         }
 
+        public IEnumerable<UserPhoneNumber> GetPhoneNumbers()
+        {
+            if (IsDeleted)
+                throw new InvalidUserOperationException("Cannot retrieve phone numbers of a deleted user.");
+            return _phoneNumbers;
+        }
+
+        public IEnumerable<string> GetPhoneNumbersValue()
+        {
+            if (IsDeleted)
+                throw new InvalidUserOperationException("Cannot retrieve phone numbers of a deleted user.");
+            return _phoneNumbers.Select(pn => pn.PhoneNumber.Value);
+        }
+
         public void AddPhoneNumber(string phoneNumberValue)
         {
             if (IsDeleted)
@@ -73,29 +84,18 @@ namespace UserModule.Domain.Entities
                 throw new PhoneNumberNotFoundException("Phone number not found");
             _phoneNumbers.Remove(phoneNumber);
         }
-
-        public void BlockUser(Guid blockedUserId)
-        {
-            if (blockedUserId == Guid.Empty)
-                throw new InvalidBlockDataException("Blocked user ID cannot be empty");
-            if (Blocks.Any(b => (b.BlockedUserId == blockedUserId && b.UnblockedAt == null)))
-                throw new BlockExistException("User is already blocked");
-            var block = UserBlock.Create(Id, blockedUserId);
-            _blocks.Add(block);
-        }
-        public void UnblockUser(int blockId)
-        {
-            var block = _blocks.FirstOrDefault(b => b.Id == blockId);
-            if (block == null)
-                throw new BlockNotFoundException("Block not found");
-            block.Unblock();
-        }
-
         public void MarkAsDeleted()
         {
             if (IsDeleted)
                 throw new DeleteUserException("User is already deleted.");
             IsDeleted = true;
+        }
+
+        public void Restore()
+        {
+            if (!IsDeleted)
+                throw new RestoreUserException("User is not deleted.");
+            IsDeleted = false;
         }
     }
 }

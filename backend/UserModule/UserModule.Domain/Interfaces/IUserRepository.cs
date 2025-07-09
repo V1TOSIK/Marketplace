@@ -4,13 +4,12 @@ namespace UserModule.Domain.Interfaces
 {
     public interface IUserRepository
     {
-        Task<User> GetByIdAsync(Guid userId);
+        Task<User> GetByIdAsync(Guid userId, bool includeDeleted);
         Task<IEnumerable<User>> GetAllAsync();
         Task AddAsync(User user);
-        Task UpdateAsync(User user);
         Task SoftDeleteAsync(Guid userId);
         Task HardDeleteAsync(Guid userId);
         Task<bool> ExistsAsync(Guid userId);
-        Task<bool> PhoneNumberExistsAsync(string phoneNumber);
+        Task<IEnumerable<string>> GetPhoneNumbersAsync(Guid userId);
     }
 }

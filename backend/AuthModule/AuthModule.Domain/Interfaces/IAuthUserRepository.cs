@@ -9,8 +9,8 @@ namespace AuthModule.Domain.Interfaces
         Task<bool> IsUserExistsAsync(Guid userId);
         Task<bool> IsUserExistsAsync(string email, string phoneNumber);
         Task AddUserAsync(AuthUser user);
-        Task<AuthUser?> GetUserByEmailAsync(string email);
-        Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber);
+        Task<AuthUser?> GetUserByEmailAsync(string email, bool canBeDeleted);
+        Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber, bool canBeDeleted);
         Task<AuthUser?> GetUserByIdAsync(Guid userId);
         Task UpdateUserAsync(AuthUser user);
         Task HardDeleteUserAsync(Guid userId);

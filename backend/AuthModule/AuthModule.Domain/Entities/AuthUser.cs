@@ -31,8 +31,8 @@ namespace AuthModule.Domain.Entities
         public Password Password { get; private set; }
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
-        public bool IsBlocked { get; private set; } = false;
-        public DateTime? BlockedAt { get; private set; } = null;
+        public bool IsBaned { get; private set; } = false;
+        public DateTime? BanedAt { get; private set; } = null;
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
 
@@ -74,20 +74,20 @@ namespace AuthModule.Domain.Entities
             DeletedAt = null;
         }
 
-        public void Block()
+        public void Ban()
         {
-            if (IsBlocked)
-                throw new UserOperationException("User is already blocked.");
-            IsBlocked = true;
-            BlockedAt = DateTime.UtcNow;
+            if (IsBaned)
+                throw new UserOperationException("User is already baned.");
+            IsBaned = true;
+            BanedAt = DateTime.UtcNow;
         }
 
-        public void Unblock()
+        public void Unban()
         {
-            if (!IsBlocked)
-                throw new UserOperationException("User is not blocked.");
-            IsBlocked = false;
-            BlockedAt = null;
+            if (!IsBaned)
+                throw new UserOperationException("User is not baned.");
+            IsBaned = false;
+            BanedAt = null;
         }
         public void UpdateEmail(string emailValue)
         {
@@ -109,7 +109,7 @@ namespace AuthModule.Domain.Entities
         }
         public void UpdateRole(string roleText)
         {
-            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
+            if (!Enum.TryParse<UserRole>(roleText.ToLower(), true, out var parsedRole))
                 throw new InvalidUserRoleException($"Invalid user role: {roleText}");
             Role = parsedRole;
         }
