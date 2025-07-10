@@ -16,33 +16,18 @@ namespace AuthModule.Persistence.Repositories
             _dbContext = dbContext;
             _logger = logger;
         }
-        public async Task AddAsync(RefreshToken token)
+        public async Task<RefreshToken> GetByTokenAsync(string token)
         {
-            await _dbContext.RefreshTokens.AddAsync(token);
-            await _dbContext.SaveChangesAsync();
-            _logger.LogInformation("Refresh token added for user {UserId} with expiration date {ExpirationDate}",
-                token.UserId, token.ExpirationDate);
-        }
+            var refreshToken = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == token && !rt.IsRevoked && rt.ExpirationDate > DateTime.UtcNow);
 
-        public async Task RevokeExpiredAsync()
-        {
-            var deleteResult = await _dbContext.RefreshTokens
-                .Where(rt => rt.ExpirationDate < DateTime.UtcNow)
-                .ExecuteDeleteAsync();
-
-            if (deleteResult == 0)
+            if (refreshToken == null)
             {
-                _logger.LogWarning("No expired refresh tokens found to delete.");
-                throw new RefreshTokenOperationException("No expired refresh tokens found to delete.");
+                _logger.LogError("Refresh token not found");
+                throw new RefreshTokenNotFoundException("Refresh token not found");
             }
 
-            _logger.LogInformation("{Count} expired refresh tokens deleted.", deleteResult);
-        }
-
-        public async Task<RefreshToken?> GetByTokenAsync(string token)
-        {
-            return await _dbContext.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == token && !rt.IsRevoked);
+            return refreshToken;
         }
 
         public async Task<List<RefreshToken>> GetByUserIdAsync(Guid userId)
@@ -52,37 +37,59 @@ namespace AuthModule.Persistence.Repositories
                 .ToListAsync();
         }
 
-        public async Task RevokeAllAsync(Guid userId)
+        public async Task AddAsync(RefreshToken token)
         {
-            var tokens = await _dbContext.RefreshTokens
-                .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+            await _dbContext.RefreshTokens.AddAsync(token);
+            _logger.LogInformation($"Refresh token added for user {token.UserId} with expiration date {token.ExpirationDate}");
+        }
+
+        public async Task DeleteExpiredAsync()
+        {
+            var deleteResult = await _dbContext.RefreshTokens
+                .Where(rt => rt.ExpirationDate < DateTime.UtcNow)
+                .ExecuteDeleteAsync();
+
+            if (deleteResult == 0)
+            {
+                _logger.LogWarning("No expired refresh tokens found to delete.");
+                throw new RefreshTokenNotFoundException("No expired refresh tokens found to delete.");
+            }
+
+            _logger.LogInformation($"Expired refresh tokens deleted.");
+        }
+
+        public async Task RevokeExpiredAsync()
+        {
+            var expiredTokens = await _dbContext.RefreshTokens
+                .Where(rt => rt.ExpirationDate < DateTime.UtcNow)
                 .ToListAsync();
 
-            foreach (var token in tokens)
+            foreach (var token in expiredTokens)
             {
                 token.Revoke();
             }
-            
-            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation($"{expiredTokens.Count} refresh tokens was expired and been revoked");
+        }
+
+        public async Task RevokeAllAsync(Guid userId)
+        {
+            await _dbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(rt => rt.IsRevoked, true)
+                .SetProperty(rt => rt.RevokedAt, DateTime.UtcNow)
+            );
+
             _logger.LogInformation("All refresh tokens for user {UserId} revoked successfully.", userId);
         }
 
-        public async Task RevokeAsync(Guid tokenId)
+        public async Task RevokeAsync(string token)
         {
-            var token = await _dbContext.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Id == tokenId && !rt.IsRevoked);
-
-            if (token == null)
-            {
-                _logger.LogWarning("Refresh token with ID {TokenId} does not exist or is already revoked.", tokenId);
-                throw new RefreshTokenOperationException($"Refresh token with ID {tokenId} does not exist or is already revoked.");
-            }
+            var refreshToken = await GetByTokenAsync(token);
             
-            token.Revoke();
+            refreshToken.Revoke();
 
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation("Refresh token with ID {TokenId} revoked successfully.", tokenId);
+            _logger.LogInformation($"Refresh token: {refreshToken.Token} revoked successfully.");
         }
 
     }

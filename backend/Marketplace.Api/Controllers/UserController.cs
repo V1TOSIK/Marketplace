@@ -1,6 +1,7 @@
 ﻿using AuthModule.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Interfaces;
 using System.Security.Claims;
 using UserModule.Application.Dtos.Requests;
 using UserModule.Application.Dtos.Responses;
@@ -15,11 +16,14 @@ namespace Marketplace.Api.Controllers
     {
 
         private readonly IUserService _userService;
+        private readonly ICookieService _cookieService;
         private readonly IUserBlockService _userBlockService;
         public UserController(IUserService userService,
+            ICookieService cookieService,
             IUserBlockService userBlockService)
         {
             _userService = userService;
+            _cookieService = cookieService;
             _userBlockService = userBlockService;
         }
 
@@ -134,6 +138,8 @@ namespace Marketplace.Api.Controllers
                 return BadRequest();
 
             await _userService.HardDeleteProfile(parsedUserId);
+            _cookieService.Delete("refreshToken");
+
             return Ok();
         }
 
@@ -146,6 +152,8 @@ namespace Marketplace.Api.Controllers
                 return BadRequest();
 
             await _userService.SoftDeleteProfile(parsedUserId);
+            _cookieService.Delete("refreshToken");
+
             return Ok();
         }
     }

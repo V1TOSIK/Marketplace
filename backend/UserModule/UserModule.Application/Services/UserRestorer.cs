@@ -7,10 +7,10 @@ namespace UserModule.Application.Services
     public class UserRestorer : IUserRestorer
     {
         private readonly IUserRepository _userRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserUnitOfWork _unitOfWork;
         private readonly ILogger<UserRestorer> _logger;
         public UserRestorer(IUserRepository userRepository,
-            IUnitOfWork unitOfWork,
+            IUserUnitOfWork unitOfWork,
             ILogger<UserRestorer> logger)
         {
             _userRepository = userRepository;

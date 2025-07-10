@@ -57,6 +57,8 @@ namespace AuthModule.Persistence.Configurations
             builder.Property(rt => rt.IpAddress)
                 .HasColumnName("ip_address")
                 .IsRequired();
+
+            builder.HasIndex(rt => new { rt.IsRevoked, rt.RevokedAt });
         }
     }
 }
