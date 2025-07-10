@@ -11,10 +11,10 @@ namespace UserModule.Application.Services
     public class UserBlockService : IUserBlockService
     {
         private readonly IUserBlockRepository _userBlockRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserUnitOfWork _unitOfWork;
         private readonly ILogger<UserBlockService> _logger;
         public UserBlockService(IUserBlockRepository userBlockRepository,
-            IUnitOfWork unitOfWork,
+            IUserUnitOfWork unitOfWork,
             ILogger<UserBlockService> logger)
         {
             _userBlockRepository = userBlockRepository;

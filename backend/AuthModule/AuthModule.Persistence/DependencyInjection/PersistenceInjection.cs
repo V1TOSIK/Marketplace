@@ -8,7 +8,8 @@ namespace AuthModule.Persistence.DependencyInjection
 {
     public static class PersistenceInjection
     {
-        public static IServiceCollection AddAuthPersistence(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddAuthPersistence(this IServiceCollection services,
+            IConfiguration configuration)
         {
             services.AddDbContext<AuthDbContext>(options =>
             {

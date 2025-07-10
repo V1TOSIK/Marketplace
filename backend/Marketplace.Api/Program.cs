@@ -47,6 +47,8 @@ builder.Host.UseSerilog();
 
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+
 
 var app = builder.Build();
 
@@ -69,6 +71,7 @@ if (app.Environment.IsDevelopment())
         options.ConfigObject.AdditionalItems["persistAuthorization"] = true;
     });
 }
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
@@ -76,6 +79,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ClientInfoMiddleware>();
 
 app.MapControllers();
 

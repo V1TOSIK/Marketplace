@@ -1,8 +1,10 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Interfaces;
+using AuthModule.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Interfaces;
 using System.Security.Claims;
 
 namespace Marketplace.Api.Controllers
@@ -48,12 +50,18 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Either email or phone number must be provided");
             }
 
-            var result = await _authService.Register(request);
+            var clientInfo = new ClientInfo
+            {
+                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
+                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
+            };
+
+            var result = await _authService.Register(request, clientInfo);
 
             if (result == null)
             {
-                _logger.LogError("Registration failed. User already exists.");
-                return BadRequest("Registration failed. User already exists.");
+                _logger.LogError("Registration failed.");
+                return BadRequest("Registration failed.");
             }
 
             result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
@@ -85,7 +93,13 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Either email or phone number must be provided");
             }
 
-            var result = await _authService.Login(request);
+            var clientInfo = new ClientInfo
+            {
+                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
+                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
+            };
+
+            var result = await _authService.Login(request, clientInfo);
             if (result == null)
             {
                 _logger.LogError("Login failed. Invalid credentials.");
@@ -98,6 +112,57 @@ namespace Marketplace.Api.Controllers
 
             _logger.LogInformation("User logged in successfully with ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
+        }
+
+        [HttpPost("restore")]
+        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request)
+        {
+            if (request == null)
+            {
+                _logger.LogError("Restore request is null");
+                return BadRequest("Request cannot be null");
+            }
+            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
+            {
+                _logger.LogError("Both email and phone number are empty in restore request");
+                return BadRequest("Either email or phone number must be provided");
+            }
+            var clientInfo = new ClientInfo
+            {
+                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
+                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
+            };
+            var result = await _authService.Restore(request, clientInfo);
+            if (result == null)
+            {
+                _logger.LogError("Restore failed. Invalid credentials.");
+                return Unauthorized("Invalid credentials");
+            }
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            _logger.LogInformation("User restored successfully with ID: {UserId}", result.Response.UserId);
+            return Ok(result.Response);
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<ActionResult> ChangePassword(ChangePasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                _logger.LogError("Old password or new password is empty");
+                return BadRequest("Old password and new password cannot be empty");
+            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var parsedUserId))
+            {
+                _logger.LogError("Invalid user ID format: {UserId}", userId);
+                return BadRequest("Invalid user ID format");
+            }
+            await _authService.ChangePassword(request, parsedUserId);
+
+            _logger.LogInformation("Password changed successfully for user ID: {UserId}", userId);
+            return Ok("Password changed successfully");
         }
 
         [Authorize]
@@ -136,8 +201,6 @@ namespace Marketplace.Api.Controllers
             await _authService.LogoutFromDevice(refreshToken);
 
             _cookieService.Delete("refreshToken");
-
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return Ok("User logged out successfully");
         }
 
@@ -152,7 +215,13 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Invalid request");
             }
 
-            var result = await _authService.RefreshTokens(refreshToken);
+            var clientInfo = new ClientInfo
+            {
+                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
+                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
+            };
+
+            var result = await _authService.RefreshTokens(refreshToken, clientInfo);
             if (result == null)
             {
                 _logger.LogError("Refresh token is invalid or expired");

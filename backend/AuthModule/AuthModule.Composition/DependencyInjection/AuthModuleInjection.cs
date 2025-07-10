@@ -21,7 +21,11 @@ namespace AuthModule.Composition.DependencyInjection
             services.AddAuthInfrastructure(configuration);
 
             services.AddScoped<IModuleInitializer, AuthModuleInitializer>();
-            services.AddScoped<IUnitOfWork, UnitOfWork<AuthDbContext>>();
+            services.AddScoped<IAuthUnitOfWork>(provider =>
+            {
+                var context = provider.GetRequiredService<AuthDbContext>();
+                return new AuthUnitOfWork<AuthDbContext>(context);
+            });
             return services;
         }
     }

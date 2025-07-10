@@ -1,4 +1,4 @@
-﻿namespace AuthModule.Application.Interfaces
+﻿namespace SharedKernel.Interfaces
 {
     public interface ICookieService
     {

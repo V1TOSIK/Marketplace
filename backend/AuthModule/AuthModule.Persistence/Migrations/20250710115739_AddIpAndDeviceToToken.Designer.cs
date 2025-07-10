@@ -3,6 +3,7 @@ using System;
 using AuthModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AuthModule.Persistence.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250710115739_AddIpAndDeviceToToken")]
+    partial class AddIpAndDeviceToToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,12 +33,10 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime?>("BanedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("baned_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .HasMaxLength(255)
@@ -43,16 +44,10 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnName("email");
 
                     b.Property<bool>("IsBaned")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_baned");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_deleted");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Password")
                         .IsRequired()

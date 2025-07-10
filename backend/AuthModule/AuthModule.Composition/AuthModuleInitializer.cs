@@ -1,17 +1,17 @@
-﻿using AuthModule.Persistence;
-using Marketplace.Abstractions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿    using Marketplace.Abstractions;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.DependencyInjection;
+    using AuthModule.Persistence;
 
-namespace AuthModule.Composition
-{
-    public class AuthModuleInitializer : IModuleInitializer
+    namespace AuthModule.Composition
     {
-        public async Task InitializeAsync(IServiceProvider serviceProvider)
+        public class AuthModuleInitializer : IModuleInitializer
         {
-            using var scope = serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-            await context.Database.MigrateAsync();
+            public async Task InitializeAsync(IServiceProvider serviceProvider)
+            {
+                using var scope = serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+                await context.Database.MigrateAsync();
+            }
         }
     }
-}

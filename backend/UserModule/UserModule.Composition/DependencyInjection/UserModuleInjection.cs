@@ -10,13 +10,19 @@ namespace UserModule.Composition.DependencyInjection
 {
     public static class UserModuleInjection
     {
-        public static IServiceCollection AddUserModule(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddUserModule(this IServiceCollection services,
+            IConfiguration configuration)
         {
-            services.AddApplicationInjection();
-            services.AddPersistenceInjection(configuration);
+            services.AddUserApplication();
+            services.AddUserPersistence(configuration);
 
             services.AddScoped<IModuleInitializer, UserModuleInitializer>();
-            services.AddScoped<IUnitOfWork, UnitOfWork<UserDbContext>>();
+            services.AddScoped<IUserUnitOfWork>(provider =>
+            {
+                var context = provider.GetRequiredService<UserDbContext>();
+                return new UserUnitOfWork<UserDbContext>(context);
+            });
+
             return services;
         }
     }
