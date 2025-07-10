@@ -1,4 +1,5 @@
-﻿using AuthModule.Domain.Entities;
+﻿using AuthModule.Application.Exceptions;
+using AuthModule.Domain.Entities;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using AuthModule.Domain.ValueObjects;
@@ -17,96 +18,89 @@ namespace AuthModule.Persistence.Repositories
         {
             _dbContext = dbContext;
             _logger = logger;
+            Console.WriteLine($"[AuthUserRepository] DbContext HashCode: {_dbContext.GetHashCode()}");
         }
-        public async Task AddUserAsync(AuthUser user)
-        {
-            if (user == null)
-                throw new NullableUserException();
+        
 
+        public async Task<AuthUser> GetByIdAsync(Guid userId, bool includeDeleted = false)
+        {
+            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
+            if (user == null)
+                throw new UserNotFoundException($"User with Id: {userId} not found");
+
+            return user;
+        }
+
+        public async Task<AuthUser?> GetByEmailAsync(string email, bool includeDeleted = false)
+        {
+            var emailValue = new Email(email);
+            
+            var user = await _dbContext.AuthUsers
+                .Where(u => u.Email != null
+                    && u.Email.Equals(emailValue)
+                    && (includeDeleted || !u.IsDeleted))
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
+        public async Task<AuthUser?> GetByPhoneNumberAsync(string phoneNumber, bool includeDeleted = false)
+        {
+            var phoneNumberValue = new PhoneNumber(phoneNumber);
+
+            var user = await _dbContext.AuthUsers
+                .Where(u => u.PhoneNumber != null
+                    && u.PhoneNumber.Equals(phoneNumberValue)
+                    && (includeDeleted || !u.IsDeleted))
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
+        public async Task AddAsync(AuthUser user)
+        {
             if (user.Email is not null)
             {
-                var emailExist = await _dbContext.AuthUsers
-                    .AnyAsync(u => u.Email!.Equals(user.Email));
+                var emailExist = await IsEmailRegisteredAsync(user.Email);
                 if (emailExist)
                     throw new EmailAlreadyExistsException($"User with email {user.Email.Value} already exists.");
             }
 
             if (user.PhoneNumber is not null)
             {
-                var phoneExist = await _dbContext.AuthUsers
-                    .AnyAsync(u => u.PhoneNumber!.Equals(user.PhoneNumber));
+                var phoneExist = await IsPhoneNumberRegisteredAsync(user.PhoneNumber);
                 if (phoneExist)
                     throw new PhoneNumberAlreadyExistsException($"User with phone number {user.PhoneNumber.Value} already exists.");
             }
 
             await _dbContext.AuthUsers.AddAsync(user);
-            await _dbContext.SaveChangesAsync();
-            _logger.LogInformation("User with ID {UserId} added successfully.", user.UserId);
+            _logger.LogInformation("User with ID {UserId} added successfully.", user.Id);
         }
 
-        public async Task HardDeleteUserAsync(Guid userId)
+        public async Task HardDeleteAsync(Guid userId)
         {
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (user == null)
-                throw new NullableUserException();
-
+            var user = await GetByIdAsync(userId);
             _dbContext.AuthUsers.Remove(user);
+
+            _logger.LogInformation($"{user.Id} was deleted");
         }
 
-        public async Task SoftDeleteUserAsync(Guid userId)
+        public async Task SoftDeleteAsync(Guid userId)
         {
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
-
-            if (user == null)
-                throw new UserOperationException($"User with ID {userId} does not exist.");
+            var user = await GetByIdAsync(userId);
 
             user.MarkAsDeleted();
 
             _logger.LogInformation("User with ID {UserId} soft deleted successfully.", userId);
         }
 
-        public async Task RestoreUserAsync(Guid userId)
+        public async Task RestoreAsync(Guid userId)
         {
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.UserId == userId);
-
-            if (user == null)
-                throw new NullableUserException($"User with ID {userId} does not exist.");
+            var user = await GetByIdAsync(userId);
 
             user.Restore();
-            await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("User with ID {UserId} restored successfully.", userId);
-        }
-
-        public async Task<AuthUser?> GetUserByEmailAsync(string email, bool canBeDeleted)
-        {
-            var emailValue = new Email(email);
-            
-            var user = await _dbContext.AuthUsers
-                .Where(u => u.Email != null && u.Email.Equals(emailValue) && u.IsDeleted == canBeDeleted)
-                .FirstOrDefaultAsync();
-
-            return user;
-        }
-
-        public async Task<AuthUser?> GetUserByPhoneNumberAsync(string phoneNumber, bool canBeDeleted)
-        {
-            var phoneNumberValue = new PhoneNumber(phoneNumber);
-
-            var user = await _dbContext.AuthUsers
-                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && u.IsDeleted == canBeDeleted)
-                .FirstOrDefaultAsync();
-
-            return user;
-        }
-
-        public async Task<AuthUser?> GetUserByIdAsync(Guid userId)
-        {
-            var user = await _dbContext.AuthUsers
-                .Where(u => u.UserId == userId && !u.IsDeleted)
-                .FirstOrDefaultAsync();
-
-            return user;
         }
 
         public async Task<bool> IsEmailRegisteredAsync(string email)
@@ -114,45 +108,34 @@ namespace AuthModule.Persistence.Repositories
             var emailValue = new Email(email);
 
             return await _dbContext.AuthUsers
-                .Where(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted)
-                .AnyAsync();
+                .AnyAsync(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted);
         }
 
         public async Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber)
         {
-            var phonenumberValue = new PhoneNumber(phoneNumber);
+            var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             return await _dbContext.AuthUsers
-                .Where(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phonenumberValue) && !u.IsDeleted)
-                .AnyAsync();
+                .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted);
         }
 
-        public async Task<bool> IsUserExistsAsync(Guid userId)
+        public async Task<bool> IsExistsAsync(Guid userId)
         {
             return await _dbContext.AuthUsers
-                .Where(u => u.UserId == userId && !u.IsDeleted)
-                .AnyAsync();
+                .AnyAsync(u => u.Id == userId && !u.IsDeleted);
         }
 
-        public async Task<bool> IsUserExistsAsync(string email, string phoneNumber)
+        public async Task<bool> IsExistsAsync(string email, string phoneNumber)
         {
             var emailValue = new Email(email);
             var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             return await _dbContext.AuthUsers
-                .Where(u => !u.IsDeleted)
                 .AnyAsync(u =>
                     (u.Email != null && u.Email.Equals(emailValue)) ||
-                    (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue))
+                    (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue)) &&
+                    !u.IsDeleted
                 );
-        }
-
-        public async Task UpdateUserAsync(AuthUser user)
-        {
-            _dbContext.AuthUsers.Update(user);
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation("User with ID {UserId} updated successfully.", user.UserId);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace UserModule.Application.DependencyInjection
 {
     public static class ApplicationInjection
     {
-        public static IServiceCollection AddApplicationInjection(this IServiceCollection services)
+        public static IServiceCollection AddUserApplication(this IServiceCollection services)
         {
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserBlockService, UserBlockService>();

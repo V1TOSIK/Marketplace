@@ -8,17 +8,32 @@ namespace UserModule.Persistence.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly UserDbContext _context;
+        private readonly UserDbContext _dbContext;
         private readonly ILogger<UserRepository> _logger;
-        public UserRepository(UserDbContext context, ILogger<UserRepository> logger)
+        public UserRepository(UserDbContext dbContext, ILogger<UserRepository> logger)
         {
-            _context = context;
+            _dbContext = dbContext;
             _logger = logger;
+            Console.WriteLine($"[UserRepository] DbContext HashCode: {_dbContext.GetHashCode()}");
+        }
+
+        public async Task<User> GetByIdAsync(Guid userId, bool includeDeleted = false)
+        {
+            var user = await _dbContext.Users
+                .Include(u => u.PhoneNumbers)
+                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
+            if (user == null)
+            {
+                _logger.LogError($"User with ID {userId} not found.");
+                throw new UserNotFoundException($"User with ID {userId} not found.");
+            }
+            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
+            return user;
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            var users = await _context.Users
+            var users = await _dbContext.Users
                 .Where(u => !u.IsDeleted)
                 .Include(u => u.PhoneNumbers)
                 .ToListAsync();
@@ -33,20 +48,6 @@ namespace UserModule.Persistence.Repositories
             return users;
         }
 
-        public async Task<User> GetByIdAsync(Guid userId, bool includeDeleted = false)
-        {
-            var user = await _context.Users
-                .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
-            if (user == null)
-            {
-                _logger.LogError($"User with ID {userId} not found.");
-                throw new UserNotFoundException($"User with ID {userId} not found.");
-            }
-            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
-            return user;
-        }
-
         public async Task AddAsync(User user)
         {
             if (await ExistsAsync(user.Id))
@@ -55,35 +56,19 @@ namespace UserModule.Persistence.Repositories
                 throw new UserExistException($"User with ID {user.Id} already exists.");
             }
 
-            await _context.Users.AddAsync(user);
+            await _dbContext.Users.AddAsync(user);
             _logger.LogInformation($"User with ID {user.Id} added successfully.");
-        }
-
-        public async Task SoftDeleteAsync(Guid userId)
-        {
-            var user = await GetByIdAsync(userId);
-            user.MarkAsDeleted();
-            _logger.LogInformation($"User with ID {userId} marked as deleted successfully.");
         }
 
         public async Task HardDeleteAsync(Guid userId)
         {
             var user = await GetByIdAsync(userId, includeDeleted: true);
-            _context.Users.Remove(user);
+            _dbContext.Users.Remove(user);
         }
 
         public async Task<bool> ExistsAsync(Guid userId)
         {
-            var exists = await _context.Users.AnyAsync(u => u.Id == userId && !u.IsDeleted);
-            _logger.LogInformation($"User with ID {userId} exists: {exists}");
-            return exists;
-        }
-
-        public async Task<IEnumerable<string>> GetPhoneNumbersAsync(Guid userId)
-        {
-            var user = await GetByIdAsync(userId);
-            var phones = user.GetPhoneNumbers().Select(p => p.PhoneNumber.Value);
-            return phones;
+            return await _dbContext.Users.AnyAsync(u => u.Id == userId);
         }
     }
 }

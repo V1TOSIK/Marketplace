@@ -12,10 +12,10 @@ namespace AuthModule.Persistence.Configurations
         public void Configure(EntityTypeBuilder<AuthUser> builder)
         {
             builder.ToTable("auth_users")
-                .HasKey(u => u.UserId);
+                .HasKey(u => u.Id);
 
-            builder.Property(u => u.UserId)
-                .HasColumnName("user_id");
+            builder.Property(u => u.Id)
+                .HasColumnName("id");
 
             var emailConverter = new ValueConverter<Email?, string>(
                 v => v == null ? null : v.Value,
@@ -59,6 +59,24 @@ namespace AuthModule.Persistence.Configurations
                 .HasColumnName("registration_date")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
+
+            builder.Property(u => u.IsBaned)
+                .HasColumnName("is_baned")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            builder.Property(u => u.BanedAt)
+                .HasColumnName("baned_at")
+                .IsRequired(false);
+
+            builder.Property(u => u.IsDeleted)
+                .HasColumnName("is_deleted")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            builder.Property(u => u.DeletedAt)
+                .HasColumnName("deleted_at")
+                .IsRequired(false);
         }
     }
 }

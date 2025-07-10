@@ -3,6 +3,7 @@ using AuthModule.Infrastructure.Options;
 using AuthModule.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Interfaces;
 
 namespace AuthModule.Infrastructure.DependencyInjection
 {

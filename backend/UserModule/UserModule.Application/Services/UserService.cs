@@ -14,11 +14,11 @@ namespace UserModule.Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IUserManager _userManager;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserUnitOfWork _unitOfWork;
         private readonly ILogger<UserService> _logger;
         public UserService(IUserRepository userRepository,
             IUserManager userManager,
-            IUnitOfWork unitOfWork,
+            IUserUnitOfWork unitOfWork,
             ILogger<UserService> logger)
         {
             _userRepository = userRepository;
@@ -103,23 +103,22 @@ namespace UserModule.Application.Services
             var user = await _userRepository.GetByIdAsync(userId, false);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _userRepository.SoftDeleteAsync(userId);
+                user.MarkAsDeleted();
                 await _userManager.SoftDeleteUser(userId);
                 await _unitOfWork.SaveChangesAsync();
             });
-            _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been soft deleted.");
+            _logger.LogInformation($"Profile for user with ID {userId} has been soft deleted.");
         }
 
         public async Task HardDeleteProfile(Guid userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId, false);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 await _userRepository.HardDeleteAsync(userId);
                 await _userManager.HardDeleteUser(userId);
                 await _unitOfWork.SaveChangesAsync();
             });
-            _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been hard deleted.");
+            _logger.LogInformation($"Profile for user with ID {userId} has been hard deleted.");
         }
 
         public async Task AddPhoneNumber(Guid userId, string phone)

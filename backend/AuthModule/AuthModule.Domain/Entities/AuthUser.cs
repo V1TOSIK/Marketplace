@@ -8,7 +8,7 @@ namespace AuthModule.Domain.Entities
 {
     public class AuthUser
     {
-        private AuthUser(Guid userId,
+        private AuthUser(Guid id,
             Email? email,
             PhoneNumber? phoneNumber,
             Password password,
@@ -17,7 +17,7 @@ namespace AuthModule.Domain.Entities
             if (email is null && phoneNumber is null)
                 throw new MissingAuthCredentialException();
 
-            UserId = userId;
+            Id = id;
             Email = email;
             PhoneNumber = phoneNumber;
             Password = password;
@@ -25,7 +25,7 @@ namespace AuthModule.Domain.Entities
             RegistrationDate = DateTime.UtcNow;
         }
 
-        public Guid UserId { get; private set; }
+        public Guid Id { get; private set; }
         public Email? Email { get; private set; }
         public PhoneNumber? PhoneNumber { get; private set; }
         public Password Password { get; private set; }
