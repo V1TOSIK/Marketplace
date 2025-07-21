@@ -8,7 +8,6 @@ namespace UserModule.Domain.Interfaces
         Task<UserBlock> GetActiveBlockAsync(Guid userId, Guid blockedUserId);
         Task<UserBlock> GetAnyBlockAsync(Guid userId, Guid blockedUserId);
         Task AddAsync(UserBlock block);
-        Task RemoveAsync(Guid userId, Guid blockedUserId);
         Task<bool> ExistsAsync(Guid userId, Guid blockedUserId);
         Task<IEnumerable<User>> GetBlockedUsersAsync(Guid userId);
     }

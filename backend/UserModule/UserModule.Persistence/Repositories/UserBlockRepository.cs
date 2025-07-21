@@ -72,19 +72,6 @@ namespace UserModule.Persistence.Repositories
             _logger.LogInformation($"User: {block.UserId} block user: {block.BlockedUserId}");
         }
 
-        public async Task RemoveAsync(Guid userId, Guid blockedUserId)
-        {
-            var delResult = await _dbContext.UserBlocks
-                .Where(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId)
-                .ExecuteDeleteAsync();
-
-            if (delResult == 0)
-            {
-                _logger.LogError("Cannot delete block, maybe ist already removed");
-                throw new BlockNotFoundException("Block not found");
-            }
-        }
-
         public async Task<bool> ExistsAsync(Guid userId, Guid blockedUserId)
         {
             var result = await _dbContext.UserBlocks

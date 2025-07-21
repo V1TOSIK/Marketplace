@@ -29,10 +29,13 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("is_deleted")
                 .HasDefaultValue(false);
 
-            builder.HasMany<UserPhoneNumber>()
+            builder.HasMany(u => u.PhoneNumbers)
                 .WithOne()
-                .HasForeignKey(upn => upn.UserId)
+                .HasForeignKey(pn => pn.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Navigation(u => u.PhoneNumbers)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

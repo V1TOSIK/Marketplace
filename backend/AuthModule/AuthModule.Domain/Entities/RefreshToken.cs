@@ -53,9 +53,6 @@ namespace AuthModule.Domain.Entities
             ExpirationDate = newExpirationDate;
         }
 
-        private string GenerateToken()
-        {
-            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        }
+        private string GenerateToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     }
 }
