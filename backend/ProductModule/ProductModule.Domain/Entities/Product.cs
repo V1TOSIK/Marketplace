@@ -48,8 +48,6 @@ namespace ProductModule.Domain.Entities
 
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidProductDataException("Product name cannot be empty or null.");
-            if (price == null)
-                throw new InvalidProductDataException("Price cannot be null.");
             if (string.IsNullOrWhiteSpace(location))
                 throw new InvalidProductDataException("Location cannot be empty or null.");
             if (string.IsNullOrWhiteSpace(description))

@@ -17,7 +17,7 @@ namespace ProductModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<IEnumerable<CharacteristicGroup>> GetAllAsync(Guid productId)
+        public async Task<IEnumerable<CharacteristicGroup>> GetProductGroupsAsync(Guid productId)
         {
             return await _dbContext.CharacteristicGroups
                 .Where(c => c.ProductId == productId)
@@ -25,7 +25,7 @@ namespace ProductModule.Persistence.Repositories
                 .ToListAsync();
         }
 
-        public async Task<CharacteristicGroup> GetByIdAsync(int groupId)
+        public async Task<CharacteristicGroup> GetGroupByIdAsync(int groupId)
         {
             var group = await _dbContext.CharacteristicGroups
                 .FirstOrDefaultAsync(g => g.Id == groupId);
@@ -44,6 +44,14 @@ namespace ProductModule.Persistence.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<CharacteristicTemplate>> GetTemplatesByIdsAsync(List<int> templateIds)
+        {
+            return await _dbContext.CharacteristicTemplates
+                .Where(t => templateIds.Contains(t.Id))
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task AddTemplateAsync(CharacteristicTemplate template)
         {
             if (template == null)
@@ -55,9 +63,14 @@ namespace ProductModule.Persistence.Repositories
 
         public async Task<CharacteristicTemplate?> GetTemplateByPropertiesAsync(string templateName, string unit)
         {
+            var lowerTemplateName = templateName.ToLowerInvariant();
+            var lowerUnit = unit.ToLowerInvariant();
+
             var template = await _dbContext.CharacteristicTemplates
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Name == templateName && t.Unit == unit);
+                .FirstOrDefaultAsync(t =>
+                t.Name.ToLowerInvariant() == lowerTemplateName &&
+                t.Unit.ToLowerInvariant() == lowerUnit);
 
             return template;
         }
@@ -73,7 +86,7 @@ namespace ProductModule.Persistence.Repositories
             return template;
         }
 
-        public async Task DeleteAsync(int groupId)
+        public async Task DeleteGroupAsync(int groupId)
         {
             await _dbContext.CharacteristicValues
                 .Where(cv => cv.GroupId == groupId)

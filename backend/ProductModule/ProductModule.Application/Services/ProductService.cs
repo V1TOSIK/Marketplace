@@ -25,6 +25,118 @@ namespace ProductModule.Application.Services
             _logger = logger;
         }
 
+        public async Task<IEnumerable<ProductResponse>> GetAllProductsAsync()
+        {
+            var products = await _productRepository.GetAllAsync();
+
+            var response = products.Select(p => new ProductResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PriceCurrency = p.Price.Currency,
+                PriceAmount = p.Price.Amount,
+                Location = p.Location,
+                Description = p.Description,
+                CategoryId = p.CategoryId,
+                UserId = p.UserId
+            });
+
+            return response;
+        }
+
+        public async Task<ProductResponse> GetProductByIdAsync(Guid productId)
+        {
+            var product = await _productRepository.GetByIdAsync(productId);
+            var characteristicGroups = await _characteristicRepository
+                .GetProductGroupsAsync(productId);
+
+            var groupResponse = new List<CharacteristicGroupResponse>();
+
+            foreach (var characteristicGroup in characteristicGroups)
+            {
+                var values = await _characteristicRepository
+                    .GetValuesByGroupIdAsync(characteristicGroup.Id);
+
+                var templateIds = values.Select(v => v.CharacteristicTemplateId).Distinct().ToList();
+
+                var templates = await _characteristicRepository
+                    .GetTemplatesByIdsAsync(templateIds);
+
+                var templatesDictionary = templates.ToDictionary(t => t.Id, t => t);
+
+
+
+                var group = new CharacteristicGroupResponse
+                {
+                    Id = characteristicGroup.Id,
+                    Name = characteristicGroup.Name,
+                    Characteristics = values
+                        .Where(v => v.GroupId == characteristicGroup.Id)
+                        .Select(v =>
+                        {
+                            var template = templatesDictionary[v.CharacteristicTemplateId];
+                            return new CharacteristicResponse
+                            {
+                                Name = template.Name,
+                                Value = v.Value,
+                                Unit = template.Unit,
+                            };
+                        }).ToList()
+                };
+                groupResponse.Add(group);
+            }
+
+            var response = new ProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                PriceCurrency = product.Price.Currency,
+                PriceAmount = product.Price.Amount,
+                Location = product.Location,
+                Description = product.Description,
+                CategoryId = product.CategoryId,
+                UserId = product.UserId,
+                CharacteristicGroups = groupResponse
+            };
+
+
+            return response;
+        }
+
+        public async Task<IEnumerable<ProductResponse>> GetProductsByCategoryIdAsync(int categoryId)
+        {
+            var products = await _productRepository.GetByCategoryIdAsync(categoryId);
+            var response = products.Select(p => new ProductResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PriceCurrency = p.Price.Currency,
+                PriceAmount = p.Price.Amount,
+                Location = p.Location,
+                Description = p.Description,
+                CategoryId = p.CategoryId,
+                UserId = p.UserId
+            });
+            return response;
+        }
+
+        public async Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(Guid userId)
+        {
+            var products = await _productRepository.GetByUserIdAsync(userId);
+            var response = products.Select(p => new ProductResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PriceCurrency = p.Price.Currency,
+                PriceAmount = p.Price.Amount,
+                Location = p.Location,
+                Description = p.Description,
+                CategoryId = p.CategoryId,
+                UserId = p.UserId
+            });
+            return response;
+        }
+
         public async Task AddProductAsync(Guid userId, AddProductRequest request)
         {
             var product = Product.Create(
@@ -36,7 +148,7 @@ namespace ProductModule.Application.Services
                 request.Description,
                 request.CategoryId);
 
-            if (request.CharacteristicGroups != null && request.CharacteristicGroups.Any())
+            if (request.CharacteristicGroups?.Any() == true)
             {
                 foreach (var group in request.CharacteristicGroups)
                 {
@@ -61,38 +173,23 @@ namespace ProductModule.Application.Services
             IEnumerable<CharacteristicValueRequest>? characteristicValues,
             int categoryId)
         {
-            if (characteristicValues == null || !characteristicValues.Any())
+            if (!(characteristicValues?.Any() ?? false))
                 return;
+
             foreach (var value in characteristicValues)
             {
-                var template = await _characteristicRepository.GetOrCreateTemplateAsync(value.Name, categoryId, value.Unit);
+                var template = await _characteristicRepository
+                    .GetOrCreateTemplateAsync(value.Name, categoryId, value.Unit);
+
                 characteristicGroup.AddCharacteristic(value.Value, template.Id);
             }
         }
 
-        public Task DeleteProductAsync(Guid productId)
+        public async Task DeleteProductAsync(Guid productId, Guid userId)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<ProductResponse>> GetAllProductsAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ProductResponse> GetProductByIdAsync(Guid productId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<ProductResponse>> GetProductsByCategoryIdAsync(int categoryId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(string userId)
-        {
-            throw new NotImplementedException();
+            await _productRepository.DeleteAsync(productId, userId);
+            await _productUnitOfWork.SaveChangesAsync();
+            _logger.LogInformation("Product with ID {ProductId} successfully deleted", productId);
         }
     }
 }

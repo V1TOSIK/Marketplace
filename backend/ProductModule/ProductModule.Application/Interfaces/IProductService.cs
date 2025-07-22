@@ -5,11 +5,11 @@ namespace ProductModule.Application.Interfaces
 {
     public interface IProductService
     {
-        Task AddProductAsync(Guid userId, AddProductRequest request);
         Task<IEnumerable<ProductResponse>> GetAllProductsAsync();
         Task<IEnumerable<ProductResponse>> GetProductsByCategoryIdAsync(int categoryId);
-        Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(string userId);
+        Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(Guid userId);
         Task<ProductResponse> GetProductByIdAsync(Guid productId);
-        Task DeleteProductAsync(Guid productId);
+        Task AddProductAsync(Guid userId, AddProductRequest request);
+        Task DeleteProductAsync(Guid productId, Guid userId);
     }
 }

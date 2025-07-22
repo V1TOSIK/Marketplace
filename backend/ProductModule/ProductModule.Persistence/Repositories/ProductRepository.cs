@@ -63,7 +63,7 @@ namespace ProductModule.Persistence.Repositories
             _logger.LogInformation($"Product with ID {product.Id} added successfully.");
         }
 
-        public async Task DeleteAsync(Guid productId)
+        public async Task DeleteAsync(Guid productId, Guid userId)
         {
             var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == productId);
             if (product == null)
@@ -71,6 +71,13 @@ namespace ProductModule.Persistence.Repositories
                 _logger.LogWarning($"Product with ID {productId} not found for deletion.");
                 return;
             }
+
+            if (product.UserId != userId)
+            {
+                _logger.LogWarning($"User {userId} attempted to delete product {productId} they do not own.");
+                throw new UnauthorizedAccessException($"User {userId} is not authorized to delete product {productId}.");
+            }
+
             _dbContext.Products.Remove(product);
             _logger.LogInformation($"Product with ID {productId} deleted successfully.");
         }

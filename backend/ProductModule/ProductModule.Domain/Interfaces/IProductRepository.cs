@@ -9,6 +9,6 @@ namespace ProductModule.Domain.Interfaces
         Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId);
         Task<Product> GetByIdAsync(Guid productId);
         Task AddAsync(Product product);
-        Task DeleteAsync (Guid productId);
+        Task DeleteAsync (Guid productId, Guid userId);
     }
 }

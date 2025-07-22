@@ -17,16 +17,66 @@ namespace Marketplace.Api.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        public async Task<ActionResult> GetMyProducts()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return BadRequest("Invalid user ID.");
+
+            var products = await _productService.GetProductsByUserIdAsync(parsedUserId);
+            return Ok(products);
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult> GetAllProducts()
+        {
+            var products = await _productService.GetAllProductsAsync();
+            return Ok(products);
+        }
+
+        [HttpGet("category/{categoryId}")]
+        public async Task<ActionResult> GetProductsByCategoryId([FromRoute] int categoryId)
+        {
+            var products = await _productService.GetProductsByCategoryIdAsync(categoryId);
+            return Ok(products);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult> GetProductById([FromRoute] Guid id)
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
+                return NotFound("Product not found.");
+
+            return Ok(product);
+        }
+
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult> AddProduct([FromBody] AddProductRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if(!Guid.TryParse(userId, out var parsedUserId))
+            if (!Guid.TryParse(userId, out var parsedUserId))
                 return BadRequest("Invalid user ID.");
 
             await _productService.AddProductAsync(parsedUserId, request);
 
             return Ok("Product added successfully.");
+        }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteProduct([FromRoute] Guid id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return BadRequest("Invalid user ID.");
+
+            await _productService.DeleteProductAsync(id, parsedUserId);
+            return Ok("Product deleted successfully.");
         }
     }
 }
