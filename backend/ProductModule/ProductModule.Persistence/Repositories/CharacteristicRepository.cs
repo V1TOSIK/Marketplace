@@ -69,8 +69,8 @@ namespace ProductModule.Persistence.Repositories
             var template = await _dbContext.CharacteristicTemplates
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t =>
-                t.Name.ToLowerInvariant() == lowerTemplateName &&
-                t.Unit.ToLowerInvariant() == lowerUnit);
+                t.Name.ToLower() == lowerTemplateName &&
+                t.Unit.ToLower() == lowerUnit);
 
             return template;
         }

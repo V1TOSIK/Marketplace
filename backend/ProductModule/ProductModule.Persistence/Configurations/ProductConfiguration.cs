@@ -47,6 +47,11 @@ namespace ProductModule.Persistence.Configurations
                 .HasColumnName("category_id")
                 .IsRequired();
 
+            builder.Property(p => p.Status)
+                .HasColumnName("status")
+                .HasConversion<string>()
+                .IsRequired();
+
             builder.Property(p => p.CreatedAt)
                 .HasColumnName("created_at")
                 .IsRequired();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ProductModule.Domain.Entities;
+using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
 using ProductModule.Domain.Interfaces;
 
@@ -17,9 +18,41 @@ namespace ProductModule.Persistence.Repositories
             _logger = logger;
         }
 
+        public IQueryable<Product> Query()
+        {
+            return _dbContext.Products.AsNoTracking();
+        }
+
+        public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, List<string> values)> filters)
+        {
+            var productIds = await _dbContext.CharacteristicValues
+             .Where(cv => filters.Any(f =>
+                 f.templateId == cv.CharacteristicTemplateId &&
+                 f.values.Contains(cv.Value)))
+             .Select(cv => cv.GroupId)
+             .Distinct()
+             .Join(_dbContext.CharacteristicGroups,
+                 valGroupId => valGroupId,
+                 group => group.Id,
+                 (valGroupId, group) => group.ProductId)
+             .Distinct()
+             .ToListAsync();
+
+            return productIds;
+        }
+
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
             return await _dbContext.Products
+                .Where(p => p.Status == Status.Published)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetByStatus(Status status)
+        {
+            return await _dbContext.Products
+                .Where(p => p.Status == status)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -27,7 +60,15 @@ namespace ProductModule.Persistence.Repositories
         public async Task<IEnumerable<Product>> GetByCategoryIdAsync(int categoryId)
         {
             return await _dbContext.Products
-                .Where(p => p.CategoryId == categoryId)
+                .Where(p => p.CategoryId == categoryId && p.Status == Status.Published)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Product>> GetByUserIdWithDraftsAsync(Guid userId)
+        {
+            return await _dbContext.Products
+                .Where(p => p.UserId == userId)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -35,7 +76,7 @@ namespace ProductModule.Persistence.Repositories
         public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId)
         {
             return await _dbContext.Products
-                .Where(p => p.UserId == userId)
+                .Where(p => p.UserId == userId && p.Status == Status.Published)
                 .AsNoTracking()
                 .ToListAsync();
         }

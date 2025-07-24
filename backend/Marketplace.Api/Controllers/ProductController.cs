@@ -17,7 +17,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [Authorize]
-        [HttpGet]
+        [HttpGet("my")]
         public async Task<ActionResult> GetMyProducts()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -25,7 +25,7 @@ namespace Marketplace.Api.Controllers
             if (!Guid.TryParse(userId, out var parsedUserId))
                 return BadRequest("Invalid user ID.");
 
-            var products = await _productService.GetProductsByUserIdAsync(parsedUserId);
+            var products = await _productService.GetMyProducts(parsedUserId);
             return Ok(products);
         }
 
@@ -52,6 +52,25 @@ namespace Marketplace.Api.Controllers
                 return NotFound("Product not found.");
 
             return Ok(product);
+        }
+
+        [HttpPost("filter")]
+        public async Task<ActionResult> GetProductsByFilter([FromBody] ProductFilterRequest request)
+        {
+            var products = await _productService.GetProductsByFilterAsync(request);
+            return Ok(products);
+        }
+
+        [Authorize]
+        [HttpPost("publish/{productId}")]
+        public async Task<ActionResult> PublishProduct(Guid productId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return BadRequest("Invalid user ID.");
+
+            await _productService.PublishProductAsync(productId, parsedUserId);
+            return Ok("Product published successfully.");
         }
 
         [Authorize]

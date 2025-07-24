@@ -2,7 +2,7 @@
 {
     public enum TemplateType
     {
-        Base,
+        System,
         Custom
     }
 }

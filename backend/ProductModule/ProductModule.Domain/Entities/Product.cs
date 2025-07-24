@@ -1,4 +1,5 @@
-﻿using ProductModule.Domain.Exceptions;
+﻿using ProductModule.Domain.Enums;
+using ProductModule.Domain.Exceptions;
 using ProductModule.Domain.ValueObjects;
 
 namespace ProductModule.Domain.Entities
@@ -11,7 +12,8 @@ namespace ProductModule.Domain.Entities
             Price price,
             string location,
             string description,
-            int categoryId)
+            int categoryId,
+            Status status)
         {
             Id = Guid.NewGuid();
             UserId = userId;
@@ -20,6 +22,7 @@ namespace ProductModule.Domain.Entities
             Location = location;
             Description = description;
             CategoryId = categoryId;
+            Status = status;
             CreatedAt = DateTime.UtcNow;
         }
 
@@ -29,6 +32,7 @@ namespace ProductModule.Domain.Entities
         public Price Price { get; private set; }
         public string Location { get; private set; } = string.Empty;
         public string Description { get; private set; } = string.Empty;
+        public Status Status { get; private set; } = Status.Draft;
         public DateTime CreatedAt { get; private set; }
 
         public int CategoryId { get; private set; }
@@ -42,7 +46,8 @@ namespace ProductModule.Domain.Entities
             decimal priceAmount,
             string location,
             string description,
-            int categoryId)
+            int categoryId,
+            string statusValue)
         {
             var price = new Price(priceAmount,  priceCurrency);
 
@@ -52,8 +57,12 @@ namespace ProductModule.Domain.Entities
                 throw new InvalidProductDataException("Location cannot be empty or null.");
             if (string.IsNullOrWhiteSpace(description))
                 throw new InvalidProductDataException("Description cannot be empty or null.");
+            if (categoryId <= 0)
+                throw new InvalidProductDataException("Category ID must be a positive integer.");
+            if (!Enum.TryParse<Status>(statusValue, true, out var status))
+                throw new InvalidProductDataException("Invalid product status.");
 
-            return new Product(userId, name, price, location, description, categoryId);
+            return new Product(userId, name, price, location, description, categoryId, status);
         }
 
         public void UpdateName(string name)
@@ -92,6 +101,39 @@ namespace ProductModule.Domain.Entities
             if (categoryId <= 0)
                 throw new InvalidProductDataException("Category ID must be a positive integer.");
             CategoryId = categoryId;
+        }
+
+        public void Publish()
+        {
+            if (Status == Status.Published)
+                throw new InvalidProductOperationException("Product is already published.");
+            if (string.IsNullOrWhiteSpace(Name) ||
+                string.IsNullOrWhiteSpace(Location) ||
+                string.IsNullOrWhiteSpace(Description) ||
+                Price.Amount <= 0)
+            {
+                throw new InvalidProductOperationException("Cannot publish product with incomplete data.");
+            }
+            Status = Status.Published;
+        }
+
+        public void UpdateStatus(string statusValue)
+        {
+            if (!Enum.TryParse<Status>(statusValue, true, out var status))
+                throw new InvalidProductDataException("Invalid product status.");
+
+            if (status == Status.Published)
+            {
+                if (string.IsNullOrWhiteSpace(Name) ||
+                    string.IsNullOrWhiteSpace(Location) ||
+                    string.IsNullOrWhiteSpace(Description) ||
+                    Price.Amount <= 0)
+                {
+                    throw new InvalidProductOperationException("Cannot publish product with incomplete data.");
+                }
+            }
+
+            Status = status;
         }
 
         public void AddCharacteristicGroup(CharacteristicGroup characteristicGroup)

@@ -18,12 +18,12 @@ namespace ProductModule.Domain.Entities
         public int CategoryId { get; private set; }
         public TemplateType Type { get; private set; }
 
-        public static CharacteristicTemplate Create(string name, string unit, int categoryId, string templateTypeValue)
+        public static CharacteristicTemplate Create(string name, string? unit, int categoryId, string templateTypeValue)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidCharacteristicTemplateDataException("Characteristic template name cannot be empty or null.");
-            if (string.IsNullOrWhiteSpace(unit))
-                throw new InvalidCharacteristicTemplateDataException("Characteristic template unit cannot be empty or null.");
+            unit = unit ?? string.Empty;
+
             if (categoryId <= 0)
                 throw new InvalidCharacteristicTemplateDataException("Category ID must be a positive integer.");
 
