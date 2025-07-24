@@ -3,6 +3,7 @@ using AuthModule.Composition.DependencyInjection;
 using Marketplace.Abstractions;
 using Serilog;
 using UserModule.Composition.DependencyInjection;
+using ProductModule.Composition.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +48,7 @@ builder.Host.UseSerilog();
 
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
+builder.Services.AddProductModule(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
 

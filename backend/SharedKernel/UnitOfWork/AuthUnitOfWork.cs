@@ -1,37 +1,39 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedKernel.Interfaces;
 
-public class AuthUnitOfWork<TContext> : IAuthUnitOfWork where TContext : DbContext
+namespace SharedKernel.UnitOfWork
 {
-    private readonly TContext _dbContext;
-
-    public AuthUnitOfWork(TContext dbContext)
+    public class AuthUnitOfWork<TContext> : IAuthUnitOfWork where TContext : DbContext
     {
-        _dbContext = dbContext;
-        Console.WriteLine($"[AuthUnitOfWork] DbContext HashCode: {_dbContext.GetHashCode()}");
+        private readonly TContext _dbContext;
+
+        public AuthUnitOfWork(TContext dbContext)
+        {
+            _dbContext = dbContext;
+            Console.WriteLine($"[AuthUnitOfWork] DbContext HashCode: {_dbContext.GetHashCode()}");
+        }
+        public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
+
+        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            if (_dbContext.Database.CurrentTransaction != null)
+            {
+                await action();
+                return;
+            }
+
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                await action();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Transaction rolled back: {ex.Message}");
+                throw;
+            }
+        }
     }
-    public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
-
-    public async Task ExecuteInTransactionAsync(Func<Task> action)
-    {
-        if (_dbContext.Database.CurrentTransaction != null)
-        {
-            await action();
-            return;
-        }
-
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
-        try
-        {
-            await action();
-            await transaction.CommitAsync();
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-            Console.WriteLine($"Transaction rolled back: {ex.Message}");
-            throw;
-        }
-    }
-
 }

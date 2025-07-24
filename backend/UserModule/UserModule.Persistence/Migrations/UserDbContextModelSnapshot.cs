@@ -103,14 +103,9 @@ namespace UserModule.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("user_phone_numbers", (string)null);
                 });
@@ -127,14 +122,10 @@ namespace UserModule.Persistence.Migrations
             modelBuilder.Entity("UserModule.Domain.Entities.UserPhoneNumber", b =>
                 {
                     b.HasOne("UserModule.Domain.Entities.User", null)
-                        .WithMany()
+                        .WithMany("PhoneNumbers")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("UserModule.Domain.Entities.User", null)
-                        .WithMany("PhoneNumbers")
-                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("UserModule.Domain.Entities.User", b =>

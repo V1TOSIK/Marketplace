@@ -22,6 +22,12 @@ COPY ["UserModule/UserModule.Persistence/UserModule.Persistence.csproj", "UserMo
 COPY ["UserModule/UserModule.Infrastructure/UserModule.Infrastructure.csproj", "UserModule/UserModule.Infrastructure/"]
 COPY ["UserModule/UserModule.Composition/UserModule.Composition.csproj", "UserModule/UserModule.Composition/"]
 
+COPY ["ProductModule/ProductModule.Application/ProductModule.Application.csproj", "ProductModule/ProductModule.Application/"]
+COPY ["ProductModule/ProductModule.Domain/ProductModule.Domain.csproj", "ProductModule/ProductModule.Domain/"]
+COPY ["ProductModule/ProductModule.Persistence/ProductModule.Persistence.csproj", "ProductModule/ProductModule.Persistence/"]
+COPY ["ProductModule/ProductModule.Infrastructure/ProductModule.Infrastructure.csproj", "ProductModule/ProductModule.Infrastructure/"]
+COPY ["ProductModule/ProductModule.Composition/ProductModule.Composition.csproj", "ProductModule/ProductModule.Composition/"]
+
 RUN dotnet restore "./Marketplace.Api/Marketplace.Api.csproj"
 COPY . .
 WORKDIR "/src/Marketplace.Api"

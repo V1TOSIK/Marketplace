@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
+    <ProjectReference Include="..\ProductModule.Application\ProductModule.Application.csproj" />
+    <ProjectReference Include="..\ProductModule.Domain\ProductModule.Domain.csproj" />
+    <ProjectReference Include="..\ProductModule.Infrastructure\ProductModule.Infrastructure.csproj" />
+    <ProjectReference Include="..\ProductModule.Persistence\ProductModule.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>
