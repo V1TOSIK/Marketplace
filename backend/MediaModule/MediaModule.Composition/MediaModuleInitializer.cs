@@ -1,16 +1,16 @@
 ﻿using Marketplace.Abstractions;
-using ProductModule.Persistence;
+using MediaModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ProductModule.Composition
+namespace MediaModule.Composition
 {
-    public class ProductModuleInitializer : IModuleInitializer
+    public class MediaModuleInitializer : IModuleInitializer
     {
         public async Task InitializeAsync(IServiceProvider serviceProvider)
         {
             using var scope = serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+            var context = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
             await context.Database.MigrateAsync();
         }
     }

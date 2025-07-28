@@ -1,9 +1,10 @@
 using Marketplace.Api.Middleware;
-using AuthModule.Composition.DependencyInjection;
-using Marketplace.Abstractions;
 using Serilog;
+using Marketplace.Abstractions;
+using AuthModule.Composition.DependencyInjection;
 using UserModule.Composition.DependencyInjection;
 using ProductModule.Composition.DependencyInjection;
+using MediaModule.Composition.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,7 @@ builder.Host.UseSerilog();
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
 builder.Services.AddProductModule(builder.Configuration);
+builder.Services.AddMediaModule(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
 
