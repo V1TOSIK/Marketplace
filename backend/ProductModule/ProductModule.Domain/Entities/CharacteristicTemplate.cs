@@ -27,7 +27,7 @@ namespace ProductModule.Domain.Entities
             if (categoryId <= 0)
                 throw new InvalidCharacteristicTemplateDataException("Category ID must be a positive integer.");
 
-            if (!Enum.TryParse<TemplateType>(templateTypeValue, out var templateType))
+            if (!Enum.TryParse<TemplateType>(templateTypeValue, true, out var templateType))
                 throw new InvalidCharacteristicTemplateDataException("Invalid template type");
 
             return new CharacteristicTemplate(name, unit, categoryId, templateType);

@@ -14,6 +14,8 @@ namespace AuthModule.Composition.DependencyInjection
            IConfiguration configuration)
         {
             var jwtOptions = configuration.GetSection("JWT").Get<JwtOptions>();
+            services.Configure<JwtOptions>(configuration.GetSection("JWT"));
+
             if (jwtOptions == null || string.IsNullOrEmpty(jwtOptions.SecretKey))
             {
                 throw new ArgumentException("JWT options are not configured properly.");

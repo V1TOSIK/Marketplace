@@ -1,11 +1,11 @@
 ﻿using Marketplace.Abstractions;
+using ProductModule.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ProductModule.Persistence;
 
 namespace ProductModule.Composition
 {
-    class ProductModuleInitializer : IModuleInitializer
+    public class ProductModuleInitializer : IModuleInitializer
     {
         public async Task InitializeAsync(IServiceProvider serviceProvider)
         {

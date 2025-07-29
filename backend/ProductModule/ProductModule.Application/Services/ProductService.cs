@@ -15,15 +15,18 @@ namespace ProductModule.Application.Services
         private readonly IProductRepository _productRepository;
         private readonly ICharacteristicRepository _characteristicRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
+        private readonly IMediaManager _mediaManager;
         private readonly ILogger<ProductService> _logger;
         public ProductService(IProductRepository productRepository,
             ICharacteristicRepository characteristicRepository,
             IProductUnitOfWork productUnitOfWork,
+            IMediaManager mediaManager,
             ILogger<ProductService> logger)
         {
             _productRepository = productRepository;
             _characteristicRepository = characteristicRepository;
             _productUnitOfWork = productUnitOfWork;
+            _mediaManager = mediaManager;
             _logger = logger;
         }
 
@@ -55,39 +58,56 @@ namespace ProductModule.Application.Services
 
             var result = await query.ToListAsync();
 
-            return result.Select(p => new ProductResponse
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(result.Select(r => r.Id));
+
+            var response = result.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                PriceCurrency = p.Price.Currency,
-                PriceAmount = p.Price.Amount,
-                Location = p.Location,
-                Description = p.Description,
-                CategoryId = p.CategoryId,
-                UserId = p.UserId
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+
+                return new ProductResponse
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
             });
+            return response;
         }
 
         public async Task<IEnumerable<ProductResponse>> GetAllProductsAsync()
         {
             var products = await _productRepository.GetAllAsync();
 
-            var response = products.Select(p => new ProductResponse
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(products.Select(p => p.Id));
+
+            var response = products.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                PriceCurrency = p.Price.Currency,
-                PriceAmount = p.Price.Amount,
-                Location = p.Location,
-                Description = p.Description,
-                CategoryId = p.CategoryId,
-                UserId = p.UserId
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+
+                return new ProductResponse
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
             });
 
             return response;
         }
 
-        public async Task<ProductResponse> GetProductByIdAsync(Guid productId)
+        public async Task<CurrentProductResponse> GetProductByIdAsync(Guid productId)
         {
             var product = await _productRepository.GetByIdAsync(productId);
             var characteristicGroups = await _characteristicRepository
@@ -106,8 +126,6 @@ namespace ProductModule.Application.Services
                     .GetTemplatesByIdsAsync(templateIds);
 
                 var templatesDictionary = templates.ToDictionary(t => t.Id, t => t);
-
-
 
                 var group = new CharacteristicGroupResponse
                 {
@@ -128,10 +146,15 @@ namespace ProductModule.Application.Services
                 };
                 groupResponse.Add(group);
             }
+            
+            var mainMediaUrl = await _mediaManager.GetMainMediaUrl(product.Id);
+            var entityMediaUrls = await _mediaManager.GetAllEntityMediaUrls(product.Id);
 
-            var response = new ProductResponse
+            var response = new CurrentProductResponse
             {
                 Id = product.Id,
+                MainMediaUrl = mainMediaUrl,
+                MediaUrls = entityMediaUrls,
                 Name = product.Name,
                 PriceCurrency = product.Price.Currency,
                 PriceAmount = product.Price.Amount,
@@ -149,16 +172,25 @@ namespace ProductModule.Application.Services
         public async Task<IEnumerable<ProductResponse>> GetProductsByCategoryIdAsync(int categoryId)
         {
             var products = await _productRepository.GetByCategoryIdAsync(categoryId);
-            var response = products.Select(p => new ProductResponse
+
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(products.Select(p => p.Id));
+
+            var response = products.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                PriceCurrency = p.Price.Currency,
-                PriceAmount = p.Price.Amount,
-                Location = p.Location,
-                Description = p.Description,
-                CategoryId = p.CategoryId,
-                UserId = p.UserId
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+
+                return new ProductResponse
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
             });
             return response;
         }
@@ -166,16 +198,25 @@ namespace ProductModule.Application.Services
         public async Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(Guid userId)
         {
             var products = await _productRepository.GetByUserIdAsync(userId);
-            var response = products.Select(p => new ProductResponse
+
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(products.Select(p => p.Id));
+
+            var response = products.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                PriceCurrency = p.Price.Currency,
-                PriceAmount = p.Price.Amount,
-                Location = p.Location,
-                Description = p.Description,
-                CategoryId = p.CategoryId,
-                UserId = p.UserId
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+
+                return new ProductResponse
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
             });
             return response;
         }
@@ -183,16 +224,25 @@ namespace ProductModule.Application.Services
         public async Task<IEnumerable<ProductResponse>> GetMyProducts(Guid userId)
         {
             var products = await _productRepository.GetByUserIdWithDraftsAsync(userId);
-            var response = products.Select(p => new ProductResponse
+
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(products.Select(p => p.Id));
+
+            var response = products.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                PriceCurrency = p.Price.Currency,
-                PriceAmount = p.Price.Amount,
-                Location = p.Location,
-                Description = p.Description,
-                CategoryId = p.CategoryId,
-                UserId = p.UserId
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+
+                return new ProductResponse
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
             });
             return response;
         }

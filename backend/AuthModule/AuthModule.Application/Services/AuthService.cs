@@ -41,26 +41,14 @@ namespace AuthModule.Application.Services
         {
             var user = await GetUserByCredentials(request.Email, request.PhoneNumber);
 
-            if (user.IsDeleted)
-            {
-                _logger.LogWarning($"User with ID {user.Id} is deleted.");
-                throw new DeletedUserException("User is deleted.");
-            }
-
-            if (user.IsBaned)
-            {
-                _logger.LogWarning($"User with ID {user.Id} is banned.");
-                throw new BannedUserException("User is banned.");
-            }
-
+            user.EnsureCanLogin();
             if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
             {
                 _logger.LogWarning($"Invalid password attempt for user with ID {user.Id}.");
                 throw new IncorrectCredentialsException("Invalid password.");
             }
 
-            var refreshToken = RefreshToken.Create(user.Id, client.Device, client.IpAddress);
-            await _refreshTokenRepository.AddAsync(refreshToken);
+            var refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation($"User with ID {user.Id} logged in successfully.");
@@ -99,11 +87,7 @@ namespace AuthModule.Application.Services
 
             if (existingUser != null)
             {
-                if (existingUser.IsBaned)
-                    throw new BannedUserException("User is banned.");
-
-                if (existingUser.IsDeleted)
-                    throw new DeletedUserException("User is deleted.");
+                existingUser.EnsureCanLogin();
 
                 throw email != null
                     ? new EmailAlreadyExistsException($"Email {email} is already registered.")
@@ -129,7 +113,6 @@ namespace AuthModule.Application.Services
                 _logger.LogInformation("Changes saved.");
             });
 
-            _logger.LogInformation($"New user registered with {email ?? phone}.");
             return new AuthResult()
             {
                 Response = new AuthorizeResponse
@@ -160,10 +143,10 @@ namespace AuthModule.Application.Services
             else if (phone is not null)
                 user = await _authUserRepository.GetByPhoneNumberAsync(phone, true);
 
-            if (user == null || !user.IsDeleted)
-                throw new UserOperationException("Cannot restore account. It either doesn't exist or is not deleted.");
-            if (user.IsBaned)
-                throw new BannedUserException("User is banned and cannot be restored.");
+            if (user == null)
+                throw new UserNotFoundException("User does not exist.");
+
+            user.EnsureCanLogin();
 
             if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
                 throw new IncorrectCredentialsException("Invalid password.");
@@ -174,9 +157,7 @@ namespace AuthModule.Application.Services
                 await _userRestorer.RestoreUserAsync(user.Id);
                 await _unitOfWork.SaveChangesAsync();
 
-                refreshToken = RefreshToken.Create(user.Id, client.Device, client.IpAddress);
-
-                await _refreshTokenRepository.AddAsync(refreshToken);
+                refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress);
                 await _unitOfWork.SaveChangesAsync();
             });
 
@@ -211,7 +192,6 @@ namespace AuthModule.Application.Services
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
                 throw new InvalidRefreshTokenException("RefreshToken is not valid");
-
 
             var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
             token.Revoke();
@@ -252,15 +232,13 @@ namespace AuthModule.Application.Services
 
             var user = await _authUserRepository.GetByIdAsync(token.UserId);
 
-            if (user == null || user.IsDeleted)
+            if (user == null)
             {
-                _logger.LogWarning($"User with ID {token.UserId} not found or deleted.");
-                throw new UserOperationException("User not found or deleted.");
+                _logger.LogWarning($"User with ID {token.UserId} not found.");
+                throw new UserOperationException("User not found.");
             }
-
-            var newRefreshToken = RefreshToken.Create(user.Id, client.Device, client.IpAddress, token.Id);
-
-            await _refreshTokenRepository.AddAsync(newRefreshToken);
+            user.EnsureCanLogin();
+            var newRefreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, token.Id);
             token.Revoke();
             await _unitOfWork.SaveChangesAsync();
 
@@ -275,6 +253,13 @@ namespace AuthModule.Application.Services
 
                 RefreshToken = newRefreshToken
             };
+        }
+
+        private async Task<RefreshToken> TakeToken(Guid userId, string device, string ipAddress, Guid? tokenId = null)
+        {
+            var refreshToken = RefreshToken.Create(userId, device, ipAddress, tokenId);
+            await _refreshTokenRepository.AddAsync(refreshToken);
+            return refreshToken;
         }
 
         private async Task<AuthUser> GetUserByCredentials(string? email, string? phone)

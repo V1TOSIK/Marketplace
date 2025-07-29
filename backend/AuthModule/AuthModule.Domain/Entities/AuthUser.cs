@@ -31,8 +31,8 @@ namespace AuthModule.Domain.Entities
         public Password Password { get; private set; }
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
-        public bool IsBaned { get; private set; } = false;
-        public DateTime? BanedAt { get; private set; } = null;
+        public bool IsBanned { get; private set; } = false;
+        public DateTime? BannedAt { get; private set; } = null;
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
 
@@ -76,18 +76,18 @@ namespace AuthModule.Domain.Entities
 
         public void Ban()
         {
-            if (IsBaned)
+            if (IsBanned)
                 throw new UserOperationException("User is already baned.");
-            IsBaned = true;
-            BanedAt = DateTime.UtcNow;
+            IsBanned = true;
+            BannedAt = DateTime.UtcNow;
         }
 
         public void Unban()
         {
-            if (!IsBaned)
+            if (!IsBanned)
                 throw new UserOperationException("User is not baned.");
-            IsBaned = false;
-            BanedAt = null;
+            IsBanned = false;
+            BannedAt = null;
         }
         public void UpdateEmail(string emailValue)
         {
@@ -109,9 +109,17 @@ namespace AuthModule.Domain.Entities
         }
         public void UpdateRole(string roleText)
         {
-            if (!Enum.TryParse<UserRole>(roleText.ToLower(), true, out var parsedRole))
+            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
                 throw new InvalidUserRoleException($"Invalid user role: {roleText}");
             Role = parsedRole;
+        }
+        public bool EnsureCanLogin()
+        {
+            if (IsDeleted)
+                throw new UserOperationException("User is deleted.");
+            if (IsBanned)
+                throw new UserOperationException("User is banned.");
+            return true;
         }
     }
 }

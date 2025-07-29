@@ -85,30 +85,12 @@ namespace AuthModule.Persistence.Repositories
             _logger.LogInformation($"{user.Id} was deleted");
         }
 
-        public async Task SoftDeleteAsync(Guid userId)
-        {
-            var user = await GetByIdAsync(userId);
-
-            user.MarkAsDeleted();
-
-            _logger.LogInformation("User with ID {UserId} soft deleted successfully.", userId);
-        }
-
-        public async Task RestoreAsync(Guid userId)
-        {
-            var user = await GetByIdAsync(userId);
-
-            user.Restore();
-
-            _logger.LogInformation("User with ID {UserId} restored successfully.", userId);
-        }
-
         public async Task<bool> IsEmailRegisteredAsync(string email)
         {
             var emailValue = new Email(email);
 
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted);
+                .AnyAsync(u => u.Email != null && u.Email.Equals(emailValue) && u.EnsureCanLogin());
         }
 
         public async Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber)
@@ -116,13 +98,13 @@ namespace AuthModule.Persistence.Repositories
             var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted);
+                .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && u.EnsureCanLogin());
         }
 
         public async Task<bool> IsExistsAsync(Guid userId)
         {
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.Id == userId && !u.IsDeleted);
+                .AnyAsync(u => u.Id == userId && u.EnsureCanLogin());
         }
 
         public async Task<bool> IsExistsAsync(string email, string phoneNumber)
@@ -132,9 +114,11 @@ namespace AuthModule.Persistence.Repositories
 
             return await _dbContext.AuthUsers
                 .AnyAsync(u =>
-                    (u.Email != null && u.Email.Equals(emailValue)) ||
-                    (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue)) &&
-                    !u.IsDeleted
+                    (
+                        (u.Email != null && u.Email.Equals(emailValue))
+                        || (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue))
+                    )
+                    && u.EnsureCanLogin()
                 );
         }
     }

@@ -10,7 +10,7 @@ namespace ProductModule.Application.Interfaces
         Task<IEnumerable<ProductResponse>> GetProductsByCategoryIdAsync(int categoryId);
         Task<IEnumerable<ProductResponse>> GetProductsByUserIdAsync(Guid userId);
         Task<IEnumerable<ProductResponse>> GetMyProducts(Guid userId);
-        Task<ProductResponse> GetProductByIdAsync(Guid productId);
+        Task<CurrentProductResponse> GetProductByIdAsync(Guid productId);
         Task PublishProductAsync(Guid productId, Guid userId);
         Task AddProductAsync(Guid userId, AddProductRequest request);
         Task DeleteProductAsync(Guid productId, Guid userId);
