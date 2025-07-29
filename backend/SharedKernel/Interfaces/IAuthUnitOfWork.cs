@@ -2,7 +2,7 @@
 {
     public interface IAuthUnitOfWork
     {
-        Task SaveChangesAsync();
-        Task ExecuteInTransactionAsync(Func<Task> action);
+        Task SaveChangesAsync(CancellationToken cancellationToken);
+        Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken);
     }
 }

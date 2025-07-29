@@ -13,8 +13,7 @@ namespace AuthModule.Persistence.Configurations
             builder.HasKey(rt => rt.Id);
 
             builder.Property(rt => rt.Id)
-                .HasColumnName("id")
-                .ValueGeneratedOnAdd();
+                .HasColumnName("id");
 
             builder.HasOne<AuthUser>()
                 .WithMany()
@@ -41,6 +40,7 @@ namespace AuthModule.Persistence.Configurations
 
             builder.Property(rt => rt.CreatedAt)
                 .HasColumnName("created_at")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
             
             builder.Property(rt => rt.RevokedAt)
@@ -52,13 +52,14 @@ namespace AuthModule.Persistence.Configurations
                 .IsRequired(false);
 
             builder.Property(rt => rt.Device)
-                .HasColumnName("device");
+                .HasColumnName("device")
+                .IsRequired();
 
             builder.Property(rt => rt.IpAddress)
                 .HasColumnName("ip_address")
                 .IsRequired();
 
-            builder.HasIndex(rt => new { rt.IsRevoked, rt.RevokedAt });
+            builder.HasIndex(rt => rt.UserId);
         }
     }
 }

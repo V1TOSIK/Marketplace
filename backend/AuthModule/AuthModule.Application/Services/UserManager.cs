@@ -20,21 +20,48 @@ namespace AuthModule.Application.Services
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task HardDeleteUser(Guid userId)
+        public async Task HardDeleteUser(Guid userId, CancellationToken cancellationToken)
         {
-            await _authUserRepository.HardDeleteAsync(userId);
-            await _refreshTokenRepository.RevokeAllAsync(userId);
-            await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation($"User with ID {userId} hard deleted successfully.");
+            await _authUserRepository.HardDeleteAsync(userId, cancellationToken);
+            await _refreshTokenRepository.RevokeAllAsync(userId, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation($"User with ID {userId} hard deleted successfully.", cancellationToken);
         }
 
-        public async Task SoftDeleteUser(Guid userId)
+        public async Task SoftDeleteUser(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(userId, false);
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
             user.MarkAsDeleted();
-            await _refreshTokenRepository.RevokeAllAsync(userId);
-            await _unitOfWork.SaveChangesAsync();
-            _logger.LogInformation($"User with ID {userId} soft deleted successfully.");
+            await _refreshTokenRepository.RevokeAllAsync(userId, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation($"User with ID {userId} soft deleted successfully.", cancellationToken);
+        }
+
+        public async Task Ban(Guid userId, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _refreshTokenRepository.RevokeAllAsync(userId, cancellationToken);
+                user.Ban();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+        }
+
+        public async Task UnBan(Guid userId, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
+
+            user.Unban();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task UpdateRole(Guid userId, string roleText, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
+            user.UpdateRole(roleText);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation($"User with ID {userId} role updated to {roleText} successfully.",cancellationToken);
         }
     }
 }

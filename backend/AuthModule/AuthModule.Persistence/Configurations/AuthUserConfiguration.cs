@@ -7,7 +7,7 @@ using SharedKernel.ValueObjects;
 
 namespace AuthModule.Persistence.Configurations
 {
-    class AuthUserConfiguration : IEntityTypeConfiguration<AuthUser>
+    public class AuthUserConfiguration : IEntityTypeConfiguration<AuthUser>
     {
         public void Configure(EntityTypeBuilder<AuthUser> builder)
         {
@@ -61,12 +61,12 @@ namespace AuthModule.Persistence.Configurations
                 .IsRequired();
 
             builder.Property(u => u.IsBanned)
-                .HasColumnName("is_baned")
+                .HasColumnName("is_banned")
                 .HasDefaultValue(false)
                 .IsRequired();
 
             builder.Property(u => u.BannedAt)
-                .HasColumnName("baned_at")
+                .HasColumnName("banned_at")
                 .IsRequired(false);
 
             builder.Property(u => u.IsDeleted)
@@ -77,6 +77,9 @@ namespace AuthModule.Persistence.Configurations
             builder.Property(u => u.DeletedAt)
                 .HasColumnName("deleted_at")
                 .IsRequired(false);
+
+            builder.HasIndex(u => u.Email).IsUnique();
+            builder.HasIndex(u => u.PhoneNumber).IsUnique();
         }
     }
 }

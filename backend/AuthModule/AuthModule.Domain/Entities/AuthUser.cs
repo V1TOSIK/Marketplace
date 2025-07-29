@@ -50,10 +50,9 @@ namespace AuthModule.Domain.Entities
 
             var password = new Password(passwordValue);
 
-            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
-                throw new InvalidUserRoleException($"Invalid user role: {roleText}");
+            var role = ParseRole(roleText);
 
-            return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, parsedRole);
+            return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, role);
         }
 
         public void MarkAsDeleted()
@@ -89,17 +88,21 @@ namespace AuthModule.Domain.Entities
             IsBanned = false;
             BannedAt = null;
         }
-        public void UpdateEmail(string emailValue)
+        public void AddEmail(string emailValue)
         {
             if (string.IsNullOrWhiteSpace(emailValue))
                 throw new InvalidEmailFormatException("Email cannot be empty or null.");
+            if (Email != null)
+                throw new UserOperationException("Email is already set. Use UpdateEmail method to change it.");
             Email = new Email(emailValue);
         }
-        public void UpdatePhoneNumber(string phoneNumberValue)
+        public void AddPhone(string phoneValue)
         {
-            if (string.IsNullOrWhiteSpace(phoneNumberValue))
+            if (string.IsNullOrWhiteSpace(phoneValue))
                 throw new InvalidPhoneNumberFormatException("Phone number cannot be empty or null.");
-            PhoneNumber = new PhoneNumber(phoneNumberValue);
+            if (PhoneNumber != null)
+                throw new UserOperationException("Phone number is already set. Use UpdatePhoneNumber method to change it.");
+            PhoneNumber = new PhoneNumber(phoneValue);
         }
         public void UpdatePassword(string passwordValue)
         {
@@ -109,17 +112,25 @@ namespace AuthModule.Domain.Entities
         }
         public void UpdateRole(string roleText)
         {
-            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
-                throw new InvalidUserRoleException($"Invalid user role: {roleText}");
-            Role = parsedRole;
+            Role = ParseRole(roleText);
         }
-        public bool EnsureCanLogin()
+        public bool ThrowIfCannotLogin()
         {
             if (IsDeleted)
                 throw new UserOperationException("User is deleted.");
             if (IsBanned)
-                throw new UserOperationException("User is banned.");
+                throw new UserOperationException("User is baned.");
             return true;
+        }
+        public bool CanLogin()
+        {
+            return !IsDeleted && !IsBanned;
+        }
+        private static UserRole ParseRole(string roleText)
+        {
+            if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))
+                throw new InvalidUserRoleException($"Invalid user role: {roleText}");
+            return parsedRole;
         }
     }
 }

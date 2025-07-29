@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Interfaces;
 using System.Security.Claims;
+using UserModule.Domain.Entities;
 
 namespace Marketplace.Api.Controllers
 {
@@ -30,14 +31,8 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
         {
-            if (request == null)
-            {
-                _logger.LogError("Register request is null");
-                return BadRequest("Request cannot be null");
-            }
-
             if (string.IsNullOrWhiteSpace(request.Password))
             {
                 _logger.LogError("Password is empty or null in register request");
@@ -56,7 +51,7 @@ namespace Marketplace.Api.Controllers
                 Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
             };
 
-            var result = await _authService.Register(request, clientInfo);
+            var result = await _authService.Register(request, clientInfo, cancellationToken);
 
             if (result == null)
             {
@@ -73,14 +68,8 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
-            if (request == null)
-            {
-                _logger.LogError("Login request is null");
-                return BadRequest("Request cannot be null");
-            }
-
             if (string.IsNullOrWhiteSpace(request.Password))
             {
                 _logger.LogError("Password is empty or null in login request");
@@ -99,7 +88,7 @@ namespace Marketplace.Api.Controllers
                 Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
             };
 
-            var result = await _authService.Login(request, clientInfo);
+            var result = await _authService.Login(request, clientInfo, cancellationToken);
             if (result == null)
             {
                 _logger.LogError("Login failed. Invalid credentials.");
@@ -115,13 +104,8 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("restore")]
-        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request)
+        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken)
         {
-            if (request == null)
-            {
-                _logger.LogError("Restore request is null");
-                return BadRequest("Request cannot be null");
-            }
             if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
             {
                 _logger.LogError("Both email and phone number are empty in restore request");
@@ -132,7 +116,7 @@ namespace Marketplace.Api.Controllers
                 IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
                 Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
             };
-            var result = await _authService.Restore(request, clientInfo);
+            var result = await _authService.Restore(request, clientInfo, cancellationToken);
             if (result == null)
             {
                 _logger.LogError("Restore failed. Invalid credentials.");
@@ -146,39 +130,73 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpPost("change-password")]
-        public async Task<ActionResult> ChangePassword(ChangePasswordRequest request)
+        public async Task<ActionResult> ChangePassword([FromBody]ChangePasswordRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
             {
                 _logger.LogError("Old password or new password is empty");
                 return BadRequest("Old password and new password cannot be empty");
             }
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out var parsedUserId))
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
             {
-                _logger.LogError("Invalid user ID format: {UserId}", userId);
-                return BadRequest("Invalid user ID format");
+                _logger.LogError("User ID is null or invalid");
+                return BadRequest("Invalid user ID");
             }
-            await _authService.ChangePassword(request, parsedUserId);
+            await _authService.ChangePassword(request, userId, cancellationToken);
 
             _logger.LogInformation("Password changed successfully for user ID: {UserId}", userId);
             return Ok("Password changed successfully");
         }
 
         [Authorize]
-        [HttpPost("logout-all")]
-        public async Task<ActionResult> LogoutAll()
+        [HttpPost("email")]
+        public async Task<ActionResult> AddEmail([FromBody] AddEmailRequest request, CancellationToken cancellationToken)
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userRole = User.FindFirstValue(ClaimTypes.Role);
-
-            if (!Guid.TryParse(userIdString, out var userId))
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
             {
-                _logger.LogError("Invalid user ID format: {UserId}", userIdString);
-                return BadRequest("Invalid user ID format");
-            }    
+                _logger.LogError("User ID is null or invalid");
+                return BadRequest("Invalid user ID");
+            }
 
-            await _authService.LogoutFromAllDevices(userId);
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest("Email cannot be empty.");
+
+            await _authService.AddEmailAsync(userId, request.Email, cancellationToken);
+            return Ok(new { Message = "Email added successfully." });
+        }
+
+        [Authorize]
+        [HttpPost("phone")]
+        public async Task<ActionResult> AddPhone([FromBody] AddPhoneRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+            {
+                _logger.LogError("User ID is null or invalid");
+                return BadRequest("Invalid user ID");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+                return BadRequest("Phone number cannot be empty.");
+
+            await _authService.AddPhoneAsync(userId, request.PhoneNumber, cancellationToken);
+            return Ok(new { Message = "Phone number added successfully." });
+        }
+
+        [Authorize]
+        [HttpPost("logout-all")]
+        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken)
+        {
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+            {
+                _logger.LogError("User ID is null or invalid");
+                return BadRequest("Invalid user ID");
+            }
+
+            await _authService.LogoutFromAllDevices(userId, cancellationToken);
 
             _cookieService.Delete("refreshToken");
 
@@ -188,7 +206,7 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpPost("logout")]
-        public async Task<ActionResult> Logout()
+        public async Task<ActionResult> Logout(CancellationToken cancellationToken)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
@@ -198,14 +216,14 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Invalid request");
             }
 
-            await _authService.LogoutFromDevice(refreshToken);
+            await _authService.LogoutFromDevice(refreshToken, cancellationToken);
 
             _cookieService.Delete("refreshToken");
             return Ok("User logged out successfully");
         }
 
         [HttpPost("refresh")]
-        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens()
+        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
@@ -221,7 +239,7 @@ namespace Marketplace.Api.Controllers
                 Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
             };
 
-            var result = await _authService.RefreshTokens(refreshToken, clientInfo);
+            var result = await _authService.RefreshTokens(refreshToken, clientInfo, cancellationToken);
             if (result == null)
             {
                 _logger.LogError("Refresh token is invalid or expired");
@@ -234,6 +252,14 @@ namespace Marketplace.Api.Controllers
 
             _logger.LogInformation("Tokens refreshed successfully for user ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
+        }
+
+        private Guid GetUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userId, out var parsedUserId))
+                return parsedUserId;
+            return Guid.Empty;
         }
     }
 }
