@@ -6,7 +6,7 @@ namespace AuthModule.Domain.Entities
     public class RefreshToken
     {
         public const byte EXPIRATION_DAYS = 10;
-        private RefreshToken(Guid userId, Guid? replacedByTokenId, string device, string ipAddress)
+        private RefreshToken(Guid userId, string device, string ipAddress, Guid? replacedByTokenId)
         {
             if (userId == Guid.Empty)
                 throw new InvalidRefreshTokenException("User ID cannot be empty.");
@@ -34,7 +34,7 @@ namespace AuthModule.Domain.Entities
 
         public static RefreshToken Create(Guid userId, string device, string ipAddress, Guid? replacedByTokenId = null)
         {
-            return new RefreshToken(userId, replacedByTokenId, device, ipAddress);
+            return new RefreshToken(userId, device, ipAddress, replacedByTokenId);
         }
 
         public void Revoke()
@@ -44,13 +44,6 @@ namespace AuthModule.Domain.Entities
 
             IsRevoked = true;
             RevokedAt = DateTime.UtcNow;
-        }
-
-        public void UpdateTokenExpiration(DateTime newExpirationDate)
-        {
-            if (newExpirationDate <= DateTime.UtcNow)
-                throw new RefreshTokenOperationException("New expiration date must be in the future.");
-            ExpirationDate = newExpirationDate;
         }
 
         private string GenerateToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));

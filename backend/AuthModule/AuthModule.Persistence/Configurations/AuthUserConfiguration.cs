@@ -60,12 +60,12 @@ namespace AuthModule.Persistence.Configurations
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
-            builder.Property(u => u.IsBaned)
+            builder.Property(u => u.IsBanned)
                 .HasColumnName("is_baned")
                 .HasDefaultValue(false)
                 .IsRequired();
 
-            builder.Property(u => u.BanedAt)
+            builder.Property(u => u.BannedAt)
                 .HasColumnName("baned_at")
                 .IsRequired(false);
 
