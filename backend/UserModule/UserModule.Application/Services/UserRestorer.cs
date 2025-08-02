@@ -18,11 +18,11 @@ namespace UserModule.Application.Services
             _logger = logger;
         }
 
-        public async Task RestoreUserAsync(Guid userId)
+        public async Task RestoreUserAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, true);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, true);
             user.Restore();
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"User with ID {userId} restored successfully.");
         }
     }

@@ -17,36 +17,17 @@ namespace UserModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<UserBlock> GetByIdAsync(int blockId)
+        public async Task<UserBlock> GetActiveBlockAsync(Guid userId, Guid blockedUserId, CancellationToken cancellationToken)
         {
             var result = await _dbContext.UserBlocks
-                .FirstOrDefaultAsync(ub => ub.Id == blockId);
-            if (result == null)
-                throw new BlockNotFoundException($"Block with Id:{blockId} not found");
-
-            return result;
-        }
-        public async Task<UserBlock> GetActiveBlockAsync(Guid userId, Guid blockedUserId)
-        {
-            var result = await _dbContext.UserBlocks
-                .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId && ub.UnblockedAt == null);
+                .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId && ub.UnblockedAt == null, cancellationToken);
             if (result == null)
                 throw new BlockNotFoundException($"Active block not found for user: {blockedUserId}");
 
             return result;
         }
 
-        public async Task<UserBlock> GetAnyBlockAsync(Guid userId, Guid blockedUserId)
-        {
-            var result = await _dbContext.UserBlocks
-                .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BlockedUserId == blockedUserId);
-            if (result == null)
-                throw new BlockNotFoundException($"Block not found for user: {blockedUserId}");
-
-            return result;
-        }
-
-        public async Task<IEnumerable<User>> GetBlockedUsersAsync(Guid userId)
+        public async Task<IEnumerable<User>> GetBlockedUsersAsync(Guid userId, CancellationToken cancellationToken)
         {
             var result = await _dbContext.UserBlocks
                 .Where(ub => ub.UserId == userId && ub.UnblockedAt == null)
@@ -57,27 +38,28 @@ namespace UserModule.Persistence.Repositories
                     (ub, u) => u
                 )
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             return result;
         }
 
-        public async Task AddAsync(UserBlock block)
+        public async Task AddAsync(UserBlock block, CancellationToken cancellationToken)
         {
-            if (await ExistsAsync(block.UserId, block.BlockedUserId))
+            if (await ExistsAsync(block.UserId, block.BlockedUserId, cancellationToken))
             {
                 _logger.LogError($"User with ID {block.BlockedUserId} already blocked.");
                 throw new BlockExistException($"User with ID {block.BlockedUserId} already blocked.");
             }
-            await _dbContext.UserBlocks.AddAsync(block);
+            await _dbContext.UserBlocks.AddAsync(block, cancellationToken);
             _logger.LogInformation($"User: {block.UserId} block user: {block.BlockedUserId}");
         }
 
-        public async Task<bool> ExistsAsync(Guid userId, Guid blockedUserId)
+        public async Task<bool> ExistsAsync(Guid userId, Guid blockedUserId, CancellationToken cancellationToken)
         {
             var result = await _dbContext.UserBlocks
                 .AnyAsync(ub => ub.UserId == userId
                 && ub.BlockedUserId == blockedUserId
-                && ub.UnblockedAt == null);
+                && ub.UnblockedAt == null,
+                cancellationToken);
 
             return result;
         }

@@ -5,6 +5,7 @@ using AuthModule.Composition.DependencyInjection;
 using UserModule.Composition.DependencyInjection;
 using ProductModule.Composition.DependencyInjection;
 using MediaModule.Composition.DependencyInjection;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,12 @@ builder.Services.AddUserModule(builder.Configuration);
 builder.Services.AddProductModule(builder.Configuration);
 builder.Services.AddMediaModule(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(config);
+});
 
 
 var app = builder.Build();

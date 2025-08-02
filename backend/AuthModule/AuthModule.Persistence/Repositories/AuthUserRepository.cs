@@ -19,7 +19,7 @@ namespace AuthModule.Persistence.Repositories
             _dbContext = dbContext;
             _logger = logger;
         }
-        
+
 
         public async Task<AuthUser> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false)
         {
@@ -33,7 +33,7 @@ namespace AuthModule.Persistence.Repositories
         public async Task<AuthUser?> GetByEmailAsync(string email, CancellationToken cancellationToken, bool includeDeleted = false)
         {
             var emailValue = new Email(email);
-            
+
             var user = await _dbContext.AuthUsers
                 .Where(u => u.Email != null
                     && u.Email.Equals(emailValue)
@@ -89,7 +89,7 @@ namespace AuthModule.Persistence.Repositories
             var emailValue = new Email(email);
 
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.Email != null && u.Email.Equals(emailValue) && u.CanLogin(), cancellationToken);
+                .AnyAsync(u => u.Email != null && u.Email.Equals(emailValue) && !u.IsDeleted && !u.IsBanned, cancellationToken);
         }
 
         public async Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber, CancellationToken cancellationToken)
@@ -97,13 +97,13 @@ namespace AuthModule.Persistence.Repositories
             var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && u.CanLogin(), cancellationToken);
+                .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted && !u.IsBanned, cancellationToken);
         }
 
         public async Task<bool> IsExistsAsync(Guid userId, CancellationToken cancellationToken)
         {
             return await _dbContext.AuthUsers
-                .AnyAsync(u => u.Id == userId && u.CanLogin(), cancellationToken);
+                .AnyAsync(u => u.Id == userId && !u.IsDeleted && !u.IsBanned, cancellationToken);
         }
 
         public async Task<bool> IsExistsAsync(string email, string phoneNumber, CancellationToken cancellationToken)
@@ -116,8 +116,7 @@ namespace AuthModule.Persistence.Repositories
                     (
                         (u.Email != null && u.Email.Equals(emailValue))
                         || (u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue))
-                    )
-                    && u.CanLogin(), cancellationToken
+                    ) && !u.IsDeleted && !u.IsBanned, cancellationToken
                 );
         }
     }

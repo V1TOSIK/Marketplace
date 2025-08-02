@@ -5,13 +5,13 @@ namespace UserModule.Application.Interfaces
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserResponse>> GetAllUsers();
-        Task<UserResponse> GetProfile(Guid userId);
-        Task CreateNewProfile(Guid userId, CreateUserRequest request);
-        Task UpdateProfile(Guid userId, UpdateUserRequest request);
-        Task HardDeleteProfile(Guid userId);
-        Task SoftDeleteProfile(Guid userId);
-        Task AddPhoneNumber(Guid userId, string phone);
-        Task RemovePhoneNumber(Guid userId, int phoneId);
+        Task<IEnumerable<UserResponse>> GetAllUsers(CancellationToken cancellationToken);
+        Task<UserResponse> GetProfile(Guid userId, CancellationToken cancellationToken);
+        Task CreateNewProfile(Guid userId, CreateUserRequest request, CancellationToken cancellationToken);
+        Task UpdateProfile(Guid userId, UpdateUserRequest request, CancellationToken cancellationToken);
+        Task HardDeleteProfile(Guid userId, CancellationToken cancellationToken);
+        Task SoftDeleteProfile(Guid userId, CancellationToken cancellationToken);
+        Task AddPhoneNumber(Guid userId, string phone, CancellationToken cancellationToken);
+        Task RemovePhoneNumber(Guid userId, int phoneId, CancellationToken cancellationToken);
     }
 }

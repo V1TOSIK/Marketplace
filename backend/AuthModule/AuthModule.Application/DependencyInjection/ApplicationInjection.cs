@@ -12,6 +12,7 @@ namespace AuthModule.Application.DependencyInjection
         {
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserManager, UserManager>();
+            services.AddScoped<IVerificationService, VerificationService>();
             
 
             return services;

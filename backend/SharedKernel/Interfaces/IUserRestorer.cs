@@ -2,6 +2,6 @@
 {
     public interface IUserRestorer
     {
-        Task RestoreUserAsync(Guid userId);
+        Task RestoreUserAsync(Guid userId, CancellationToken cancellationToken);
     }  
 }

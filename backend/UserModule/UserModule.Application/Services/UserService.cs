@@ -27,9 +27,9 @@ namespace UserModule.Application.Services
             _logger = logger;
         }
 
-        public async Task<UserResponse> GetProfile(Guid userId)
+        public async Task<UserResponse> GetProfile(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false);
             var response = new UserResponse
             {
                 Name = user.Name,
@@ -40,9 +40,9 @@ namespace UserModule.Application.Services
             return response;
         }
 
-        public async Task<IEnumerable<UserResponse>> GetAllUsers()
+        public async Task<IEnumerable<UserResponse>> GetAllUsers(CancellationToken cancellationToken)
         {
-            var users = await _userRepository.GetAllAsync();
+            var users = await _userRepository.GetAllAsync(cancellationToken);
             var userResponses = users.Select(user => new UserResponse
             {
                 Name = user.Name,
@@ -53,7 +53,7 @@ namespace UserModule.Application.Services
             return userResponses;
         }
 
-        public async Task CreateNewProfile(Guid userId, CreateUserRequest request)
+        public async Task CreateNewProfile(Guid userId, CreateUserRequest request, CancellationToken cancellationToken)
         {
             if (request == null)
             {
@@ -65,12 +65,12 @@ namespace UserModule.Application.Services
             {
                 user.AddPhoneNumber(phone);
             }
-            await _userRepository.AddAsync(user);
-            await _unitOfWork.SaveChangesAsync();
+            await _userRepository.AddAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"New profile created for user {user.Name} with ID {userId}.");
         }
 
-        public async Task UpdateProfile(Guid userId, UpdateUserRequest request)
+        public async Task UpdateProfile(Guid userId, UpdateUserRequest request, CancellationToken cancellationToken)
         {
             if (request == null)
             {
@@ -78,7 +78,7 @@ namespace UserModule.Application.Services
                 throw new BadRequestException("UpdateUserRequest cannot be null.");
             }
 
-            var user = await _userRepository.GetByIdAsync(userId, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false);
 
             if (!string.IsNullOrWhiteSpace(request.Name))
                 user.UpdateName(request.Name);
@@ -94,46 +94,46 @@ namespace UserModule.Application.Services
                     }
                 }
             }
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been updated.");
         }
 
-        public async Task SoftDeleteProfile(Guid userId)
+        public async Task SoftDeleteProfile(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.MarkAsDeleted();
-                await _userManager.SoftDeleteUser(userId);
-                await _unitOfWork.SaveChangesAsync();
-            });
+                await _userManager.SoftDeleteUser(userId, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
             _logger.LogInformation($"Profile for user with ID {userId} has been soft deleted.");
         }
 
-        public async Task HardDeleteProfile(Guid userId)
+        public async Task HardDeleteProfile(Guid userId, CancellationToken cancellationToken)
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _userRepository.HardDeleteAsync(userId);
-                await _userManager.HardDeleteUser(userId);
-                await _unitOfWork.SaveChangesAsync();
-            });
+                await _userRepository.HardDeleteAsync(userId, cancellationToken);
+                await _userManager.HardDeleteUser(userId, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
             _logger.LogInformation($"Profile for user with ID {userId} has been hard deleted.");
         }
 
-        public async Task AddPhoneNumber(Guid userId, string phone)
+        public async Task AddPhoneNumber(Guid userId, string phone, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false);
             user.AddPhoneNumber(phone);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"Phone number {phone} has been added to user {user.Name} with ID {userId}.");
         }
 
-        public async Task RemovePhoneNumber(Guid userId, int phoneId)
+        public async Task RemovePhoneNumber(Guid userId, int phoneId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false);
             user.RemovePhoneNumber(phoneId);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"Phone number with ID {phoneId} has been removed from user {user.Name} with ID {userId}.");
         }
     }

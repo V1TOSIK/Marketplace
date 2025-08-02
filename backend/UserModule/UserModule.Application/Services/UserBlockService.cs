@@ -21,43 +21,43 @@ namespace UserModule.Application.Services
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task BlockUser(Guid userId, Guid blockedUserId)
+        public async Task BlockUser(Guid userId, Guid blockedUserId, CancellationToken cancellationToken)
         {
             if (blockedUserId == userId)
             {
                 _logger.LogError("User cannot block themselves.");
                 throw new InvalidBlockDataException("User cannot block themselves.");
             }
-            if (await _userBlockRepository.ExistsAsync(userId, blockedUserId))
+            if (await _userBlockRepository.ExistsAsync(userId, blockedUserId, cancellationToken))
             {
                 _logger.LogError("User already blocked");
                 throw new BlockExistException("User already blocked");
             }
             var block = UserBlock.Create(userId, blockedUserId);
-            await _userBlockRepository.AddAsync(block);
-            await _unitOfWork.SaveChangesAsync();
+            await _userBlockRepository.AddAsync(block, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UnblockUser(Guid userId, Guid blockedUserId)
+        public async Task UnblockUser(Guid userId, Guid blockedUserId, CancellationToken cancellationToken)
         {
             if (blockedUserId == userId)
             {
                 _logger.LogError("User cannot unblock themselves.");
                 throw new InvalidBlockDataException("User cannot unblock themselves.");
             }
-            if (!await _userBlockRepository.ExistsAsync(userId, blockedUserId))
+            if (!await _userBlockRepository.ExistsAsync(userId, blockedUserId, cancellationToken))
             {
                 _logger.LogError("User is not blocked");
                 throw new BlockExistException("User is not blocked");
             }
-            var block = await _userBlockRepository.GetActiveBlockAsync(userId, blockedUserId);
+            var block = await _userBlockRepository.GetActiveBlockAsync(userId, blockedUserId, cancellationToken);
             block.Unblock();
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<BlockedUserResponse>> GetBlockedUsers(Guid userId)
+        public async Task<IEnumerable<BlockedUserResponse>> GetBlockedUsers(Guid userId, CancellationToken cancellationToken)
         {
-            var blockedUsers = await _userBlockRepository.GetBlockedUsersAsync(userId);
+            var blockedUsers = await _userBlockRepository.GetBlockedUsersAsync(userId, cancellationToken);
 
             if (!blockedUsers.Any())
             {

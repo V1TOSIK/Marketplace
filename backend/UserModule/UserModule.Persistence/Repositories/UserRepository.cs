@@ -14,14 +14,13 @@ namespace UserModule.Persistence.Repositories
         {
             _dbContext = dbContext;
             _logger = logger;
-            Console.WriteLine($"[UserRepository] DbContext HashCode: {_dbContext.GetHashCode()}");
         }
 
-        public async Task<User> GetByIdAsync(Guid userId, bool includeDeleted = false)
+        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false)
         {
             var user = await _dbContext.Users
                 .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
+                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted), cancellationToken);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found.");
@@ -31,12 +30,12 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken)
         {
             var users = await _dbContext.Users
                 .Where(u => !u.IsDeleted)
                 .Include(u => u.PhoneNumbers)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (users == null || !users.Any())
             {
@@ -48,27 +47,27 @@ namespace UserModule.Persistence.Repositories
             return users;
         }
 
-        public async Task AddAsync(User user)
+        public async Task AddAsync(User user, CancellationToken cancellationToken)
         {
-            if (await ExistsAsync(user.Id))
+            if (await ExistsAsync(user.Id, cancellationToken))
             {
                 _logger.LogError($"User with ID {user.Id} already exists in the repository.");
                 throw new UserExistException($"User with ID {user.Id} already exists.");
             }
 
-            await _dbContext.Users.AddAsync(user);
+            await _dbContext.Users.AddAsync(user, cancellationToken);
             _logger.LogInformation($"User with ID {user.Id} added successfully.");
         }
 
-        public async Task HardDeleteAsync(Guid userId)
+        public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await GetByIdAsync(userId, includeDeleted: true);
+            var user = await GetByIdAsync(userId, cancellationToken, includeDeleted: true);
             _dbContext.Users.Remove(user);
         }
 
-        public async Task<bool> ExistsAsync(Guid userId)
+        public async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken)
         {
-            return await _dbContext.Users.AnyAsync(u => u.Id == userId);
+            return await _dbContext.Users.AnyAsync(u => u.Id == userId, cancellationToken);
         }
     }
 }

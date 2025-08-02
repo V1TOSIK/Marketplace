@@ -29,13 +29,13 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<UserResponse>> MyAccount()
+        public async Task<ActionResult<UserResponse>> MyAccount(CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
 
-            var response = await _userService.GetProfile(parsedUserId);
+            var response = await _userService.GetProfile(parsedUserId, cancellationToken);
             if (response == null)
                 return NotFound();
 
@@ -43,12 +43,12 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<UserResponse>> GetUserAccount(Guid userId)
+        public async Task<ActionResult<UserResponse>> GetUserAccount(Guid userId, CancellationToken cancellationToken)
         {
             if (userId ==  Guid.Empty)
                 return BadRequest();
 
-            var response = await _userService.GetProfile(userId);
+            var response = await _userService.GetProfile(userId, cancellationToken);
             if (response == null)
                 return NotFound();
 
@@ -57,21 +57,21 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpGet("my-blocked")]
-        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers()
+        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers(CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
 
-            var blockedUsers = await _userBlockService.GetBlockedUsers(parsedUserId);
+            var blockedUsers = await _userBlockService.GetBlockedUsers(parsedUserId, cancellationToken);
 
             return Ok(blockedUsers);
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult> CreateAccount([FromBody] CreateUserRequest request)
+        public async Task<ActionResult> CreateAccount([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
@@ -80,13 +80,13 @@ namespace Marketplace.Api.Controllers
             if (request == null)
                 return BadRequest();
 
-            await _userService.CreateNewProfile(parsedUserId, request);
+            await _userService.CreateNewProfile(parsedUserId, request, cancellationToken);
             return Ok();
         }
 
         [Authorize]
         [HttpPost("block/{userId}")]
-        public async Task<ActionResult> BlockUser(Guid userId)
+        public async Task<ActionResult> BlockUser(Guid userId, CancellationToken cancellationToken)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
@@ -95,13 +95,13 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty || userId == parsedCurrentUserId)
                 return BadRequest("Invalid user ID");
 
-            await _userBlockService.BlockUser(parsedCurrentUserId, userId);
+            await _userBlockService.BlockUser(parsedCurrentUserId, userId, cancellationToken);
             return Ok();
         }
 
         [Authorize]
         [HttpPost("unblock/{userId}")]
-        public async Task<ActionResult> UnblockUser(Guid userId)
+        public async Task<ActionResult> UnblockUser(Guid userId, CancellationToken cancellationToken)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
@@ -110,13 +110,13 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty || userId == parsedCurrentUserId)
                 return BadRequest("Invalid user ID");
 
-            await _userBlockService.UnblockUser(parsedCurrentUserId, userId);
+            await _userBlockService.UnblockUser(parsedCurrentUserId, userId, cancellationToken);
             return Ok();
         }
 
         [Authorize]
         [HttpPut]
-        public async Task<ActionResult> UpdateAccountInfo([FromBody] UpdateUserRequest request)
+        public async Task<ActionResult> UpdateAccountInfo([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
@@ -125,19 +125,19 @@ namespace Marketplace.Api.Controllers
             if (request == null)
                 return BadRequest();
 
-            await _userService.UpdateProfile(parsedUserId, request);
+            await _userService.UpdateProfile(parsedUserId, request, cancellationToken);
             return Ok();
         }
 
         [Authorize]
         [HttpDelete("hard-delete")]
-        public async Task<ActionResult> HardDeleteAccount()
+        public async Task<ActionResult> HardDeleteAccount(CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
 
-            await _userService.HardDeleteProfile(parsedUserId);
+            await _userService.HardDeleteProfile(parsedUserId, cancellationToken);
             _cookieService.Delete("refreshToken");
 
             return Ok();
@@ -145,13 +145,13 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpDelete("soft-delete")]
-        public async Task<ActionResult> SoftDeleteAccount()
+        public async Task<ActionResult> SoftDeleteAccount(CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userId, out Guid parsedUserId))
                 return BadRequest();
 
-            await _userService.SoftDeleteProfile(parsedUserId);
+            await _userService.SoftDeleteProfile(parsedUserId, cancellationToken);
             _cookieService.Delete("refreshToken");
 
             return Ok();

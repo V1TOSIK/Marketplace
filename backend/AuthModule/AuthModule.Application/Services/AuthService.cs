@@ -154,7 +154,7 @@ namespace AuthModule.Application.Services
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.Restore();
-                await _userRestorer.RestoreUserAsync(user.Id);
+                await _userRestorer.RestoreUserAsync(user.Id, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, cancellationToken);
