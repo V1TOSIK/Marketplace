@@ -27,10 +27,15 @@ namespace AuthModule.Persistence.Configurations
                 v => string.IsNullOrWhiteSpace(v) ? null : new PhoneNumber(v)
             );
 
-            var passwordConverter = new ValueConverter<Password, string>(
-                v => v.Value,
-                v => new Password(v)
+            var passwordConverter = new ValueConverter<Password?, string>(
+                v => v == null ? null : v.Value,
+                v => string.IsNullOrWhiteSpace(v) ? null : new Password(v)
             );
+
+            builder.Property(u => u.ProviderUserId)
+                .HasColumnName("provider_user_id")
+                .HasMaxLength(255)
+                .IsRequired(false);
 
             builder.Property(u => u.Email)
                 .HasColumnName("email")
@@ -48,6 +53,11 @@ namespace AuthModule.Persistence.Configurations
                 .HasColumnName("password")
                 .HasConversion(passwordConverter)
                 .HasMaxLength(255)
+                .IsRequired(false);
+
+            builder.Property(u => u.Provider)
+                .HasColumnName("provider")
+                .HasConversion<string>()
                 .IsRequired();
 
             builder.Property(u => u.Role)

@@ -15,6 +15,7 @@ namespace UserModule.Domain.Entities
         public string Name { get; private set; } = string.Empty;
         public string Location { get; private set; } = string.Empty;
         public bool IsDeleted { get; private set; } = false;
+        public bool IsBanned { get; private set; } = false;
 
         private readonly List<UserPhoneNumber> _phoneNumbers = [];
         public IReadOnlyCollection<UserPhoneNumber> PhoneNumbers => _phoneNumbers.AsReadOnly();
@@ -90,12 +91,18 @@ namespace UserModule.Domain.Entities
                 throw new DeleteUserException("User is already deleted.");
             IsDeleted = true;
         }
-
         public void Restore()
         {
             if (!IsDeleted)
                 throw new RestoreUserException("User is not deleted.");
             IsDeleted = false;
+        }
+
+        public void Ban()
+        {
+            if(!IsBanned)
+                throw new BannedUserException("User is already banned.");
+            IsBanned = true;
         }
     }
 }

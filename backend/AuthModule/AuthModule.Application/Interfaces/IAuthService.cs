@@ -5,8 +5,9 @@ namespace AuthModule.Application.Interfaces
 {
     public interface IAuthService
     {
+        Task<AuthResult> LoginOrRegisterOAuth(LoginRequest request, ClientInfo client, CancellationToken cancellationToken);
         Task<AuthResult> Login(LoginRequest request, ClientInfo client, CancellationToken cancellationToken);
-        Task<AuthResult> Register(RegisterRequest request, ClientInfo client, CancellationToken cancellationToken);
+        Task<AuthResult> RegisterLocalUser(RegisterLocalRequest request, ClientInfo client, CancellationToken cancellationToken);
         Task<AuthResult> Restore(RestoreRequest request, ClientInfo client, CancellationToken cancellationToken);
         Task ChangePassword(ChangePasswordRequest request, Guid userId, CancellationToken cancellationToken);
         Task LogoutFromDevice(string refreshToken, CancellationToken cancellationToken);

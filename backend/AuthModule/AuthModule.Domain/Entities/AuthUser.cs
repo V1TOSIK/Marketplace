@@ -9,26 +9,34 @@ namespace AuthModule.Domain.Entities
     public class AuthUser
     {
         private AuthUser(Guid id,
+            string? providerUserId,
             Email? email,
             PhoneNumber? phoneNumber,
-            Password password,
+            Password? password,
+            AuthProvider provider,
             UserRole role)
         {
             if (email is null && phoneNumber is null)
                 throw new MissingAuthCredentialException();
 
             Id = id;
+            ProviderUserId = providerUserId;
             Email = email;
             PhoneNumber = phoneNumber;
-            Password = password;
+            Password = provider == AuthProvider.Local
+                ? password ?? throw new InvalidPasswordFormatException("Password can not be null")
+                : null;
+            Provider = provider;
             Role = role;
             RegistrationDate = DateTime.UtcNow;
         }
 
         public Guid Id { get; private set; }
+        public string? ProviderUserId { get; private set; }
         public Email? Email { get; private set; }
         public PhoneNumber? PhoneNumber { get; private set; }
-        public Password Password { get; private set; }
+        public Password? Password { get; private set; }
+        public AuthProvider Provider { get; private set; } = AuthProvider.Local;
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
         public bool IsBanned { get; private set; } = false;
@@ -36,23 +44,44 @@ namespace AuthModule.Domain.Entities
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
 
-        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, string roleText)
+        public static AuthUser CreateOAuth(string providerUserId, string email, string roleText, string providerText)
         {
-            if (string.IsNullOrWhiteSpace(emailValue) && string.IsNullOrWhiteSpace(phoneNumberValue))
-                throw new MissingAuthCredentialException();
+            if (string.IsNullOrWhiteSpace(email))
+                throw new MissingAuthCredentialException("Email is required for OAuth users.");
 
-            var email = string.IsNullOrWhiteSpace(emailValue)
-                ? null
-                : new Email(emailValue);
-            var phoneNumber = string.IsNullOrWhiteSpace(phoneNumberValue)
-                ? null
-                : new PhoneNumber(phoneNumberValue);
+            if (string.IsNullOrWhiteSpace(providerUserId))
+                throw new InvalidProviderException("Provider user id cannot be null or empty");
 
-            var password = new Password(passwordValue);
-
+            var provider = ParseProvider(providerText);
             var role = ParseRole(roleText);
 
-            return new AuthUser(Guid.NewGuid(), email, phoneNumber, password, role);
+            return new AuthUser(
+                Guid.NewGuid(),
+                providerUserId,
+                new Email(email),
+                null,
+                null,
+                provider,
+                role
+            );
+        }
+
+        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, string roleText)
+        {
+            var email = string.IsNullOrWhiteSpace(emailValue) ? null : new Email(emailValue);
+            var phoneNumber = string.IsNullOrWhiteSpace(phoneNumberValue) ? null : new PhoneNumber(phoneNumberValue);
+
+            var password = new Password(passwordValue);
+            var role = ParseRole(roleText);
+
+            return new AuthUser(
+                Guid.NewGuid(),
+                null,
+                email,
+                phoneNumber,
+                password,
+                AuthProvider.Local,
+                role);
         }
 
         public void MarkAsDeleted()
@@ -108,12 +137,12 @@ namespace AuthModule.Domain.Entities
         {
             if (string.IsNullOrWhiteSpace(passwordValue))
                 throw new InvalidPasswordFormatException("Password cannot be empty or null.");
+            if (IsOAuth())
+                throw new UserOperationException("User is registered by OAuth");
             Password = new Password(passwordValue);
         }
-        public void UpdateRole(string roleText)
-        {
-            Role = ParseRole(roleText);
-        }
+        public void UpdateRole(string roleText) => Role = ParseRole(roleText);
+
         public bool ThrowIfCannotLogin()
         {
             if (IsDeleted)
@@ -122,10 +151,20 @@ namespace AuthModule.Domain.Entities
                 throw new UserOperationException("User is baned.");
             return true;
         }
-        public bool CanLogin()
+
+        public bool CanLogin() => !IsDeleted && !IsBanned;
+
+        public bool IsOAuth() => Provider != AuthProvider.Local;
+
+        public bool IsLocal() => Provider == AuthProvider.Local;
+
+        private static AuthProvider ParseProvider(string providerText)
         {
-            return !IsDeleted && !IsBanned;
+            if (!Enum.TryParse<AuthProvider>(providerText, true, out var parsedProvider))
+                throw new InvalidProviderException($"Invalid auth provider: {providerText}");
+            return parsedProvider;
         }
+
         private static UserRole ParseRole(string roleText)
         {
             if (!Enum.TryParse<UserRole>(roleText, true, out var parsedRole))

@@ -1,4 +1,5 @@
 ﻿using AuthModule.Infrastructure.Options;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,11 +18,13 @@ namespace AuthModule.Composition.DependencyInjection
             services.Configure<JwtOptions>(configuration.GetSection("JWT"));
 
             if (jwtOptions == null || string.IsNullOrEmpty(jwtOptions.SecretKey))
-            {
                 throw new ArgumentException("JWT options are not configured properly.");
-            }
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new()

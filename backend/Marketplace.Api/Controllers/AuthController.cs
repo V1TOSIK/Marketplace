@@ -31,7 +31,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterLocalRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Password))
             {
@@ -45,13 +45,9 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Either email or phone number must be provided");
             }
 
-            var clientInfo = new ClientInfo
-            {
-                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
-                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
-            };
+            var clientInfo = GetClientInfo();
 
-            var result = await _authService.Register(request, clientInfo, cancellationToken);
+            var result = await _authService.RegisterLocalUser(request, clientInfo, cancellationToken);
 
             if (result == null)
             {
@@ -63,7 +59,6 @@ namespace Marketplace.Api.Controllers
 
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
-            _logger.LogInformation("User registered successfully with ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
         }
 
@@ -82,11 +77,7 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Either email or phone number must be provided");
             }
 
-            var clientInfo = new ClientInfo
-            {
-                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
-                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
-            };
+            var clientInfo = GetClientInfo();
 
             var result = await _authService.Login(request, clientInfo, cancellationToken);
             if (result == null)
@@ -111,11 +102,7 @@ namespace Marketplace.Api.Controllers
                 _logger.LogError("Both email and phone number are empty in restore request");
                 return BadRequest("Either email or phone number must be provided");
             }
-            var clientInfo = new ClientInfo
-            {
-                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
-                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
-            };
+            var clientInfo = GetClientInfo();
             var result = await _authService.Restore(request, clientInfo, cancellationToken);
             if (result == null)
             {
@@ -233,11 +220,7 @@ namespace Marketplace.Api.Controllers
                 return BadRequest("Invalid request");
             }
 
-            var clientInfo = new ClientInfo
-            {
-                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
-                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
-            };
+            var clientInfo = GetClientInfo();
 
             var result = await _authService.RefreshTokens(refreshToken, clientInfo, cancellationToken);
             if (result == null)
@@ -261,5 +244,15 @@ namespace Marketplace.Api.Controllers
                 return parsedUserId;
             return Guid.Empty;
         }
+
+        private ClientInfo GetClientInfo()
+        {
+            return new ClientInfo
+            {
+                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
+                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
+            };
+        }
+
     }
 }
