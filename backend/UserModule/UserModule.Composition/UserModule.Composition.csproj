@@ -10,7 +10,6 @@
     <ProjectReference Include="..\..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
     <ProjectReference Include="..\UserModule.Application\UserModule.Application.csproj" />
     <ProjectReference Include="..\UserModule.Domain\UserModule.Domain.csproj" />
-    <ProjectReference Include="..\UserModule.Infrastructure\UserModule.Infrastructure.csproj" />
     <ProjectReference Include="..\UserModule.Persistence\UserModule.Persistence.csproj" />
   </ItemGroup>
 

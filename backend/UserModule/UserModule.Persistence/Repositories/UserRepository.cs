@@ -16,11 +16,12 @@ namespace UserModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false)
+        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
             var user = await _dbContext.Users
-                .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted), cancellationToken);
+                .FirstOrDefaultAsync(u => u.Id == userId
+                && (includeDeleted || !u.IsDeleted)
+                && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found.");
@@ -30,21 +31,28 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken)
+        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
-            var users = await _dbContext.Users
-                .Where(u => !u.IsDeleted)
+            var user = await _dbContext.Users
                 .Include(u => u.PhoneNumbers)
-                .ToListAsync(cancellationToken);
-
-            if (users == null || !users.Any())
+                .FirstOrDefaultAsync(u => u.Id == userId
+                && (includeDeleted || !u.IsDeleted)
+                && (includeBanned || !u.IsBanned), cancellationToken);
+            if (user == null)
             {
-                _logger.LogInformation("No users found.");
-                return Enumerable.Empty<User>();
+                _logger.LogError($"User with ID {userId} not found.");
+                throw new UserNotFoundException($"User with ID {userId} not found.");
             }
+            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
+            return user;
+        }
 
-            _logger.LogInformation($"Retrieved {users.Count} users from the repository.");
-            return users;
+        public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            return await _dbContext.UserPhoneNumbers
+                .Where(pn => pn.UserId == userId)
+                .Select(pn => pn.PhoneNumber.Value)
+                .ToListAsync();
         }
 
         public async Task AddAsync(User user, CancellationToken cancellationToken)
@@ -61,11 +69,11 @@ namespace UserModule.Persistence.Repositories
 
         public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await GetByIdAsync(userId, cancellationToken, includeDeleted: true);
+            var user = await GetByIdAsync(userId, cancellationToken, true, true);
             _dbContext.Users.Remove(user);
         }
 
-        public async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken)
+        private async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken)
         {
             return await _dbContext.Users.AnyAsync(u => u.Id == userId, cancellationToken);
         }

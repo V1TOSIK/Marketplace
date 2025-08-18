@@ -4,6 +4,6 @@
     {
         public string? Name { get; set; }
         public string? Location { get; set; }
-        public List<string?> PhoneNumbers { get; set; } = [];
+        public List<string>? PhoneNumbers { get; set; } = [];
     }
 }

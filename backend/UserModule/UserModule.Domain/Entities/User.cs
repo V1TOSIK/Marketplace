@@ -1,4 +1,7 @@
-﻿using UserModule.Domain.Exceptions;
+﻿using System.Linq;
+using System.Threading;
+using UserModule.Domain.Exceptions;
+using UserModule.Domain.Interfaces;
 
 namespace UserModule.Domain.Entities
 {
@@ -28,44 +31,69 @@ namespace UserModule.Domain.Entities
             return new User(id, name, location);
         }
 
-        public void UpdateName(string name)
+        public void UpdateUser(string? name, string? location, IEnumerable<string>? newPhones)
         {
-            if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot update a deleted user.");
+            EnsureActive();
+
+            if (!string.IsNullOrWhiteSpace(name))
+                UpdateName(name);
+
+            if (!string.IsNullOrWhiteSpace(location))
+                UpdateLocation(location);
+
+            if (newPhones != null)
+            {
+                var phonesToRemove = _phoneNumbers
+                    .Where(p => !newPhones.Any(np => string.Equals(np?.Trim(), p.PhoneNumber.Value, StringComparison.OrdinalIgnoreCase)))
+                    .Select(p => p.PhoneNumber.Value)
+                    .ToList();
+
+                foreach (var phone in phonesToRemove)
+                    RemovePhoneNumber(phone);
+
+                foreach (var phone in newPhones.Where(p => !string.IsNullOrWhiteSpace(p)))
+                {
+                    if (!_phoneNumbers.Any(p => p.PhoneNumber.Value == phone))
+                        AddPhoneNumber(phone);
+                }
+            }
+        }
+
+        private void UpdateName(string name)
+        {
+            EnsureActive();
 
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidUserDataException("Name cannot be empty or null");
             Name = name;
         }
 
-        public void UpdateLocation(string location)
+        private void UpdateLocation(string location)
         {
-            if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot update a deleted user.");
+            EnsureActive();
 
             if (string.IsNullOrWhiteSpace(location))
                 throw new InvalidUserDataException("Location cannot be empty or null");
             Location = location;
         }
 
-        public IEnumerable<UserPhoneNumber> GetPhoneNumbers()
-        {
-            if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot retrieve phone numbers of a deleted user.");
-            return _phoneNumbers;
-        }
-
         public IEnumerable<string> GetPhoneNumbersValue()
         {
+            EnsureActive();
+            return _phoneNumbers.Select(pn => pn.PhoneNumber.Value).ToList();
+        }
+
+        private void EnsureActive()
+        {
             if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot retrieve phone numbers of a deleted user.");
-            return _phoneNumbers.Select(pn => pn.PhoneNumber.Value);
+                throw new InvalidUserOperationException("Cannot validate a deleted user.");
+            if (IsBanned)
+                throw new InvalidUserOperationException("Cannot validate a banned user.");
         }
 
         public void AddPhoneNumber(string phoneNumberValue)
         {
-            if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot update a deleted user.");
+            EnsureActive();
 
             if (_phoneNumbers.Any(p => p.PhoneNumber.Value == phoneNumberValue))
                 throw new PhoneNumberIsAlreadyAddedException("This phone number is already added.");
@@ -75,12 +103,11 @@ namespace UserModule.Domain.Entities
             _phoneNumbers.Add(phoneNumber);
         }
 
-        public void RemovePhoneNumber(int phoneNumberId)
+        public void RemovePhoneNumber(string phoneNumberValue)
         {
-            if (IsDeleted)
-                throw new InvalidUserOperationException("Cannot update a deleted user.");
+            EnsureActive();
 
-            var phoneNumber = PhoneNumbers.FirstOrDefault(p => p.Id == phoneNumberId);
+            var phoneNumber = PhoneNumbers.FirstOrDefault(p => p.PhoneNumber.Value == phoneNumberValue);
             if (phoneNumber == null)
                 throw new PhoneNumberNotFoundException("Phone number not found");
             _phoneNumbers.Remove(phoneNumber);
@@ -100,9 +127,16 @@ namespace UserModule.Domain.Entities
 
         public void Ban()
         {
-            if(!IsBanned)
-                throw new BannedUserException("User is already banned.");
+            if(IsBanned)
+                throw new BanUserException("User is already banned.");
             IsBanned = true;
+        }
+
+        public void UnBan()
+        {
+            if(!IsBanned)
+                throw new UnbanUserException("User is not banned.");
+            IsBanned = false;
         }
     }
 }

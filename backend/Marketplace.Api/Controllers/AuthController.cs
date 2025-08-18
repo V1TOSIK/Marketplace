@@ -10,7 +10,7 @@ using UserModule.Domain.Entities;
 
 namespace Marketplace.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -62,7 +62,7 @@ namespace Marketplace.Api.Controllers
             return Ok(result.Response);
         }
 
-        [HttpPost("login")]
+        [HttpPost("local/login")]
         public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Password))

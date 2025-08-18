@@ -28,11 +28,6 @@ namespace UserModule.Application.Services
                 _logger.LogError("User cannot block themselves.");
                 throw new InvalidBlockDataException("User cannot block themselves.");
             }
-            if (await _userBlockRepository.ExistsAsync(userId, blockedUserId, cancellationToken))
-            {
-                _logger.LogError("User already blocked");
-                throw new BlockExistException("User already blocked");
-            }
             var block = UserBlock.Create(userId, blockedUserId);
             await _userBlockRepository.AddAsync(block, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -45,11 +40,6 @@ namespace UserModule.Application.Services
                 _logger.LogError("User cannot unblock themselves.");
                 throw new InvalidBlockDataException("User cannot unblock themselves.");
             }
-            if (!await _userBlockRepository.ExistsAsync(userId, blockedUserId, cancellationToken))
-            {
-                _logger.LogError("User is not blocked");
-                throw new BlockExistException("User is not blocked");
-            }
             var block = await _userBlockRepository.GetActiveBlockAsync(userId, blockedUserId, cancellationToken);
             block.Unblock();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -58,12 +48,6 @@ namespace UserModule.Application.Services
         public async Task<IEnumerable<BlockedUserResponse>> GetBlockedUsers(Guid userId, CancellationToken cancellationToken)
         {
             var blockedUsers = await _userBlockRepository.GetBlockedUsersAsync(userId, cancellationToken);
-
-            if (!blockedUsers.Any())
-            {
-                _logger.LogInformation($"No blocked users found for user {userId}");
-                return Enumerable.Empty<BlockedUserResponse>();
-            }
 
             var response = blockedUsers.Select(u => new BlockedUserResponse()
             {
