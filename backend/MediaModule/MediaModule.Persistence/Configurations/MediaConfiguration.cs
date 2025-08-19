@@ -48,6 +48,13 @@ namespace MediaModule.Persistence.Configurations
 
             builder.Property(m => m.CreatedAt)
                 .HasColumnName("created_at");
+
+            builder.HasIndex(m => m.EntityId)
+                .HasDatabaseName("IX_Media_EntityId");
+            builder.HasIndex(m => m.IsMain)
+                .HasDatabaseName("IX_Media_IsMain");
+            builder.HasIndex(m => m.Url).IsUnique();
+
         }
     }
 }

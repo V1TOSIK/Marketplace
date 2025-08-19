@@ -25,7 +25,7 @@ namespace MediaModule.Domain.Entities
         public bool IsDeleted { get; private set; } = false;
         public string MediaType { get; private set; }
         public EntityType EntityType { get; private set; } = EntityType.Product;
-        public DateTime DeletedAt { get; private set; }
+        public DateTime? DeletedAt { get; private set; }
         public DateTime CreatedAt { get; private set; }
 
         public static Media Create(Guid entityId, string url, string name, string mediaType, string entityType, bool isMain = false)
@@ -45,14 +45,6 @@ namespace MediaModule.Domain.Entities
             return new Media(entityId, url, name, mediaType, parsedEntityType, isMain);
         }
 
-        public void UpdateName(string name)
-        {
-            EnsureNotDeleted();
-            if (string.IsNullOrWhiteSpace(name))
-                throw new InvalidMediaDataException("Name cannot be null or empty.");
-            Name = name;
-        }
-
         public void MarkAsMain()
         {
             EnsureNotDeleted();
@@ -63,6 +55,7 @@ namespace MediaModule.Domain.Entities
 
         public void MarkAsDeleted()
         {
+            EnsureNotDeleted();
             IsDeleted = true;
             DeletedAt = DateTime.UtcNow;
         }
@@ -71,14 +64,6 @@ namespace MediaModule.Domain.Entities
         {
             if (IsDeleted)
                 throw new InvalidMediaOperationException("Operation not allowed on deleted media.");
-        }
-
-        public void UpdateUrl(string url)
-        {
-            EnsureNotDeleted();
-            if (string.IsNullOrWhiteSpace(url))
-                throw new InvalidMediaDataException("URL cannot be null or empty.");
-            Url = url;
         }
     }
 }

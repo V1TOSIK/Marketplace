@@ -1,10 +1,10 @@
 ﻿using MediaModule.Application.Dtos.Requests;
 using MediaModule.Application.Dtos.Responses;
+using MediaModule.Application.Exceptions;
 using MediaModule.Application.Interfaces;
 using MediaModule.Domain.Entities;
-using MediaModule.Domain.Enums;
+using MediaModule.Domain.Exceptions;
 using MediaModule.Domain.Interfaces;
-using Microsoft.AspNetCore.Http;
 using SharedKernel.Interfaces;
 
 namespace MediaModule.Application.Services
@@ -23,63 +23,52 @@ namespace MediaModule.Application.Services
             _mediaUnitOfWork = mediaUnitOfWork;
         }
 
-        public async Task<IEnumerable<string>> GetAllEntityMediaUrls(Guid entityId)
+        public async Task<IEnumerable<MediaResponse>> GetAllEntityMediaUrls(Guid entityId, CancellationToken cancellationToken)
         {
-            var medias = await _mediaRepository.GetMediasByEntityIdAsync(entityId);
-            if (medias == null || !medias.Any())
-                throw new Exception($"No media found for entity with Id: {entityId}");
+            var medias = await _mediaRepository.GetMediasByEntityIdAsync(entityId, cancellationToken);
 
-            var response = medias.Select(m => m.Url);
+            var response = medias.Select(m => new MediaResponse
+            {
+                Url = m.Url,
+            });
 
             return response;
         }
 
-        public async Task<string> GetMainMediaUrl(Guid entityId)
-        {
-            var media = await _mediaRepository.GetMainMediaByEntityIdAsync(entityId);
-            if (media == null)
-                throw new Exception($"No main media found for entity with Id: {entityId}");
-            if (media.IsDeleted)
-                throw new Exception($"Main media for entity with Id: {entityId} is deleted");
-            if (string.IsNullOrWhiteSpace(media.Url))
-                throw new Exception($"Main media URL for entity with Id: {entityId} is empty");
-
-            return media.Url;
-        }
-
-        public async Task AddMedia(UploadMediaRequest media)
+        public async Task AddMedia(UploadMediaRequest media, CancellationToken cancellationToken)
         {
             if (media == null)
-                throw new ArgumentException("Media cannot be null");
+                throw new NullableMediaException("Media cannot be null");
+
             var mediaType = media.File.ContentType;
             string fileName = GenerateMediaFileName(media.EntityId, mediaType.Split('/').Last());
             using var stream = media.File.OpenReadStream();
-            var url = await _mediaProvider.AddMediaAsync(fileName, mediaType, stream);
+            var url = await _mediaProvider.AddMediaAsync(fileName, mediaType, stream, cancellationToken);
             var mediaName = fileName.Split('/').Last();
             var mediaEntity = Media.Create(media.EntityId, url, mediaName, mediaType, media.EntityType, media.IsMain);
-            await _mediaRepository.AddMediaAsync(mediaEntity);
+            await _mediaRepository.AddMediaAsync(mediaEntity, cancellationToken);
 
-            await _mediaUnitOfWork.SaveChangesAsync();
+            await _mediaUnitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task SoftDeleteMedia(Guid mediaId)
+        public async Task SoftDeleteMedia(Guid mediaId, CancellationToken cancellationToken)
         {
-            var media = await _mediaRepository.GetMediaByIdAsync(mediaId);
+            var media = await _mediaRepository.GetMediaByIdAsync(mediaId, cancellationToken);
             if (media == null)
-                throw new Exception($"Media with Id: {mediaId} not found");
+                throw new MediaNotFoundException($"Media with Id: {mediaId} not found");
             media.MarkAsDeleted();
-            await _mediaUnitOfWork.SaveChangesAsync();
+            await _mediaUnitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task HardDeleteMedia(Guid mediaId)
+        public async Task HardDeleteMedia(Guid mediaId, CancellationToken cancellationToken)
         {
-            var media = await _mediaRepository.GetMediaByIdAsync(mediaId);
+            var media = await _mediaRepository.GetMediaByIdAsync(mediaId, cancellationToken);
             if (media == null)
-                throw new Exception($"Media with Id: {mediaId} not found");
+                throw new MediaNotFoundException($"Media with Id: {mediaId} not found");
             var mediaFileName = CombineFileName(media.EntityId.ToString(), media.Name);
-            await _mediaProvider.DeleteMediaAsync(mediaFileName);
-            await _mediaRepository.DeleteMediaAsync(mediaId);
-            await _mediaUnitOfWork.SaveChangesAsync();
+            await _mediaProvider.DeleteMediaAsync(mediaFileName, cancellationToken);
+            await _mediaRepository.DeleteMediaAsync(mediaId, cancellationToken);
+            await _mediaUnitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         private string GenerateMediaFileName(Guid entityId, string extentions)

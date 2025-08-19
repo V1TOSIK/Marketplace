@@ -6,8 +6,13 @@ namespace SharedKernel.Exceptions
     {
         public virtual HttpStatusCode StatusCode { get; } = HttpStatusCode.InternalServerError;
 
-        public BaseException(string message) : base(message) { }
-
-        public BaseException(string message, Exception innerException) : base(message, innerException) { }
+        public BaseException(string message)
+            : base(message) { }
+        public BaseException(string message, Exception innerException)
+            : base(message, innerException) { }
+        public BaseException()
+            : base("Base exception.") { }
+        public BaseException(Exception innerException)
+            : base("Base exception", innerException) { }
     }
 }

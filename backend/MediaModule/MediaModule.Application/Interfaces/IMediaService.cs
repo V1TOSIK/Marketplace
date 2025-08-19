@@ -5,10 +5,9 @@ namespace MediaModule.Application.Interfaces
 {
     public interface IMediaService
     {
-        Task<IEnumerable<string>> GetAllEntityMediaUrls(Guid entityId);
-        Task<string> GetMainMediaUrl(Guid entityId);
-        Task AddMedia(UploadMediaRequest media);
-        Task SoftDeleteMedia(Guid mediaId);
-        Task HardDeleteMedia(Guid mediaId);
+        Task<IEnumerable<MediaResponse>> GetAllEntityMediaUrls(Guid entityId, CancellationToken cancellationToken);
+        Task AddMedia(UploadMediaRequest media, CancellationToken cancellationToken);
+        Task SoftDeleteMedia(Guid mediaId, CancellationToken cancellationToken);
+        Task HardDeleteMedia(Guid mediaId, CancellationToken cancellationToken);
     }
 }
