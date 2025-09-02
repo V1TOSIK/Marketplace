@@ -37,6 +37,14 @@ services:
     env_file:
       - .env
 
+  redis:
+    container_name: marketplace-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+
   minio:
     container_name: marketplace-minio
     image: minio/minio:latest

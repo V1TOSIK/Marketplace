@@ -2,7 +2,8 @@
 using Microsoft.Extensions.Logging;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Exceptions;
-using ProductModule.Domain.Interfaces;
+using ProductModule.Application.Interfaces.Repositories;
+using ProductModule.Application.Dtos;
 
 namespace ProductModule.Persistence.Repositories
 {
@@ -17,51 +18,48 @@ namespace ProductModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<IEnumerable<CharacteristicGroup>> GetProductGroupsAsync(Guid productId)
+        public async Task<IEnumerable<CharacteristicGroupDto>> GetProductCharacterisitcsAsync(Guid productId, CancellationToken cancellationToken)
         {
-            return await _dbContext.CharacteristicGroups
-                .Where(c => c.ProductId == productId)
+            var result = await (
+                from g in _dbContext.CharacteristicGroups
+                join v in _dbContext.CharacteristicValues on g.Id equals v.GroupId
+                join t in _dbContext.CharacteristicTemplates on v.CharacteristicTemplateId equals t.Id
+                    where g.ProductId == productId
+                select new
+                {
+                    GroupName = g.Name,
+                    Characteristic = new CharacteristicDto
+                    {
+                        Name = t.Name,
+                        Value = v.Value,
+                        Unit = t.Unit,
+                    }
+                })
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
+
+            var response = result
+                .GroupBy(r => r.GroupName)
+                .Select(g => new CharacteristicGroupDto
+                {
+                    Name = g.Key,
+                    Characteristics = g.Select(c => c.Characteristic).ToList()
+                })
+                .ToList();
+
+            return response;
         }
 
-        public async Task<CharacteristicGroup> GetGroupByIdAsync(int groupId)
-        {
-            var group = await _dbContext.CharacteristicGroups
-                .FirstOrDefaultAsync(g => g.Id == groupId);
-
-            if (group == null)
-                throw new NullableCharacteristicGroupException("group cannot be null");
-
-            return group;
-        }
-
-        public async Task<IEnumerable<CharacteristicValue>> GetValuesByGroupIdAsync(int groupId)
-        {
-            return await _dbContext.CharacteristicValues
-                .Where(cv => cv.GroupId == groupId)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task<List<CharacteristicTemplate>> GetTemplatesByIdsAsync(List<int> templateIds)
-        {
-            return await _dbContext.CharacteristicTemplates
-                .Where(t => templateIds.Contains(t.Id))
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task AddTemplateAsync(CharacteristicTemplate template)
+        public async Task AddTemplateAsync(CharacteristicTemplate template, CancellationToken cancellationToken)
         {
             if (template == null)
                 throw new NullableCharacteristicTemplateException("Template cannot be null");
 
-            await _dbContext.CharacteristicTemplates.AddAsync(template);
+            await _dbContext.CharacteristicTemplates.AddAsync(template, cancellationToken);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<CharacteristicTemplate?> GetTemplateByPropertiesAsync(string templateName, string unit)
+        public async Task<CharacteristicTemplate?> GetTemplateByPropertiesAsync(string templateName, string unit, CancellationToken cancellationToken)
         {
             var lowerTemplateName = templateName.ToLowerInvariant();
             var lowerUnit = unit.ToLowerInvariant();
@@ -70,41 +68,41 @@ namespace ProductModule.Persistence.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t =>
                 t.Name.ToLower() == lowerTemplateName &&
-                t.Unit.ToLower() == lowerUnit);
+                t.Unit.ToLower() == lowerUnit, cancellationToken);
 
             return template;
         }
 
-        public async Task<CharacteristicTemplate> GetOrCreateTemplateAsync(string templateName, int categoryId, string unit)
+        public async Task<CharacteristicTemplate> GetOrCreateTemplateAsync(string templateName, int categoryId, string unit, CancellationToken cancellationToken)
         {
-            var template = await GetTemplateByPropertiesAsync(templateName, unit);
+            var template = await GetTemplateByPropertiesAsync(templateName, unit, cancellationToken);
             if (template == null)
             {
                 template = CharacteristicTemplate.Create(templateName, unit, categoryId, "Custom");
-                await AddTemplateAsync(template);
+                await AddTemplateAsync(template, cancellationToken);
             }
             return template;
         }
 
-        public async Task DeleteGroupAsync(int groupId)
+        public async Task DeleteGroupAsync(int groupId, CancellationToken cancellationToken)
         {
             await _dbContext.CharacteristicValues
                 .Where(cv => cv.GroupId == groupId)
                 .AsNoTracking()
-                .ExecuteDeleteAsync();
+                .ExecuteDeleteAsync(cancellationToken);
 
             await _dbContext.CharacteristicGroups
                 .Where(g => g.Id == groupId)
                 .AsNoTracking()
-                .ExecuteDeleteAsync();
+                .ExecuteDeleteAsync(cancellationToken);
 
             _logger.LogInformation($"Characteristic group with ID {groupId} deleted successfully.");
         }
 
-        public async Task DeleteValueAsync(string value, int templateId, int groupId)
+        public async Task DeleteValueAsync(string value, int templateId, int groupId, CancellationToken cancellationToken)
         {
             var characteristicValue = await _dbContext.CharacteristicValues
-                .FirstOrDefaultAsync(cv => cv.Value == value && cv.CharacteristicTemplateId == templateId && cv.GroupId == groupId);
+                .FirstOrDefaultAsync(cv => cv.Value == value && cv.CharacteristicTemplateId == templateId && cv.GroupId == groupId, cancellationToken);
             if (characteristicValue == null)
             {
                 _logger.LogWarning($"Characteristic value with value '{value}', template ID {templateId}, and group ID {groupId} not found.");

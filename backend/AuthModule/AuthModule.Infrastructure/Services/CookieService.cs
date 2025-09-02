@@ -1,7 +1,7 @@
 ﻿using AuthModule.Application.Exceptions;
+using AuthModule.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using SharedKernel.Interfaces;
 
 namespace AuthModule.Infrastructure.Services
 {

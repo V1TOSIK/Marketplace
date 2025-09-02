@@ -7,7 +7,7 @@ using SharedKernel.ValueObjects;
 
 namespace AuthModule.Persistence.Configurations
 {
-    class AuthUserConfiguration : IEntityTypeConfiguration<AuthUser>
+    public class AuthUserConfiguration : IEntityTypeConfiguration<AuthUser>
     {
         public void Configure(EntityTypeBuilder<AuthUser> builder)
         {
@@ -27,10 +27,15 @@ namespace AuthModule.Persistence.Configurations
                 v => string.IsNullOrWhiteSpace(v) ? null : new PhoneNumber(v)
             );
 
-            var passwordConverter = new ValueConverter<Password, string>(
-                v => v.Value,
-                v => new Password(v)
+            var passwordConverter = new ValueConverter<Password?, string>(
+                v => v == null ? null : v.Value,
+                v => string.IsNullOrWhiteSpace(v) ? null : new Password(v)
             );
+
+            builder.Property(u => u.ProviderUserId)
+                .HasColumnName("provider_user_id")
+                .HasMaxLength(255)
+                .IsRequired(false);
 
             builder.Property(u => u.Email)
                 .HasColumnName("email")
@@ -48,6 +53,11 @@ namespace AuthModule.Persistence.Configurations
                 .HasColumnName("password")
                 .HasConversion(passwordConverter)
                 .HasMaxLength(255)
+                .IsRequired(false);
+
+            builder.Property(u => u.Provider)
+                .HasColumnName("provider")
+                .HasConversion<string>()
                 .IsRequired();
 
             builder.Property(u => u.Role)
@@ -61,12 +71,12 @@ namespace AuthModule.Persistence.Configurations
                 .IsRequired();
 
             builder.Property(u => u.IsBanned)
-                .HasColumnName("is_baned")
+                .HasColumnName("is_banned")
                 .HasDefaultValue(false)
                 .IsRequired();
 
             builder.Property(u => u.BannedAt)
-                .HasColumnName("baned_at")
+                .HasColumnName("banned_at")
                 .IsRequired(false);
 
             builder.Property(u => u.IsDeleted)
@@ -77,6 +87,9 @@ namespace AuthModule.Persistence.Configurations
             builder.Property(u => u.DeletedAt)
                 .HasColumnName("deleted_at")
                 .IsRequired(false);
+
+            builder.HasIndex(u => u.Email).IsUnique();
+            builder.HasIndex(u => u.PhoneNumber).IsUnique();
         }
     }
 }

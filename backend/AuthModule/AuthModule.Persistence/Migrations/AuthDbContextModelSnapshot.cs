@@ -29,9 +29,9 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime?>("BanedAt")
+                    b.Property<DateTime?>("BannedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("baned_at");
+                        .HasColumnName("banned_at");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -42,11 +42,11 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
 
-                    b.Property<bool>("IsBaned")
+                    b.Property<bool>("IsBanned")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
-                        .HasColumnName("is_baned");
+                        .HasColumnName("is_banned");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -55,7 +55,6 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnName("is_deleted");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password");
@@ -64,6 +63,16 @@ namespace AuthModule.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone_number");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ProviderUserId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("provider_user_id");
 
                     b.Property<DateTime>("RegistrationDate")
                         .ValueGeneratedOnAdd()
@@ -78,6 +87,12 @@ namespace AuthModule.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
                     b.ToTable("auth_users", (string)null);
                 });
 
@@ -89,8 +104,10 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Device")
                         .IsRequired()
@@ -133,8 +150,6 @@ namespace AuthModule.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("IsRevoked", "RevokedAt");
 
                     b.ToTable("refresh_tokens", (string)null);
                 });

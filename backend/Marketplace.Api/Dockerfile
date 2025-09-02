@@ -19,7 +19,6 @@ COPY ["AuthModule/AuthModule.Composition/AuthModule.Composition.csproj", "AuthMo
 COPY ["UserModule/UserModule.Application/UserModule.Application.csproj", "UserModule/UserModule.Application/"]
 COPY ["UserModule/UserModule.Domain/UserModule.Domain.csproj", "UserModule/UserModule.Domain/"]
 COPY ["UserModule/UserModule.Persistence/UserModule.Persistence.csproj", "UserModule/UserModule.Persistence/"]
-COPY ["UserModule/UserModule.Infrastructure/UserModule.Infrastructure.csproj", "UserModule/UserModule.Infrastructure/"]
 COPY ["UserModule/UserModule.Composition/UserModule.Composition.csproj", "UserModule/UserModule.Composition/"]
 
 COPY ["ProductModule/ProductModule.Application/ProductModule.Application.csproj", "ProductModule/ProductModule.Application/"]

@@ -5,12 +5,15 @@ namespace AuthModule.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResult> Login(LoginRequest request, ClientInfo client);
-        Task<AuthResult> Register(RegisterRequest request, ClientInfo client);
-        Task<AuthResult> Restore(RestoreRequest request, ClientInfo client);
-        Task ChangePassword(ChangePasswordRequest request, Guid userId);
-        Task LogoutFromDevice(string refreshToken);
-        Task LogoutFromAllDevices(Guid userId);
-        Task<AuthResult> RefreshTokens(string refreshToken, ClientInfo client);
+        Task<AuthResult> LoginOrRegisterOAuth(LoginRequest request, ClientInfo client, CancellationToken cancellationToken);
+        Task<AuthResult> Login(LoginRequest request, ClientInfo client, CancellationToken cancellationToken);
+        Task<AuthResult> RegisterLocalUser(RegisterLocalRequest request, ClientInfo client, CancellationToken cancellationToken);
+        Task<AuthResult> Restore(RestoreRequest request, ClientInfo client, CancellationToken cancellationToken);
+        Task ChangePassword(ChangePasswordRequest request, Guid userId, CancellationToken cancellationToken);
+        Task LogoutFromDevice(string refreshToken, CancellationToken cancellationToken);
+        Task LogoutFromAllDevices(Guid userId, CancellationToken cancellationToken);
+        Task<AuthResult> RefreshTokens(string refreshToken, ClientInfo client, CancellationToken cancellationToken);
+        Task AddEmailAsync(Guid userId, string email, CancellationToken cancellationToken);
+        Task AddPhoneAsync(Guid userId, string phone, CancellationToken cancellationToken);
     }
 }

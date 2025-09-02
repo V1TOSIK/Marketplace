@@ -14,14 +14,14 @@ namespace UserModule.Persistence.Repositories
         {
             _dbContext = dbContext;
             _logger = logger;
-            Console.WriteLine($"[UserRepository] DbContext HashCode: {_dbContext.GetHashCode()}");
         }
 
-        public async Task<User> GetByIdAsync(Guid userId, bool includeDeleted = false)
+        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
             var user = await _dbContext.Users
-                .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId && (includeDeleted || !u.IsDeleted));
+                .FirstOrDefaultAsync(u => u.Id == userId
+                && (includeDeleted || !u.IsDeleted)
+                && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
                 _logger.LogError($"User with ID {userId} not found.");
@@ -31,44 +31,51 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
-            var users = await _dbContext.Users
-                .Where(u => !u.IsDeleted)
+            var user = await _dbContext.Users
                 .Include(u => u.PhoneNumbers)
-                .ToListAsync();
-
-            if (users == null || !users.Any())
+                .FirstOrDefaultAsync(u => u.Id == userId
+                && (includeDeleted || !u.IsDeleted)
+                && (includeBanned || !u.IsBanned), cancellationToken);
+            if (user == null)
             {
-                _logger.LogInformation("No users found.");
-                return Enumerable.Empty<User>();
+                _logger.LogError($"User with ID {userId} not found.");
+                throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-
-            _logger.LogInformation($"Retrieved {users.Count} users from the repository.");
-            return users;
+            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
+            return user;
         }
 
-        public async Task AddAsync(User user)
+        public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken)
         {
-            if (await ExistsAsync(user.Id))
+            return await _dbContext.UserPhoneNumbers
+                .Where(pn => pn.UserId == userId)
+                .Select(pn => pn.PhoneNumber.Value)
+                .ToListAsync();
+        }
+
+        public async Task AddAsync(User user, CancellationToken cancellationToken)
+        {
+            if (await ExistsAsync(user.Id, cancellationToken))
             {
                 _logger.LogError($"User with ID {user.Id} already exists in the repository.");
                 throw new UserExistException($"User with ID {user.Id} already exists.");
             }
 
-            await _dbContext.Users.AddAsync(user);
+            await _dbContext.Users.AddAsync(user, cancellationToken);
             _logger.LogInformation($"User with ID {user.Id} added successfully.");
         }
 
-        public async Task HardDeleteAsync(Guid userId)
+        public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await GetByIdAsync(userId, includeDeleted: true);
+            var user = await GetByIdAsync(userId, cancellationToken, true, true);
             _dbContext.Users.Remove(user);
         }
 
-        public async Task<bool> ExistsAsync(Guid userId)
+        private async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken)
         {
-            return await _dbContext.Users.AnyAsync(u => u.Id == userId);
+            return await _dbContext.Users.AnyAsync(u => u.Id == userId, cancellationToken);
         }
     }
 }

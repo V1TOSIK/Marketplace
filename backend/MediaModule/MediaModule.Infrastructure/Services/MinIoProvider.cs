@@ -25,41 +25,37 @@ namespace MediaModule.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(_minIoOptions.BucketName))
                 throw new ArgumentException("Bucket name cannot be null or empty", nameof(_minIoOptions.BucketName));
         }
-        private async Task EnsureBucketExistsAsync()
+        private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
         {
-            var args = new BucketExistsArgs()
-                .WithBucket(_bucketName);
-            if (!await CheckBucketExistAsync())
-            {
-                await CreateBucketAsync();
-                _logger.LogInformation($"Bucket '{_bucketName}' created successfully.");
-            }
+            if (await CheckBucketExistAsync(cancellationToken))
+                _logger.LogInformation($"Bucket '{_bucketName}' already exists.");
             else
             {
-                _logger.LogInformation($"Bucket '{_bucketName}' already exists.");
+                await CreateBucketAsync(cancellationToken);
+                _logger.LogInformation($"Bucket '{_bucketName}' created successfully.");
             }
         }
 
-        private async Task<bool> CheckBucketExistAsync()
+        private async Task<bool> CheckBucketExistAsync(CancellationToken cancellationToken)
         {
+
             var args = new BucketExistsArgs()
                 .WithBucket(_bucketName);
-
-            return await _minioClient.BucketExistsAsync(args);
+            return await _minioClient.BucketExistsAsync(args, cancellationToken);
         }
 
-        private async Task CreateBucketAsync()
+        private async Task CreateBucketAsync(CancellationToken cancellationToken)
         {
             var args = new MakeBucketArgs()
                 .WithBucket(_bucketName);
-            await _minioClient.MakeBucketAsync(args);
+            await _minioClient.MakeBucketAsync(args, cancellationToken);
         }
 
-        public async Task<string> AddMediaAsync(string objectName, string contentType, Stream stream)
+        public async Task<string> AddMediaAsync(string objectName, string contentType, Stream stream, CancellationToken cancellationToken)
         {
             try
             {
-                await EnsureBucketExistsAsync();
+                await EnsureBucketExistsAsync(cancellationToken);
 
                 long size;
                 if (stream.CanSeek)
@@ -69,7 +65,7 @@ namespace MediaModule.Infrastructure.Services
                 else
                 {
                     var temp = new MemoryStream();
-                    await stream.CopyToAsync(temp);
+                    await stream.CopyToAsync(temp, cancellationToken);
                     temp.Seek(0, SeekOrigin.Begin);
                     stream = temp;
                     size = temp.Length;
@@ -82,20 +78,20 @@ namespace MediaModule.Infrastructure.Services
                     .WithObjectSize(size)
                     .WithContentType(contentType);
 
-                await _minioClient.PutObjectAsync(args);
+                await _minioClient.PutObjectAsync(args, cancellationToken);
 
                 var scheme = _minIoOptions.UseSSL ? "https" : "http";
                 var url = $"{scheme}://{_minIoOptions.Endpoint}/{_bucketName}/{objectName}";
                 return url;
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new Exception("Exception: ", ex);
             }
         }
 
-        public async Task<Stream> GetMediaAsync(string objectName)
+        public async Task<Stream> GetMediaAsync(string objectName, CancellationToken cancellationToken)
         {
             try
             {
@@ -107,17 +103,17 @@ namespace MediaModule.Infrastructure.Services
                     {
                         await stream.CopyToAsync(memoryStream);
                     });
-                await _minioClient.GetObjectAsync(args);
+                await _minioClient.GetObjectAsync(args, cancellationToken);
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 return memoryStream;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new Exception("Exception: ", ex);
             }
         }
 
-        public async Task DeleteMediaAsync(string objectName)
+        public async Task DeleteMediaAsync(string objectName, CancellationToken cancellationToken)
         {
             try
             {
@@ -125,12 +121,11 @@ namespace MediaModule.Infrastructure.Services
                     .WithBucket(_bucketName)
                     .WithObject(objectName);
 
-                await _minioClient.RemoveObjectAsync(args);
+                await _minioClient.RemoveObjectAsync(args, cancellationToken);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                throw new Exception("Exception: ", ex);
             }
 
         }

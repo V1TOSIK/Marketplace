@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
-using ProductModule.Domain.Interfaces;
+
 
 namespace ProductModule.Persistence.Repositories
 {
@@ -18,12 +19,12 @@ namespace ProductModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public IQueryable<Product> Query()
+        public IQueryable<Product> Query(CancellationToken cancellationToken)
         {
             return _dbContext.Products.AsNoTracking();
         }
 
-        public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, List<string> values)> filters)
+        public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken)
         {
             var productIds = await _dbContext.CharacteristicValues
              .Where(cv => filters.Any(f =>
@@ -36,55 +37,31 @@ namespace ProductModule.Persistence.Repositories
                  group => group.Id,
                  (valGroupId, group) => group.ProductId)
              .Distinct()
-             .ToListAsync();
+             .ToListAsync(cancellationToken);
 
             return productIds;
         }
 
-        public async Task<IEnumerable<Product>> GetAllAsync()
-        {
-            return await _dbContext.Products
-                .Where(p => p.Status == Status.Published)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Product>> GetByStatus(Status status)
-        {
-            return await _dbContext.Products
-                .Where(p => p.Status == status)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Product>> GetByCategoryIdAsync(int categoryId)
+        public async Task<IEnumerable<Product>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken)
         {
             return await _dbContext.Products
                 .Where(p => p.CategoryId == categoryId && p.Status == Status.Published)
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Product>> GetByUserIdWithDraftsAsync(Guid userId)
+        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
         {
             return await _dbContext.Products
-                .Where(p => p.UserId == userId)
+                .Where(p => p.UserId == userId && statuses.Contains(p.Status))
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId)
-        {
-            return await _dbContext.Products
-                .Where(p => p.UserId == userId && p.Status == Status.Published)
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
-        public async Task<Product> GetByIdAsync(Guid productId)
+        public async Task<Product> GetByIdAsync(Guid productId, CancellationToken cancellationToken)
         {
             var product = await _dbContext.Products
-                .FirstOrDefaultAsync(p => p.Id == productId);
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
             if (product == null)
                 throw new ProductNotFoundException($"Product with ID {productId} not found.");
@@ -93,20 +70,20 @@ namespace ProductModule.Persistence.Repositories
 
         }
 
-        public async Task AddAsync(Product product)
+        public async Task AddAsync(Product product, CancellationToken cancellationToken)
         {
             if (product == null)
             {
                 _logger.LogError("Attempted to add a null product.");
                 throw new NullableProductException("Product cannot be null.");
             }
-            await _dbContext.Products.AddAsync(product);
+            await _dbContext.Products.AddAsync(product, cancellationToken);
             _logger.LogInformation($"Product with ID {product.Id} added successfully.");
         }
 
-        public async Task DeleteAsync(Guid productId, Guid userId)
+        public async Task DeleteAsync(Guid productId, Guid userId, CancellationToken cancellationToken)
         {
-            var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
             if (product == null)
             {
                 _logger.LogWarning($"Product with ID {productId} not found for deletion.");

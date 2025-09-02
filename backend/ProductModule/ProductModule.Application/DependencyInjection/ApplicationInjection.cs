@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using ProductModule.Application.Interfaces;
-using ProductModule.Application.Services;
 
 namespace ProductModule.Application.DependencyInjection
 {
@@ -9,7 +8,7 @@ namespace ProductModule.Application.DependencyInjection
         public static IServiceCollection AddProductApplication(this IServiceCollection services)
         {
 
-            services.AddScoped<IProductService, ProductService>();
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
 
             return services;
         }

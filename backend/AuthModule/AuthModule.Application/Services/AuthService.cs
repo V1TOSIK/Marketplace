@@ -4,6 +4,7 @@ using AuthModule.Application.Exceptions;
 using AuthModule.Application.Interfaces;
 using AuthModule.Application.Models;
 using AuthModule.Domain.Entities;
+using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -37,19 +38,60 @@ namespace AuthModule.Application.Services
             _logger = logger;
         }
 
-        public async Task<AuthResult> Login(LoginRequest request, ClientInfo client)
+        public async Task<AuthResult> LoginOrRegisterOAuth(LoginRequest request, ClientInfo client, CancellationToken cancellationToken)
         {
-            var user = await GetUserByCredentials(request.Email, request.PhoneNumber);
-
-            user.EnsureCanLogin();
-            if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
+            if (string.IsNullOrWhiteSpace(request.ProviderUserId) || string.IsNullOrWhiteSpace(request.Provider))
             {
-                _logger.LogWarning($"Invalid password attempt for user with ID {user.Id}.");
-                throw new IncorrectCredentialsException("Invalid password.");
+                _logger.LogError("Provider or ProviderUserId is null in OAuth login request.");
+                throw new MissingAuthCredentialException("Provider or ProviderUserId is null in OAuth login request.");
             }
 
-            var refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress);
-            await _unitOfWork.SaveChangesAsync();
+            var user = await _authUserRepository.GetByProviderAsync(request.ProviderUserId, request.Provider, cancellationToken, true, true);
+            if (user == null)
+            {
+                if(string.IsNullOrWhiteSpace(request.Email))
+                {
+                    _logger.LogError("Email is null in OAuth login request.");
+                    throw new MissingAuthCredentialException("Email is required for OAuth registration.");
+                }
+                var result = await RegisterOAuthUser(new RegisterOAuthRequest
+                {
+                    ProviderUserId = request.ProviderUserId,
+                    Email = request.Email,
+                    Provider = request.Provider
+                }, client, cancellationToken);
+                _logger.LogInformation($"New OAuth user registered with ID {result.Response.UserId}.");
+                return result;
+            }
+            else
+            {
+                return await Login(request, client, cancellationToken);
+            }
+        }
+
+        public async Task<AuthResult> Login(LoginRequest request, ClientInfo client, CancellationToken cancellationToken)
+        {
+            var user = await GetUserByCredentials(request.Email, request.PhoneNumber, cancellationToken);
+
+            user.ThrowIfCannotLogin();
+            if (!user.IsOAuth())
+            {
+                if (string.IsNullOrWhiteSpace(user.Password?.Value))
+                {
+                    _logger.LogError($"User with ID {user.Id} is local but has no password.");
+                    throw new InvalidPasswordFormatException("Local user has no password.");
+                }
+
+                if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
+                {
+                    _logger.LogWarning($"Invalid password attempt for user with ID {user.Id}.");
+                    await Task.Delay(200);
+                    throw new IncorrectCredentialsException("Invalid password.");
+                }
+            }
+
+            var refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation($"User with ID {user.Id} logged in successfully.");
             return new AuthResult
@@ -63,7 +105,7 @@ namespace AuthModule.Application.Services
             };
         }
 
-        public async Task<AuthResult> Register(RegisterRequest request, ClientInfo client)
+        public async Task<AuthResult> RegisterLocalUser(RegisterLocalRequest request, ClientInfo client, CancellationToken cancellationToken)
         {
             var hashPassword = _passwordHasher.HashPassword(request.Password);
 
@@ -81,13 +123,13 @@ namespace AuthModule.Application.Services
             RefreshToken? refreshToken = null;
 
             if (email is not null)
-                existingUser = await _authUserRepository.GetByEmailAsync(email, true);
+                existingUser = await _authUserRepository.GetByEmailAsync(email, cancellationToken, true, true);
             else if (phone is not null)
-                existingUser = await _authUserRepository.GetByPhoneNumberAsync(phone, true);
+                existingUser = await _authUserRepository.GetByPhoneNumberAsync(phone, cancellationToken, true, true);
 
             if (existingUser != null)
             {
-                existingUser.EnsureCanLogin();
+                existingUser.ThrowIfCannotLogin();
 
                 throw email != null
                     ? new EmailAlreadyExistsException($"Email {email} is already registered.")
@@ -98,20 +140,20 @@ namespace AuthModule.Application.Services
                 email,
                 phone,
                 hashPassword,
-                request.Role
+                "User"
             );
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _authUserRepository.AddAsync(user);
+                await _authUserRepository.AddAsync(user, cancellationToken);
 
                 refreshToken = RefreshToken.Create(user.Id, client.Device, client.IpAddress);
 
-                await _refreshTokenRepository.AddAsync(refreshToken);
+                await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
                 _logger.LogInformation("Saving changes...");
-                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation("Changes saved.");
-            });
+            }, cancellationToken);
 
             return new AuthResult()
             {
@@ -124,7 +166,51 @@ namespace AuthModule.Application.Services
             };
         }
 
-        public async Task<AuthResult> Restore(RestoreRequest request, ClientInfo client)
+        public async Task<AuthResult> RegisterOAuthUser(RegisterOAuthRequest request, ClientInfo client, CancellationToken cancellationToken)
+        {
+            if(string.IsNullOrWhiteSpace(request.ProviderUserId) && string.IsNullOrWhiteSpace(request.Provider))
+            {
+                _logger.LogError("Provider or ProviderUserId is null in OAuth register request.");
+                throw new MissingAuthCredentialException("Provider or ProviderUserId is null in OAuth register request.");
+            }
+
+            var user = await _authUserRepository.GetByProviderAsync(request.ProviderUserId, request.Provider, cancellationToken, true, true);
+
+            if (user != null)
+            {
+                user.ThrowIfCannotLogin();
+
+                throw new OAuthUserAlreadyExistsException($"User with provider user id {request.ProviderUserId} already exists.");
+            }
+
+            user = AuthUser.CreateOAuth(
+                request.ProviderUserId,
+                request.Email,
+                "User",
+                request.Provider
+            );
+            RefreshToken? refreshToken = null;
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _authUserRepository.AddAsync(user, cancellationToken);
+                refreshToken = RefreshToken.Create(user.Id, client.Device, client.IpAddress);
+                await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+                _logger.LogInformation("Saving changes...");
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Changes saved.");
+            }, cancellationToken);
+
+            return new AuthResult()
+            {
+                Response = new AuthorizeResponse
+                {
+                    UserId = user.Id,
+                    Role = user.Role.ToString()
+                },
+                RefreshToken = refreshToken,
+            };
+        }
+        public async Task<AuthResult> Restore(RestoreRequest request, ClientInfo client, CancellationToken cancellationToken)
         {
             var email = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : null;
             var phone = !string.IsNullOrWhiteSpace(request.PhoneNumber) ? request.PhoneNumber : null;
@@ -139,27 +225,25 @@ namespace AuthModule.Application.Services
             RefreshToken? refreshToken = null;
 
             if (email is not null)
-                user = await _authUserRepository.GetByEmailAsync(email, true);
+                user = await _authUserRepository.GetByEmailAsync(email, cancellationToken, true);
             else if (phone is not null)
-                user = await _authUserRepository.GetByPhoneNumberAsync(phone, true);
+                user = await _authUserRepository.GetByPhoneNumberAsync(phone, cancellationToken, true);
 
             if (user == null)
                 throw new UserNotFoundException("User does not exist.");
 
-            user.EnsureCanLogin();
-
-            if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.Password))
+            if (!_passwordHasher.VerifyHashedPassword(user.Password!.Value, request.Password))
                 throw new IncorrectCredentialsException("Invalid password.");
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.Restore();
-                await _userRestorer.RestoreUserAsync(user.Id);
-                await _unitOfWork.SaveChangesAsync();
+                await _userRestorer.RestoreUserAsync(user.Id, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress);
-                await _unitOfWork.SaveChangesAsync();
-            });
+                refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
 
             return new AuthResult
             {
@@ -172,49 +256,54 @@ namespace AuthModule.Application.Services
             };
         }
 
-        public async Task ChangePassword(ChangePasswordRequest request, Guid userId)
+        public async Task ChangePassword(ChangePasswordRequest request, Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(userId, false);
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
 
-            if (!_passwordHasher.VerifyHashedPassword(user.Password.Value, request.OldPassword))
+            user.ThrowIfCannotLogin();
+            if (user.IsOAuth())
+                throw new OAuthUserCannotChangePasswordException("User was registered by OAuth and have not password");
+
+            if (!_passwordHasher.VerifyHashedPassword(user.Password?.Value ?? string.Empty, request.OldPassword))
             {
-                _logger.LogWarning($"Invalid old password attempt for user with ID {user.Id}.");
-                throw new IncorrectCredentialsException("Old password is incorrect.");
+                _logger.LogWarning($"Invalid password attempt for user with ID {user.Id}.");
+                throw new IncorrectCredentialsException("Invalid password.");
             }
 
             var newHashedPassword = _passwordHasher.HashPassword(request.NewPassword);
 
             user.UpdatePassword(newHashedPassword);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task LogoutFromDevice(string refreshToken)
+        public async Task LogoutFromDevice(string refreshToken, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
                 throw new InvalidRefreshTokenException("RefreshToken is not valid");
 
-            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken, cancellationToken);
             token.Revoke();
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"User logged out from device with refresh token {refreshToken}.");
         }
 
-        public async Task LogoutFromAllDevices(Guid userId)
+        public async Task LogoutFromAllDevices(Guid userId, CancellationToken cancellationToken)
         {
-            var userExists = await _authUserRepository.IsExistsAsync(userId);
+            var userExists = await _authUserRepository.IsExistsAsync(userId, cancellationToken);
             if (!userExists)
             {
                 _logger.LogWarning($"User with ID {userId} does not exist.");
                 throw new UserNotFoundException($"User with ID {userId} does not exist.");
             }
 
-            await _refreshTokenRepository.RevokeAllAsync(userId);
+            await _refreshTokenRepository.RevokeAllAsync(userId, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation($"All devices logged out for user with ID {userId}.");
         }
 
-        public async Task<AuthResult> RefreshTokens(string refreshToken, ClientInfo client)
+        public async Task<AuthResult> RefreshTokens(string refreshToken, ClientInfo client, CancellationToken cancellationToken)
         {
-            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
+            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken, cancellationToken);
 
             if (token == null || token.IsRevoked)
             {
@@ -225,22 +314,22 @@ namespace AuthModule.Application.Services
             if (token.ExpirationDate < DateTime.UtcNow)
             {
                 token.Revoke();
-                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
                 _logger.LogWarning($"Refresh token {refreshToken} has expired.");
                 throw new RefreshTokenOperationException("Refresh token has expired.");
             }
 
-            var user = await _authUserRepository.GetByIdAsync(token.UserId);
+            var user = await _authUserRepository.GetByIdAsync(token.UserId, cancellationToken);
 
             if (user == null)
             {
                 _logger.LogWarning($"User with ID {token.UserId} not found.");
                 throw new UserOperationException("User not found.");
             }
-            user.EnsureCanLogin();
-            var newRefreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, token.Id);
+            user.ThrowIfCannotLogin();
+            var newRefreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, cancellationToken, token.Id);
             token.Revoke();
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation($"Refresh token for user with ID {user.Id} refreshed successfully.");
             return new AuthResult
@@ -255,18 +344,18 @@ namespace AuthModule.Application.Services
             };
         }
 
-        private async Task<RefreshToken> TakeToken(Guid userId, string device, string ipAddress, Guid? tokenId = null)
+        private async Task<RefreshToken> TakeToken(Guid userId, string device, string ipAddress, CancellationToken cancellationToken, Guid? tokenId = null)
         {
             var refreshToken = RefreshToken.Create(userId, device, ipAddress, tokenId);
-            await _refreshTokenRepository.AddAsync(refreshToken);
+            await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
             return refreshToken;
         }
 
-        private async Task<AuthUser> GetUserByCredentials(string? email, string? phone)
+        private async Task<AuthUser> GetUserByCredentials(string? email, string? phone, CancellationToken cancellationToken)
         {
             if (!string.IsNullOrWhiteSpace(email))
             {
-                var user = await _authUserRepository.GetByEmailAsync(email, false);
+                var user = await _authUserRepository.GetByEmailAsync(email, cancellationToken, false);
                 if (user == null)
                     throw new UserNotFoundException($"User with email {email} is not registered.");
 
@@ -275,7 +364,7 @@ namespace AuthModule.Application.Services
 
             if (!string.IsNullOrWhiteSpace(phone))
             {
-                var user = await _authUserRepository.GetByPhoneNumberAsync(phone, false);
+                var user = await _authUserRepository.GetByPhoneNumberAsync(phone, cancellationToken, false);
                 if (user == null)
                     throw new UserNotFoundException($"User with phone {phone} is not registered.");
 
@@ -284,6 +373,30 @@ namespace AuthModule.Application.Services
 
             _logger.LogError("Both email and phone number are null in login request.");
             throw new MissingAuthCredentialException();
+        }
+
+        public async Task AddEmailAsync(Guid userId, string email, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
+            if (await _authUserRepository.IsEmailRegisteredAsync(email, cancellationToken))
+            {
+                _logger.LogWarning($"Email {email} is already registered.");
+                throw new EmailAlreadyExistsException($"Email {email} is already registered.");
+            }
+            user.AddEmail(email);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task AddPhoneAsync(Guid userId, string phone, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByIdAsync(userId, cancellationToken, false);
+            if (await _authUserRepository.IsPhoneNumberRegisteredAsync(phone, cancellationToken))
+            {
+                _logger.LogWarning($"Phone number {phone} is already registered.");
+                throw new PhoneNumberAlreadyExistsException($"Phone number {phone} is already registered.");
+            }
+            user.AddPhone(phone);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

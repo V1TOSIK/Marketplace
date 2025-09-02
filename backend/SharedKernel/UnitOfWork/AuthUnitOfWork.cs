@@ -10,11 +10,10 @@ namespace SharedKernel.UnitOfWork
         public AuthUnitOfWork(TContext dbContext)
         {
             _dbContext = dbContext;
-            Console.WriteLine($"[AuthUnitOfWork] DbContext HashCode: {_dbContext.GetHashCode()}");
         }
-        public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
+        public async Task SaveChangesAsync(CancellationToken cancellationToken) => await _dbContext.SaveChangesAsync(cancellationToken);
 
-        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken)
         {
             if (_dbContext.Database.CurrentTransaction != null)
             {
@@ -22,15 +21,15 @@ namespace SharedKernel.UnitOfWork
                 return;
             }
 
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 await action();
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 Console.WriteLine($"Transaction rolled back: {ex.Message}");
                 throw;
             }

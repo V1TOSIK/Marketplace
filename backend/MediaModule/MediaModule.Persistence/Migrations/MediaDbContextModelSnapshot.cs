@@ -33,7 +33,7 @@ namespace MediaModule.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("DeletedAt")
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
@@ -74,6 +74,15 @@ namespace MediaModule.Persistence.Migrations
                         .HasColumnName("url");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntityId")
+                        .HasDatabaseName("IX_Media_EntityId");
+
+                    b.HasIndex("IsMain")
+                        .HasDatabaseName("IX_Media_IsMain");
+
+                    b.HasIndex("Url")
+                        .IsUnique();
 
                     b.ToTable("medias", (string)null);
                 });

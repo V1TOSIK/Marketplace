@@ -10,7 +10,7 @@ using UserModule.Application.Interfaces;
 
 namespace Marketplace.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -28,14 +28,14 @@ namespace Marketplace.Api.Controllers
         }
 
         [Authorize]
-        [HttpGet]
-        public async Task<ActionResult<UserResponse>> MyAccount()
+        [HttpGet("me")]
+        public async Task<ActionResult<UserResponse>> MyProfile(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
 
-            var response = await _userService.GetProfile(parsedUserId);
+            var response = await _userService.GetProfile(userId, cancellationToken);
             if (response == null)
                 return NotFound();
 
@@ -43,12 +43,12 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<UserResponse>> GetUserAccount(Guid userId)
+        public async Task<ActionResult<UserResponse>> GetUserProfile(Guid userId, CancellationToken cancellationToken)
         {
             if (userId ==  Guid.Empty)
                 return BadRequest();
 
-            var response = await _userService.GetProfile(userId);
+            var response = await _userService.GetProfile(userId, cancellationToken);
             if (response == null)
                 return NotFound();
 
@@ -56,105 +56,127 @@ namespace Marketplace.Api.Controllers
         }
 
         [Authorize]
-        [HttpGet("my-blocked")]
-        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers()
+        [HttpGet("me/blocked")]
+        public async Task<ActionResult<IEnumerable<UserResponse>>> MyBlockedUsers(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
 
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
-
-            var blockedUsers = await _userBlockService.GetBlockedUsers(parsedUserId);
+            var blockedUsers = await _userBlockService.GetBlockedUsers(userId, cancellationToken);
 
             return Ok(blockedUsers);
         }
 
         [Authorize]
-        [HttpPost]
-        public async Task<ActionResult> CreateAccount([FromBody] CreateUserRequest request)
+        [HttpPost("me/profile")]
+        public async Task<ActionResult> CreateProfile([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
-
-            if (request == null)
-                return BadRequest();
-
-            await _userService.CreateNewProfile(parsedUserId, request);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPost("block/{userId}")]
-        public async Task<ActionResult> BlockUser(Guid userId)
-        {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
-                return BadRequest();
-
-            if (userId == Guid.Empty || userId == parsedCurrentUserId)
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
-            await _userBlockService.BlockUser(parsedCurrentUserId, userId);
+            await _userService.CreateNewProfile(userId, request, cancellationToken);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{userId}/ban")]
+        public async Task<ActionResult> BanUser(Guid userId, CancellationToken cancellationToken)
+        {
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
+            await _userService.BanProfile(userId, cancellationToken);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{userId}/ban")]
+        public async Task<ActionResult> UnBanUser(Guid userId, CancellationToken cancellationToken)
+        {
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
+            await _userService.UnBanProfile(userId, cancellationToken);
             return Ok();
         }
 
         [Authorize]
-        [HttpPost("unblock/{userId}")]
-        public async Task<ActionResult> UnblockUser(Guid userId)
+        [HttpPost("{userId}/block")]
+        public async Task<ActionResult> BlockUser(Guid userId, CancellationToken cancellationToken)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(currentUserId, out Guid parsedCurrentUserId))
-                return BadRequest();
-
-            if (userId == Guid.Empty || userId == parsedCurrentUserId)
+            var currentUserId = GetUserId();
+            if (currentUserId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
-            await _userBlockService.UnblockUser(parsedCurrentUserId, userId);
+            if (userId == Guid.Empty || userId == currentUserId)
+                return BadRequest("Invalid user ID");
+
+            await _userBlockService.BlockUser(currentUserId, userId, cancellationToken);
             return Ok();
         }
 
         [Authorize]
-        [HttpPut]
-        public async Task<ActionResult> UpdateAccountInfo([FromBody] UpdateUserRequest request)
+        [HttpDelete("{userId}/block")]
+        public async Task<ActionResult> UnblockUser(Guid userId, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
+            var currentUserId = GetUserId();
+            if (currentUserId == Guid.Empty)
+                return BadRequest("Invalid user ID");
 
-            if (request == null)
-                return BadRequest();
+            if (userId == Guid.Empty || userId == currentUserId)
+                return BadRequest("Invalid user ID");
 
-            await _userService.UpdateProfile(parsedUserId, request);
+            await _userBlockService.UnblockUser(currentUserId, userId, cancellationToken);
             return Ok();
         }
 
         [Authorize]
-        [HttpDelete("hard-delete")]
-        public async Task<ActionResult> HardDeleteAccount()
+        [HttpPut("me/profile")]
+        public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
 
-            await _userService.HardDeleteProfile(parsedUserId);
+            await _userService.UpdateProfile(userId, request, cancellationToken);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpDelete("me/delete")]
+        public async Task<ActionResult> HardDeleteAccount(CancellationToken cancellationToken)
+        {
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
+
+            await _userService.HardDeleteProfile(userId, cancellationToken);
             _cookieService.Delete("refreshToken");
 
             return Ok();
         }
 
         [Authorize]
-        [HttpDelete("soft-delete")]
-        public async Task<ActionResult> SoftDeleteAccount()
+        [HttpPatch("me/deactivate")]
+        public async Task<ActionResult> SoftDeleteAccount(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out Guid parsedUserId))
-                return BadRequest();
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid user ID");
 
-            await _userService.SoftDeleteProfile(parsedUserId);
+            await _userService.SoftDeleteProfile(userId, cancellationToken);
             _cookieService.Delete("refreshToken");
 
             return Ok();
+        }
+
+        private Guid GetUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userId, out Guid parsedUserId))
+                return parsedUserId;
+
+            return Guid.Empty;
         }
     }
 }

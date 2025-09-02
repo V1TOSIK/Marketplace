@@ -1,8 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProductModule.Application.Dtos.Requests;
-using ProductModule.Application.Interfaces;
-using System.Security.Claims;
+using ProductModule.Application.Dtos;
+using ProductModule.Application.Product.Commands.CreateProduct;
+using ProductModule.Application.Product.Commands.DeleteProduct;
+using ProductModule.Application.Product.Commands.PublishProduct;
+using ProductModule.Application.Product.Queries.GetFilteredProducts;
+using ProductModule.Application.Product.Queries.GetMyProducts;
+using ProductModule.Application.Product.Queries.GetProduct;
+using ProductModule.Application.Product.Queries.GetProductByCategory;
+using ProductModule.Application.Product.Queries.GetUserProducts;
 
 namespace Marketplace.Api.Controllers
 {
@@ -10,43 +17,41 @@ namespace Marketplace.Api.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
-        public ProductController(IProductService productService)
+        private readonly IMediator _mediator;
+        public ProductController(IMediator mediator)
         {
-            _productService = productService;
+            _mediator = mediator;
         }
 
         [Authorize]
         [HttpGet("my")]
-        public async Task<ActionResult> GetMyProducts()
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetMyProducts([FromQuery] GetMyProductsQuery query, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!Guid.TryParse(userId, out var parsedUserId))
-                return BadRequest("Invalid user ID.");
-
-            var products = await _productService.GetMyProducts(parsedUserId);
+            var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
-        [HttpGet("all")]
-        public async Task<ActionResult> GetAllProducts()
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetUserProducts([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            var products = await _productService.GetAllProductsAsync();
+            var query = new GetUserProductsQuery(userId);
+            var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult> GetProductsByCategoryId([FromRoute] int categoryId)
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategoryId([FromRoute] int categoryId, CancellationToken cancellationToken)
         {
-            var products = await _productService.GetProductsByCategoryIdAsync(categoryId);
+            var query = new GetProductsByCategoryQuery { CategoryId = categoryId };
+            var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult> GetProductById([FromRoute] Guid id)
+        public async Task<ActionResult<ProductDto>> GetProductById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            var product = await _productService.GetProductByIdAsync(id);
+            var query = new GetProductQuery(id);
+            var product = await _mediator.Send(query, cancellationToken);
 
             if (product == null)
                 return NotFound("Product not found.");
@@ -54,47 +59,36 @@ namespace Marketplace.Api.Controllers
             return Ok(product);
         }
 
-        [HttpPost("filter")]
-        public async Task<ActionResult> GetProductsByFilter([FromBody] ProductFilterRequest request)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByFilter([FromQuery] GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
-            var products = await _productService.GetProductsByFilterAsync(request);
+            var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
         [Authorize]
-        [HttpPost("publish/{productId}")]
-        public async Task<ActionResult> PublishProduct(Guid productId)
+        [HttpPatch("{productId}/publish")]
+        public async Task<ActionResult> PublishProduct([FromRoute] Guid productId, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out var parsedUserId))
-                return BadRequest("Invalid user ID.");
-
-            await _productService.PublishProductAsync(productId, parsedUserId);
+            var command = new PublishProductCommand { ProductId = productId };
+            await _mediator.Send(command, cancellationToken);
             return Ok("Product published successfully.");
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult> AddProduct([FromBody] AddProductRequest request)
+        public async Task<ActionResult<Guid>> AddProduct([FromBody] CreateProductCommand command, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out var parsedUserId))
-                return BadRequest("Invalid user ID.");
-
-            await _productService.AddProductAsync(parsedUserId, request);
-
-            return Ok("Product added successfully.");
+            var productId = await _mediator.Send(command, cancellationToken);
+            return Ok(productId);
         }
 
         [Authorize]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteProduct([FromRoute] Guid id)
+        public async Task<ActionResult> DeleteProduct([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userId, out var parsedUserId))
-                return BadRequest("Invalid user ID.");
-
-            await _productService.DeleteProductAsync(id, parsedUserId);
+            var command = new DeleteProductCommand(id);
+            await _mediator.Send(command, cancellationToken);
             return Ok("Product deleted successfully.");
         }
     }

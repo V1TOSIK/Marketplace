@@ -2,8 +2,8 @@
 {
     public interface IMediaManager
     {
-        Task<IEnumerable<string>> GetAllEntityMediaUrls(Guid entityId);
-        Task<Dictionary<Guid,string>> GetAllMainMediaUrls(IEnumerable<Guid> entityIds);
-        Task<string> GetMainMediaUrl(Guid entityId);
+        Task<IEnumerable<string>> GetAllEntityMediaUrls(Guid entityId, CancellationToken cancellationToken);
+        Task<Dictionary<Guid,string>> GetAllMainMediaUrls(IEnumerable<Guid> entityIds, CancellationToken cancellationToken);
+        Task<string> GetMainMediaUrl(Guid entityId, CancellationToken cancellationToken);
     }
 }

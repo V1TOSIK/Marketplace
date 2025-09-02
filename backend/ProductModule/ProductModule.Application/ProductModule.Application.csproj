@@ -11,4 +11,12 @@
     <ProjectReference Include="..\ProductModule.Domain\ProductModule.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Characteristic\Commands\" />
+  </ItemGroup>
+
 </Project>

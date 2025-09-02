@@ -29,6 +29,10 @@ namespace UserModule.Persistence.Configurations
                 .HasColumnName("is_deleted")
                 .HasDefaultValue(false);
 
+            builder.Property(u => u.IsBanned)
+                .HasColumnName("is_banned")
+                .HasDefaultValue(false);
+
             builder.HasMany(u => u.PhoneNumbers)
                 .WithOne()
                 .HasForeignKey(pn => pn.UserId)

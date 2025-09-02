@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ProductModule.Persistence.Repositories;
-using ProductModule.Domain.Interfaces;
+using ProductModule.Application.Interfaces.Repositories;
 
 namespace ProductModule.Persistence.DependencyInjection
 {
