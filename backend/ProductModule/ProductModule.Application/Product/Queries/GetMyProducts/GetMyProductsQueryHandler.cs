@@ -1,0 +1,56 @@
+﻿using MediatR;
+using ProductModule.Application.Dtos;
+using ProductModule.Application.Interfaces.Repositories;
+using ProductModule.Domain.Enums;
+using ProductModule.SharedKernel.Interfaces;
+using SharedKernel.Interfaces;
+
+namespace ProductModule.Application.Product.Queries.GetMyProducts
+{
+    public class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQuery, IEnumerable<ProductDto>>
+    {
+        private readonly IProductRepository _productRepository;
+        private readonly IMediaManager _mediaManager;
+        private readonly ICurrentUserService _currentUserService;
+        public GetMyProductsQueryHandler(IProductRepository productRepository,
+            IMediaManager mediaManager,
+            ICurrentUserService currentUserService)
+        {
+            _productRepository = productRepository;
+            _mediaManager = mediaManager;
+            _currentUserService = currentUserService;
+        }
+
+        public async Task<IEnumerable<ProductDto>> Handle(GetMyProductsQuery query, CancellationToken cancellationToken)
+        {
+            var userId = _currentUserService.UserId;
+            if (userId == null)
+                throw new UnauthorizedAccessException("User is not authenticated.");
+
+            var statuses = query.Statuses?.ToList() ?? new List<Status>
+            {
+                Status.Published,
+                Status.Draft
+            };
+            var products = await _productRepository.GetByUserIdAsync(userId.Value, statuses, cancellationToken);
+            var mainMediaUrls = await _mediaManager
+                .GetAllMainMediaUrls(products.Select(p => p.Id), cancellationToken);
+            var response = products.Select(p =>
+            {
+                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+                return new ProductDto
+                {
+                    Id = p.Id,
+                    MainMediaUrl = url,
+                    Name = p.Name,
+                    PriceCurrency = p.Price.Currency,
+                    PriceAmount = p.Price.Amount,
+                    Location = p.Location,
+                    CategoryId = p.CategoryId,
+                    UserId = p.UserId
+                };
+            });
+            return response;
+        }
+    }
+}

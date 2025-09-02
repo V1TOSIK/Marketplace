@@ -3,6 +3,7 @@ using AuthModule.Infrastructure.Options;
 using AuthModule.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ProductModule.SharedKernel.Interfaces;
 
 namespace AuthModule.Infrastructure.DependencyInjection
 {
@@ -14,8 +15,7 @@ namespace AuthModule.Infrastructure.DependencyInjection
         {
             services.Configure<JwtOptions>(configuration.GetSection("JWT"));
 
-            services.AddHttpContextAccessor();
-
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IVerificationStore, RedisVerificationStore>();
 
             services.Configure<EmailOptions>(configuration.GetSection("SMTP"));

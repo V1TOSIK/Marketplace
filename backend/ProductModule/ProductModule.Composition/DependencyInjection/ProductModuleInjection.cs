@@ -17,7 +17,7 @@ namespace ProductModule.Composition.DependencyInjection
         {
             services.AddProductApplication();
             services.AddProductPersistence(configuration);
-            
+
             services.AddScoped<IModuleInitializer, ProductModuleInitializer>();
             services.AddScoped<IProductUnitOfWork>(provider =>
             {

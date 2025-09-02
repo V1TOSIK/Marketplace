@@ -48,15 +48,19 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
 builder.Services.AddProductModule(builder.Configuration);
 builder.Services.AddMediaModule(builder.Configuration);
-builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = builder.Configuration.GetConnectionString("Redis");
+    if (string.IsNullOrEmpty(config))
+    {
+        throw new InvalidOperationException("Redis connection string is not configured.");
+    }
     return ConnectionMultiplexer.Connect(config);
 });
 

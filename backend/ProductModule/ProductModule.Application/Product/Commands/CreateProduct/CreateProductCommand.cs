@@ -1,6 +1,9 @@
-﻿namespace ProductModule.Application.Dtos.Requests
+﻿using MediatR;
+using ProductModule.Application.Dtos;
+
+namespace ProductModule.Application.Product.Commands.CreateProduct
 {
-    public class AddProductRequest
+    public class CreateProductCommand : IRequest<Guid>
     {
         public string Name { get; set; } = string.Empty;
         public decimal PriceAmount { get; set; }
@@ -9,6 +12,6 @@
         public string Description { get; set; } = string.Empty;
         public int CategoryId { get; set; }
 
-        public List<CharacteristicGroupRequest> CharacteristicGroups { get; set; } = new ();
+        public List<CharacteristicGroupDto> CharacteristicGroups { get; set; } = new();
     }
 }
