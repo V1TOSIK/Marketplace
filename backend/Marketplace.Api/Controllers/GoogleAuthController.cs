@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using AuthModule.Application.Interfaces;
 using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Models;
 using AuthModule.Infrastructure.Services;
 using Google.Apis.Auth;
 using AuthModule.Infrastructure.Options;
 using Microsoft.Extensions.Options;
+using AuthModule.Application.Interfaces.Services;
 
 [Route("api/auth/oauth/google")]
 public class GoogleAuthController : Controller

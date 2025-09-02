@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\MediaModule.Application\MediaModule.Application.csproj" />
     <ProjectReference Include="..\MediaModule.Domain\MediaModule.Domain.csproj" />
   </ItemGroup>
 

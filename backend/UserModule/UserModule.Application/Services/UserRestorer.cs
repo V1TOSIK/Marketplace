@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;
-using UserModule.Domain.Interfaces;
+using UserModule.Application.Interfaces.Repositories;
 
 namespace UserModule.Application.Services
 {

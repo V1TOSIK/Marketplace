@@ -1,4 +1,4 @@
-﻿using AuthModule.Application.Interfaces;
+﻿using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Options;
 using AuthModule.Application.Services;
 using Microsoft.Extensions.Configuration;

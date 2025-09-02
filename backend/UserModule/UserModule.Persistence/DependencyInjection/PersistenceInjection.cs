@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using UserModule.Domain.Interfaces;
+using UserModule.Application.Interfaces.Repositories;
 using UserModule.Persistence.Repositories;
 
 namespace UserModule.Persistence.DependencyInjection

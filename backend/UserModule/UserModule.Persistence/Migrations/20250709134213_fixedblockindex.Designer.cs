@@ -13,7 +13,7 @@ namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     [Migration("20250709134213_fixedblockindex")]
-    partial class fixedblockindex
+    partial class FixedBlockIndex
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -1,6 +1,6 @@
-﻿using AuthModule.Domain.Entities;
+﻿using AuthModule.Application.Interfaces.Repositories;
+using AuthModule.Domain.Entities;
 using AuthModule.Domain.Exceptions;
-using AuthModule.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

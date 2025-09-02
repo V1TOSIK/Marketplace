@@ -13,7 +13,7 @@ namespace AuthModule.Persistence.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
     [Migration("20250706123744_renameblocktoban")]
-    partial class renameblocktoban
+    partial class RenameBlockToBan
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

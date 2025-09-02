@@ -1,4 +1,4 @@
-﻿using AuthModule.Domain.Interfaces;
+﻿using AuthModule.Application.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;
 

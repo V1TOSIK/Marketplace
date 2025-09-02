@@ -1,4 +1,4 @@
-﻿using MediaModule.Domain.Interfaces;
+﻿using MediaModule.Application.Interfaces.Repositories;
 using MediaModule.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

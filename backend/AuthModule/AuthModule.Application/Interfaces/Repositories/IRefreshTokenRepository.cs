@@ -1,6 +1,6 @@
 ﻿using AuthModule.Domain.Entities;
 
-namespace AuthModule.Domain.Interfaces
+namespace AuthModule.Application.Interfaces.Repositories
 {
     public interface IRefreshTokenRepository
     {

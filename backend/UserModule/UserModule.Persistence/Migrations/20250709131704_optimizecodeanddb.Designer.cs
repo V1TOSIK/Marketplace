@@ -13,7 +13,7 @@ namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     [Migration("20250709131704_optimizecodeanddb")]
-    partial class optimizecodeanddb
+    partial class OptimizeCodeAndDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

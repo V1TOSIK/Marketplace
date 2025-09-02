@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using UserModule.Application.Dtos.Responses;
-using UserModule.Application.Interfaces;
 using UserModule.Domain.Entities;
-using UserModule.Domain.Interfaces;
 using UserModule.Domain.Exceptions;
 using SharedKernel.Interfaces;
+using UserModule.Application.Interfaces.Services;
+using UserModule.Application.Interfaces.Repositories;
 
 namespace UserModule.Application.Services
 {

@@ -1,4 +1,4 @@
-﻿using MediaModule.Application.Interfaces;
+﻿using MediaModule.Application.Interfaces.Services;
 using MediaModule.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;

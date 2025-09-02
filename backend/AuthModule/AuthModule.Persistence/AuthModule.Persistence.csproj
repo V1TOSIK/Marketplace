@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\AuthModule.Application\AuthModule.Application.csproj" />
     <ProjectReference Include="..\AuthModule.Domain\AuthModule.Domain.csproj" />
   </ItemGroup>
 

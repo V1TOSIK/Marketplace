@@ -1,4 +1,4 @@
-﻿using AuthModule.Application.Interfaces;
+﻿using AuthModule.Application.Interfaces.Services;
 using AuthModule.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 using Twilio;

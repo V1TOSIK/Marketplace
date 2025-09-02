@@ -13,7 +13,7 @@ namespace AuthModule.Persistence.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
     [Migration("20250628121644_renamecolumnuseridinrefreshtoken")]
-    partial class renamecolumnuseridinrefreshtoken
+    partial class RenameColumnUserIdInRefreshToken
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

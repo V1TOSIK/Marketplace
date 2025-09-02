@@ -1,7 +1,6 @@
 ﻿using MediaModule.Domain.Entities;
-using MediaModule.Domain.Enums;
 
-namespace MediaModule.Domain.Interfaces
+namespace MediaModule.Application.Interfaces.Repositories
 {
     public interface IMediaRepository
     {

@@ -1,5 +1,5 @@
 ﻿using MediaModule.Application.Exceptions;
-using MediaModule.Domain.Interfaces;
+using MediaModule.Application.Interfaces.Repositories;
 using SharedKernel.Interfaces;
 
 namespace MediaModule.Application.Services

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
-using UserModule.Application.Interfaces;
+using UserModule.Application.Interfaces.Services;
 using UserModule.Application.Services;
 
 namespace UserModule.Application.DependencyInjection

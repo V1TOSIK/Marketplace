@@ -1,7 +1,7 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Models;
 
-namespace AuthModule.Application.Interfaces
+namespace AuthModule.Application.Interfaces.Services
 {
     public interface IAuthService
     {

@@ -1,10 +1,10 @@
 ﻿using MediaModule.Application.Dtos.Requests;
 using MediaModule.Application.Dtos.Responses;
 using MediaModule.Application.Exceptions;
-using MediaModule.Application.Interfaces;
+using MediaModule.Application.Interfaces.Services;
 using MediaModule.Domain.Entities;
 using MediaModule.Domain.Exceptions;
-using MediaModule.Domain.Interfaces;
+using MediaModule.Application.Interfaces.Repositories;
 using SharedKernel.Interfaces;
 
 namespace MediaModule.Application.Services

@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using System.Threading;
-using UserModule.Domain.Exceptions;
-using UserModule.Domain.Interfaces;
+﻿using UserModule.Domain.Exceptions;
 
 namespace UserModule.Domain.Entities
 {

@@ -1,7 +1,7 @@
 ﻿using UserModule.Application.Dtos.Requests;
 using UserModule.Application.Dtos.Responses;
 
-namespace UserModule.Application.Interfaces
+namespace UserModule.Application.Interfaces.Services
 {
     public interface IUserService
     {

@@ -1,4 +1,4 @@
-﻿using AuthModule.Domain.Interfaces;
+﻿using AuthModule.Application.Interfaces.Repositories;
 using AuthModule.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

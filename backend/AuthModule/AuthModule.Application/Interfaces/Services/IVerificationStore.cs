@@ -1,4 +1,4 @@
-﻿namespace AuthModule.Application.Interfaces
+﻿namespace AuthModule.Application.Interfaces.Services
 {
     public interface IVerificationStore
     {

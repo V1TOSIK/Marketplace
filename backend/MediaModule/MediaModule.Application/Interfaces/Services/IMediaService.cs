@@ -1,7 +1,7 @@
 ﻿using MediaModule.Application.Dtos.Requests;
 using MediaModule.Application.Dtos.Responses;
 
-namespace MediaModule.Application.Interfaces
+namespace MediaModule.Application.Interfaces.Services
 {
     public interface IMediaService
     {

@@ -1,12 +1,11 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Exceptions;
-using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Repositories;
+using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Models;
 using AuthModule.Domain.Entities;
-using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
-using AuthModule.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;

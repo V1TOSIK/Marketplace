@@ -1,6 +1,4 @@
-﻿using MediaModule.Domain.Entities;
-
-namespace MediaModule.Application.Interfaces
+﻿namespace MediaModule.Application.Interfaces.Services
 {
     public interface IMediaProvider
     {
