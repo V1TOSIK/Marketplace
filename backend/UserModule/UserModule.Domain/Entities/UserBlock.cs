@@ -1,8 +1,9 @@
-﻿using UserModule.Domain.Exceptions;
+﻿using SharedKernel.Entity;
+using UserModule.Domain.Exceptions;
 
 namespace UserModule.Domain.Entities
 {
-    public class UserBlock
+    public class UserBlock : Entity<int>
     {
         private UserBlock(Guid userId, Guid blockedUserId)
         {
@@ -11,7 +12,6 @@ namespace UserModule.Domain.Entities
             BlockedAt = DateTime.UtcNow;
         }
 
-        public int Id { get; private set; }
         public Guid UserId { get; private set; }
         public Guid BlockedUserId { get; private set; }
         public DateTime BlockedAt { get; private set; }

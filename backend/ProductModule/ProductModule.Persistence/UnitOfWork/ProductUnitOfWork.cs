@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedKernel.Interfaces;
 
-namespace SharedKernel.UnitOfWork
+namespace ProductModule.Persistence.UnitOfWork
 {
-    public class AuthUnitOfWork<TContext> : IAuthUnitOfWork where TContext : DbContext
+    public class ProductUnitOfWork<TContext> : IProductUnitOfWork where TContext : DbContext
     {
         private readonly TContext _dbContext;
 
-        public AuthUnitOfWork(TContext dbContext)
+        public ProductUnitOfWork(TContext dbContext)
         {
             _dbContext = dbContext;
         }

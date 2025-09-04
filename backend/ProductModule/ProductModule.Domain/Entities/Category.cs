@@ -1,8 +1,9 @@
 ﻿using ProductModule.Domain.Exceptions;
+using SharedKernel.Entity;
 
 namespace ProductModule.Domain.Entities
 {
-    public class Category
+    public class Category : Entity<int>
     {
         private Category(string name)
         {
@@ -10,7 +11,6 @@ namespace ProductModule.Domain.Entities
                 throw new InvalidCategoryDataException("Category name cannot be empty or null.");
             Name = name;
         }
-        public int Id { get; private set; }
         public string Name { get; private set; } = string.Empty;
 
 

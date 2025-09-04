@@ -1,13 +1,13 @@
 ﻿using MediaModule.Domain.Enums;
 using MediaModule.Domain.Exceptions;
+using SharedKernel.AgregateRoot;
 
 namespace MediaModule.Domain.Entities
 {
-    public class Media
+    public class Media : AggregateRoot<Guid>
     {
         private Media(Guid entityId, string url, string name, string mediaType, EntityType entityType, bool isMain = false)
         {
-            Id = Guid.NewGuid();
             EntityId = entityId;
             Url = url;
             Name = name;
@@ -17,7 +17,6 @@ namespace MediaModule.Domain.Entities
             CreatedAt = DateTime.UtcNow;
         }
 
-        public Guid Id { get; private set; }
         public Guid EntityId { get; private set; }
         public string Url { get; private set; } = string.Empty;
         public string Name { get; private set; }

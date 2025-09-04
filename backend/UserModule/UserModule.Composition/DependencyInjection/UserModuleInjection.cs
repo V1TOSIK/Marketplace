@@ -2,10 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
-using SharedKernel.UnitOfWork;
 using UserModule.Application.DependencyInjection;
 using UserModule.Persistence;
 using UserModule.Persistence.DependencyInjection;
+using UserModule.Persistence.UnitOfWork;
 
 namespace UserModule.Composition.DependencyInjection
 {

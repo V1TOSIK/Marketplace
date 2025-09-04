@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Marketplace.Abstractions;
 using SharedKernel.Interfaces;
 using AuthModule.Persistence;
-using SharedKernel.UnitOfWork;
+using AuthModule.Persistence.UnitOfWork;
 
 namespace AuthModule.Composition.DependencyInjection
 {

@@ -1,16 +1,17 @@
-﻿using SharedKernel.Exceptions;
+﻿using SharedKernel.Entity;
+using SharedKernel.Exceptions;
 using SharedKernel.ValueObjects;
 
 namespace UserModule.Domain.Entities
 {
-    public class UserPhoneNumber
+    public class UserPhoneNumber : Entity<int>
     {
         private UserPhoneNumber(Guid userId, PhoneNumber phoneNumber)
         {
             UserId = userId;
             PhoneNumber = phoneNumber;
         }
-        public int Id { get; private set; }
+
         public Guid UserId { get; private set; }
         public PhoneNumber PhoneNumber { get; private set; } 
 

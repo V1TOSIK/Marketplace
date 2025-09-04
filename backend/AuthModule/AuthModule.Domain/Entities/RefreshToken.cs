@@ -1,16 +1,16 @@
 ﻿using AuthModule.Domain.Exceptions;
+using SharedKernel.AgregateRoot;
 using System.Security.Cryptography;
 
 namespace AuthModule.Domain.Entities
 {
-    public class RefreshToken
+    public class RefreshToken : AggregateRoot<Guid>
     {
         public const byte EXPIRATION_DAYS = 10;
         private RefreshToken(Guid userId, string device, string ipAddress, Guid? replacedByTokenId)
         {
             if (userId == Guid.Empty)
                 throw new InvalidRefreshTokenException("User ID cannot be empty.");
-            Id = Guid.NewGuid();
             UserId = userId;
             ExpirationDate = DateTime.UtcNow.AddDays(EXPIRATION_DAYS);
             ReplacedByTokenId = replacedByTokenId;
@@ -20,7 +20,6 @@ namespace AuthModule.Domain.Entities
             Token = GenerateToken();
         }
 
-        public Guid Id { get; private set; }
         public Guid UserId { get; private set; }
         public string Token { get; }
         public DateTime ExpirationDate { get; private set; }

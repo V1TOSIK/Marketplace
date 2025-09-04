@@ -1,10 +1,11 @@
 ﻿using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
 using ProductModule.Domain.ValueObjects;
+using SharedKernel.AgregateRoot;
 
 namespace ProductModule.Domain.Entities
 {
-    public class Product
+    public class Product : AggregateRoot<Guid>
     {
         private Product() { }
         private Product(Guid userId,
@@ -15,7 +16,6 @@ namespace ProductModule.Domain.Entities
             int categoryId,
             Status status)
         {
-            Id = Guid.NewGuid();
             UserId = userId;
             Name = name;
             Price = price;
@@ -26,7 +26,6 @@ namespace ProductModule.Domain.Entities
             CreatedAt = DateTime.UtcNow;
         }
 
-        public Guid Id { get; private set; }
         public Guid UserId { get; private set; }
         public string Name { get; private set; } = string.Empty;
         public Price Price { get; private set; }

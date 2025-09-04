@@ -3,7 +3,6 @@ using AuthModule.Application.Options;
 using AuthModule.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
 
 namespace AuthModule.Application.DependencyInjection
 {
@@ -14,8 +13,9 @@ namespace AuthModule.Application.DependencyInjection
             IConfiguration configuration)
         {
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IUserManager, UserManager>();
             services.AddScoped<IVerificationService, VerificationService>();
+
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
 
             services.Configure<GoogleOptions>(configuration.GetSection("GOOGLE"));
 

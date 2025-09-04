@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedKernel.Interfaces;
 
-namespace SharedKernel.UnitOfWork
+namespace UserModule.Persistence.UnitOfWork
 {
     public class UserUnitOfWork<TContext> : IUserUnitOfWork where TContext : DbContext
     {

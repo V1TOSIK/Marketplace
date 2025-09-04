@@ -11,7 +11,6 @@ namespace UserModule.Application.DependencyInjection
         {
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserBlockService, UserBlockService>();
-            services.AddScoped<IUserRestorer, UserRestorer>();
             return services;
         }
     }

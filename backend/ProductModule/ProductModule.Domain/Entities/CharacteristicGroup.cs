@@ -1,8 +1,9 @@
 ﻿using ProductModule.Domain.Exceptions;
+using SharedKernel.Entity;
 
 namespace ProductModule.Domain.Entities
 {
-    public class CharacteristicGroup
+    public class CharacteristicGroup : Entity<int>
     {
         public CharacteristicGroup(string name, Guid productId)
         {
@@ -14,7 +15,7 @@ namespace ProductModule.Domain.Entities
             Name = name;
             ProductId = productId;
         }
-        public int Id { get; private set; }
+
         public string Name { get; private set; } = string.Empty;
         public Guid ProductId { get; private set; }
 

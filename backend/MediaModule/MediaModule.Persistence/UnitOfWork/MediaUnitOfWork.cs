@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedKernel.Interfaces;
 
-namespace SharedKernel.UnitOfWork
+namespace MediaModule.Persistence.UnitOfWork
 {
     public class MediaUnitOfWork<TContext> : IMediaUnitOfWork where TContext : DbContext
     {
