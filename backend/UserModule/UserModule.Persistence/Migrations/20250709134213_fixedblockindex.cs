@@ -5,7 +5,7 @@
 namespace UserModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class fixedblockindex : Migration
+    public partial class FixedBlockIndex : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -5,7 +5,7 @@
 namespace AuthModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class renamecolumnuseridinrefreshtoken : Migration
+    public partial class RenameColumnUserIdInRefreshToken : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,12 +1,10 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
-using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedKernel.Interfaces;
 using System.Security.Claims;
-using UserModule.Domain.Entities;
 
 namespace Marketplace.Api.Controllers
 {

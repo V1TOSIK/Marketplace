@@ -1,28 +1,23 @@
 ﻿using UserModule.Application.Dtos.Requests;
 using UserModule.Application.Dtos.Responses;
-using UserModule.Application.Interfaces;
-using UserModule.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using UserModule.Domain.Entities;
-using UserModule.Domain.Exceptions;
 using SharedKernel.Interfaces;
-using UserModule.Application.Exceptions;
+using UserModule.Application.Interfaces.Services;
+using UserModule.Application.Interfaces.Repositories;
 
 namespace UserModule.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IUserManager _userManager;
         private readonly IUserUnitOfWork _unitOfWork;
         private readonly ILogger<UserService> _logger;
         public UserService(IUserRepository userRepository,
-            IUserManager userManager,
             IUserUnitOfWork unitOfWork,
             ILogger<UserService> logger)
         {
             _userRepository = userRepository;
-            _userManager = userManager;
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
@@ -64,12 +59,14 @@ namespace UserModule.Application.Services
             _logger.LogInformation($"Profile for user {user.Name} with ID {userId} has been updated.");
         }
 
+
+        // Need remove transaction
+
         public async Task BanProfile(Guid userId, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false, false);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _userManager.Ban(userId, cancellationToken);
                 user.Ban();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation($"Profile for user with ID {userId} has been banned.");
@@ -78,10 +75,9 @@ namespace UserModule.Application.Services
 
         public async Task UnBanProfile(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false, true);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, true, true);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _userManager.UnBan(userId, cancellationToken);
                 user.UnBan();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation($"Profile for user with ID {userId} has been unbanned.");
@@ -90,11 +86,10 @@ namespace UserModule.Application.Services
 
         public async Task SoftDeleteProfile(Guid userId, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false, false);
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, false, true);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.MarkAsDeleted();
-                await _userManager.SoftDeleteUser(userId, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
             _logger.LogInformation($"Profile for user with ID {userId} has been soft deleted.");
@@ -102,10 +97,11 @@ namespace UserModule.Application.Services
 
         public async Task HardDeleteProfile(Guid userId, CancellationToken cancellationToken)
         {
+            var user = await _userRepository.GetByIdAsync(userId, cancellationToken, true, true);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
+                user.Delete();
                 await _userRepository.HardDeleteAsync(userId, cancellationToken);
-                await _userManager.HardDeleteUser(userId, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
             _logger.LogInformation($"Profile for user with ID {userId} has been hard deleted.");

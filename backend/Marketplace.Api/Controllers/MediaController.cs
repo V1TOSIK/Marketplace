@@ -1,6 +1,6 @@
 ﻿using MediaModule.Application.Dtos.Requests;
 using MediaModule.Application.Dtos.Responses;
-using MediaModule.Application.Interfaces;
+using MediaModule.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

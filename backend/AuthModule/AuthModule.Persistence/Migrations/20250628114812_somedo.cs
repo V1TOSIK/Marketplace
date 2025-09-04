@@ -5,7 +5,7 @@
 namespace AuthModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class somedo : Migration
+    public partial class SomeDo : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

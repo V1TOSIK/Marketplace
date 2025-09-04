@@ -1,4 +1,4 @@
-﻿using MediaModule.Application.Interfaces;
+﻿using MediaModule.Application.Interfaces.Services;
 using MediaModule.Domain.Entities;
 using MediaModule.Infrastructure.Options;
 using Microsoft.Extensions.Logging;

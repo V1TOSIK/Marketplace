@@ -13,7 +13,7 @@ namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     [Migration("20250701124957_initmigrations")]
-    partial class initmigrations
+    partial class InitMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

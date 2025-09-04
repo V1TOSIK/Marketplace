@@ -1,8 +1,8 @@
 ﻿using AuthModule.Application.Exceptions;
+using AuthModule.Application.Interfaces.Repositories;
 using AuthModule.Domain.Entities;
 using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
-using AuthModule.Domain.Interfaces;
 using AuthModule.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

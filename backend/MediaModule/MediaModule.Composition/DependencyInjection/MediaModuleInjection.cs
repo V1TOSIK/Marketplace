@@ -4,9 +4,9 @@ using MediaModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MediaModule.Persistence;
 using SharedKernel.Interfaces;
-using SharedKernel.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 using Marketplace.Abstractions;
+using MediaModule.Persistence.UnitOfWork;
 
 namespace MediaModule.Composition.DependencyInjection
 {

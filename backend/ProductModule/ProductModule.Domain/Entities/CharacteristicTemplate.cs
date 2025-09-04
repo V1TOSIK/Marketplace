@@ -1,9 +1,10 @@
 ﻿using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
+using SharedKernel.Entity;
 
 namespace ProductModule.Domain.Entities
 {
-    public class CharacteristicTemplate
+    public class CharacteristicTemplate : Entity<int>
     {
         private CharacteristicTemplate(string name, string unit, int categoryId, TemplateType type)
         {
@@ -12,7 +13,7 @@ namespace ProductModule.Domain.Entities
             CategoryId = categoryId;
             Type = type;
         }
-        public int Id { get; private set; }
+
         public string Name { get; private set; } = string.Empty;
         public string Unit { get; private set; } = string.Empty;
         public int CategoryId { get; private set; }

@@ -13,7 +13,7 @@ namespace AuthModule.Persistence.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
     [Migration("20250621203927_initmigration")]
-    partial class initmigration
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

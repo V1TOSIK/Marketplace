@@ -1,4 +1,4 @@
-﻿using AuthModule.Application.Interfaces;
+﻿using AuthModule.Application.Interfaces.Services;
 using StackExchange.Redis;
 
 namespace AuthModule.Infrastructure.Services

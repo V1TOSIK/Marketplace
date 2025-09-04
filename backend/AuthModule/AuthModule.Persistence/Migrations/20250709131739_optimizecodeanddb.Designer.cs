@@ -13,7 +13,7 @@ namespace AuthModule.Persistence.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
     [Migration("20250709131739_optimizecodeanddb")]
-    partial class optimizecodeanddb
+    partial class OptimizeCodeAndDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

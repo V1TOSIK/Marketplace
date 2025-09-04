@@ -1,11 +1,11 @@
-﻿using System.Linq;
-using System.Threading;
+﻿using MediatR;
+using SharedKernel.AgregateRoot;
+using SharedKernel.Events;
 using UserModule.Domain.Exceptions;
-using UserModule.Domain.Interfaces;
 
 namespace UserModule.Domain.Entities
 {
-    public class User
+    public class User : AggregateRoot<Guid>
     {
         private User(Guid id, string name, string location)
         {
@@ -112,12 +112,20 @@ namespace UserModule.Domain.Entities
                 throw new PhoneNumberNotFoundException("Phone number not found");
             _phoneNumbers.Remove(phoneNumber);
         }
+
         public void MarkAsDeleted()
         {
             if (IsDeleted)
                 throw new DeleteUserException("User is already deleted.");
             IsDeleted = true;
+            AddDomainEvent(new SoftDeleteUserDomainEvent(Id));
         }
+
+        public void Delete()
+        {
+            AddDomainEvent(new HardDeleteUserDomainEvent(Id));
+        }
+
         public void Restore()
         {
             if (!IsDeleted)
@@ -127,16 +135,18 @@ namespace UserModule.Domain.Entities
 
         public void Ban()
         {
-            if(IsBanned)
+            if (IsBanned)
                 throw new BanUserException("User is already banned.");
             IsBanned = true;
+            AddDomainEvent(new BanUserDomainEvent(Id));
         }
 
         public void UnBan()
         {
-            if(!IsBanned)
+            if (!IsBanned)
                 throw new UnbanUserException("User is not banned.");
             IsBanned = false;
+            AddDomainEvent(new UnbanUserDomainEvent(Id));
         }
     }
 }

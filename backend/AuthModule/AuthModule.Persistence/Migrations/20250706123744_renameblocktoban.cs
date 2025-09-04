@@ -5,7 +5,7 @@
 namespace AuthModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class renameblocktoban : Migration
+    public partial class RenameBlockToBan : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

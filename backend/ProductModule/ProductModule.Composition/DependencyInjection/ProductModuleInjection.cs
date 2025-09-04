@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using ProductModule.Application.DependencyInjection;
 using ProductModule.Persistence;
 using ProductModule.Persistence.DependencyInjection;
+using ProductModule.Persistence.UnitOfWork;
 using SharedKernel.Interfaces;
-using SharedKernel.UnitOfWork;
 
 namespace ProductModule.Composition.DependencyInjection
 {

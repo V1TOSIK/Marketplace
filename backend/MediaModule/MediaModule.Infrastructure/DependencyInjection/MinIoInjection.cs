@@ -1,4 +1,4 @@
-﻿using MediaModule.Application.Interfaces;
+﻿using MediaModule.Application.Interfaces.Services;
 using MediaModule.Infrastructure.Options;
 using MediaModule.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;

@@ -4,6 +4,7 @@ using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
+using System.Linq;
 
 
 namespace ProductModule.Persistence.Repositories
@@ -52,8 +53,10 @@ namespace ProductModule.Persistence.Repositories
 
         public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
         {
+            var statusStrings = statuses.Select(s => s.ToString()).ToList();
+
             return await _dbContext.Products
-                .Where(p => p.UserId == userId && statuses.Contains(p.Status))
+                .Where(p => p.UserId == userId && statusStrings.Contains(EF.Property<string>(p, "Status")))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }

@@ -13,7 +13,7 @@ namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     [Migration("20250817111750_checkmig")]
-    partial class checkmig
+    partial class CheckMig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -5,7 +5,7 @@
 namespace UserModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class checkmig : Migration
+    public partial class CheckMig : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

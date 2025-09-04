@@ -5,7 +5,7 @@
 namespace UserModule.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class removeindexinblocks : Migration
+    public partial class RemoveIndexInBlocks : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

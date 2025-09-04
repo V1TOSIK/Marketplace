@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using UserModule.Application.Interfaces.Repositories;
 using UserModule.Domain.Entities;
 using UserModule.Domain.Exceptions;
-using UserModule.Domain.Interfaces;
 
 namespace UserModule.Persistence.Repositories
 {

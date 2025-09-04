@@ -13,7 +13,7 @@ namespace UserModule.Persistence.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     [Migration("20250706131620_removeindexinblocks")]
-    partial class removeindexinblocks
+    partial class RemoveIndexInBlocks
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

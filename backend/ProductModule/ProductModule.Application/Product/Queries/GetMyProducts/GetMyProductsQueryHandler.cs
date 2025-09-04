@@ -27,7 +27,8 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
             if (userId == null)
                 throw new UnauthorizedAccessException("User is not authenticated.");
 
-            var statuses = query.Statuses?.ToList() ?? new List<Status>
+            var parsedStatuses = query.GetParsedStatuses();
+            var statuses = parsedStatuses?.ToList() ?? new List<Status>
             {
                 Status.Published,
                 Status.Draft

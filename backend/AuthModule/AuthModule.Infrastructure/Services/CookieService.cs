@@ -1,5 +1,5 @@
 ﻿using AuthModule.Application.Exceptions;
-using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 

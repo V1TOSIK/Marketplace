@@ -1,14 +1,17 @@
 ﻿using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.ValueObjects;
+using MediatR;
+using SharedKernel.AgregateRoot;
+using SharedKernel.Events;
 using SharedKernel.Exceptions;
 using SharedKernel.ValueObjects;
 
 namespace AuthModule.Domain.Entities
 {
-    public class AuthUser
+    public class AuthUser : AggregateRoot<Guid>
     {
-        private AuthUser(Guid id,
+        private AuthUser(
             string? providerUserId,
             Email? email,
             PhoneNumber? phoneNumber,
@@ -19,7 +22,6 @@ namespace AuthModule.Domain.Entities
             if (email is null && phoneNumber is null)
                 throw new MissingAuthCredentialException();
 
-            Id = id;
             ProviderUserId = providerUserId;
             Email = email;
             PhoneNumber = phoneNumber;
@@ -31,7 +33,6 @@ namespace AuthModule.Domain.Entities
             RegistrationDate = DateTime.UtcNow;
         }
 
-        public Guid Id { get; private set; }
         public string? ProviderUserId { get; private set; }
         public Email? Email { get; private set; }
         public PhoneNumber? PhoneNumber { get; private set; }
@@ -56,7 +57,6 @@ namespace AuthModule.Domain.Entities
             var role = ParseRole(roleText);
 
             return new AuthUser(
-                Guid.NewGuid(),
                 providerUserId,
                 new Email(email),
                 null,
@@ -75,7 +75,6 @@ namespace AuthModule.Domain.Entities
             var role = ParseRole(roleText);
 
             return new AuthUser(
-                Guid.NewGuid(),
                 null,
                 email,
                 phoneNumber,
@@ -100,6 +99,7 @@ namespace AuthModule.Domain.Entities
 
             IsDeleted = false;
             DeletedAt = null;
+            AddDomainEvent(new RestoreUserDomainEvent(Id));
         }
 
         public void Ban()
@@ -117,6 +117,7 @@ namespace AuthModule.Domain.Entities
             IsBanned = false;
             BannedAt = null;
         }
+
         public void AddEmail(string emailValue)
         {
             if (string.IsNullOrWhiteSpace(emailValue))
@@ -125,6 +126,7 @@ namespace AuthModule.Domain.Entities
                 throw new UserOperationException("Email is already set. Use UpdateEmail method to change it.");
             Email = new Email(emailValue);
         }
+
         public void AddPhone(string phoneValue)
         {
             if (string.IsNullOrWhiteSpace(phoneValue))
@@ -133,6 +135,7 @@ namespace AuthModule.Domain.Entities
                 throw new UserOperationException("Phone number is already set. Use UpdatePhoneNumber method to change it.");
             PhoneNumber = new PhoneNumber(phoneValue);
         }
+
         public void UpdatePassword(string passwordValue)
         {
             if (string.IsNullOrWhiteSpace(passwordValue))
@@ -141,6 +144,7 @@ namespace AuthModule.Domain.Entities
                 throw new UserOperationException("User is registered by OAuth");
             Password = new Password(passwordValue);
         }
+
         public void UpdateRole(string roleText) => Role = ParseRole(roleText);
 
         public bool ThrowIfCannotLogin()

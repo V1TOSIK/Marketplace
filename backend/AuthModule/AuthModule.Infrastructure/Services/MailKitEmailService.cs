@@ -1,4 +1,4 @@
-﻿using AuthModule.Application.Interfaces;
+﻿using AuthModule.Application.Interfaces.Services;
 using AuthModule.Infrastructure.Options;
 using MailKit.Net.Smtp;
 using MailKit.Security;

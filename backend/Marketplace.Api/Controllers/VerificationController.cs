@@ -1,5 +1,5 @@
 ﻿using AuthModule.Application.Dtos.Requests;
-using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Marketplace.Api.Controllers

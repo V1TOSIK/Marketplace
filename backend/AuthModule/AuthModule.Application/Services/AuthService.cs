@@ -1,12 +1,11 @@
 ﻿using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Exceptions;
-using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Repositories;
+using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Models;
 using AuthModule.Domain.Entities;
-using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
-using AuthModule.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;
@@ -18,7 +17,6 @@ namespace AuthModule.Application.Services
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly IUserRestorer _userRestorer;
         private readonly IAuthUnitOfWork _unitOfWork;
         private readonly ILogger<AuthService> _logger;
         public AuthService(
@@ -26,14 +24,12 @@ namespace AuthModule.Application.Services
             IPasswordHasher passwordHasher,
             IRefreshTokenRepository refreshTokenRepository,
             IHttpContextAccessor httpContextAccessor,
-            IUserRestorer userRestorer,
             IAuthUnitOfWork unitOfWork,
             ILogger<AuthService> logger)
         {
             _authUserRepository = authUserRepository;
             _passwordHasher = passwordHasher;
             _refreshTokenRepository = refreshTokenRepository;
-            _userRestorer = userRestorer;
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
@@ -162,7 +158,7 @@ namespace AuthModule.Application.Services
                     UserId = user.Id,
                     Role = user.Role.ToString()
                 },
-                RefreshToken = refreshToken,
+                RefreshToken = refreshToken ?? throw new RefreshTokenOperationException("Refresh token generation failed during register.")
             };
         }
 
@@ -207,9 +203,10 @@ namespace AuthModule.Application.Services
                     UserId = user.Id,
                     Role = user.Role.ToString()
                 },
-                RefreshToken = refreshToken,
+                RefreshToken = refreshToken ?? throw new RefreshTokenOperationException("Refresh token generation failed during register.")
             };
         }
+
         public async Task<AuthResult> Restore(RestoreRequest request, ClientInfo client, CancellationToken cancellationToken)
         {
             var email = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : null;
@@ -238,9 +235,6 @@ namespace AuthModule.Application.Services
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.Restore();
-                await _userRestorer.RestoreUserAsync(user.Id, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
                 refreshToken = await TakeToken(user.Id, client.Device, client.IpAddress, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
@@ -252,7 +246,7 @@ namespace AuthModule.Application.Services
                     UserId = user.Id,
                     Role = user.Role.ToString()
                 },
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken ?? throw new RefreshTokenOperationException("Refresh token generation failed during restore.")
             };
         }
 
