@@ -5,8 +5,8 @@ using AuthModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Marketplace.Abstractions;
 using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 using AuthModule.Persistence;
-using AuthModule.Persistence.UnitOfWork;
 
 namespace AuthModule.Composition.DependencyInjection
 {
@@ -22,11 +22,7 @@ namespace AuthModule.Composition.DependencyInjection
             services.AddAuthInfrastructure(configuration);
 
             services.AddScoped<IModuleInitializer, AuthModuleInitializer>();
-            services.AddScoped<IAuthUnitOfWork>(provider =>
-            {
-                var context = provider.GetRequiredService<AuthDbContext>();
-                return new AuthUnitOfWork<AuthDbContext>(context);
-            });
+            services.AddScoped<IUnitOfWork<AuthDbContext>, UnitOfWork<AuthDbContext>>();
             return services;
         }
     }

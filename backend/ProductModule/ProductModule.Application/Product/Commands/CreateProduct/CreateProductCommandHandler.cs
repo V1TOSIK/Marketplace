@@ -3,8 +3,8 @@ using ProductModule.Application.Dtos;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
-using SharedKernel.Interfaces;
 using ProductModule.SharedKernel.Interfaces;
+using ProductModule.Application.Interfaces;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {

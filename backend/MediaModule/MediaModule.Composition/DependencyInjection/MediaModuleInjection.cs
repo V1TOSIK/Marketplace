@@ -3,10 +3,10 @@ using MediaModule.Infrastructure.DependencyInjection;
 using MediaModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MediaModule.Persistence;
-using SharedKernel.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Marketplace.Abstractions;
-using MediaModule.Persistence.UnitOfWork;
+using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 
 namespace MediaModule.Composition.DependencyInjection
 {
@@ -20,11 +20,7 @@ namespace MediaModule.Composition.DependencyInjection
 
             services.AddScoped<IModuleInitializer, MediaModuleInitializer>();
 
-            services.AddScoped<IMediaUnitOfWork>(provider =>
-            {
-                var context = provider.GetRequiredService<MediaDbContext>();
-                return new MediaUnitOfWork<MediaDbContext>(context);
-            });
+            services.AddScoped<IUnitOfWork<MediaDbContext>, UnitOfWork<MediaDbContext>>();
             return services;
         }
     }

@@ -2,9 +2,9 @@
 using UserModule.Application.Dtos.Responses;
 using Microsoft.Extensions.Logging;
 using UserModule.Domain.Entities;
-using SharedKernel.Interfaces;
 using UserModule.Application.Interfaces.Services;
 using UserModule.Application.Interfaces.Repositories;
+using UserModule.Application.Interfaces;
 
 namespace UserModule.Application.Services
 {

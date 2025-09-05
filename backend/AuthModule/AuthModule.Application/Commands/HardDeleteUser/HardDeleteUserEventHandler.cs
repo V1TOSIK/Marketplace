@@ -1,8 +1,8 @@
-﻿using AuthModule.Application.Interfaces.Repositories;
+﻿using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Events;
-using SharedKernel.Interfaces;
 
 namespace AuthModule.Application.Commands.HardDeleteUser
 {

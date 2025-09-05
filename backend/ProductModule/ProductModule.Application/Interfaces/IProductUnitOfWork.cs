@@ -1,4 +1,4 @@
-﻿namespace SharedKernel.Interfaces
+﻿namespace ProductModule.Application.Interfaces
 {
     public interface IProductUnitOfWork
     {

@@ -5,7 +5,7 @@ using MediaModule.Application.Interfaces.Services;
 using MediaModule.Domain.Entities;
 using MediaModule.Domain.Exceptions;
 using MediaModule.Application.Interfaces.Repositories;
-using SharedKernel.Interfaces;
+using MediaModule.Application.Interfaces;
 
 namespace MediaModule.Application.Services
 {

@@ -1,6 +1,6 @@
-﻿namespace SharedKernel.Interfaces
+﻿namespace UserModule.Application.Interfaces
 {
-    public interface IAuthUnitOfWork
+    public interface IUserUnitOfWork
     {
         Task SaveChangesAsync(CancellationToken cancellationToken);
         Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken);

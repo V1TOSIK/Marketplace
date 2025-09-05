@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ProductModule.Persistence.Repositories;
 using ProductModule.Application.Interfaces.Repositories;
+using ProductModule.Application.Interfaces;
+using ProductModule.Persistence.UnitOfWork;
 
 namespace ProductModule.Persistence.DependencyInjection
 {
@@ -14,6 +16,7 @@ namespace ProductModule.Persistence.DependencyInjection
 
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ICharacteristicRepository, CharacteristicRepository>();
+            services.AddScoped<IProductUnitOfWork, ProductUnitOfWork>();
 
             services.AddDbContext<ProductDbContext>(options =>
             {

@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Events;
-using SharedKernel.Interfaces;
+using UserModule.Application.Interfaces;
 using UserModule.Application.Interfaces.Repositories;
 
 namespace UserModule.Application.Commands.RestoreUser
