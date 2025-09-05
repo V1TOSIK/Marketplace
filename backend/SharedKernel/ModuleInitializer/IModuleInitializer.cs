@@ -1,4 +1,4 @@
-﻿namespace Marketplace.Abstractions
+﻿namespace SharedKernel.ModuleInitializer
 {
     public interface IModuleInitializer
     {

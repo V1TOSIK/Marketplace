@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ProductModule.Application.Interfaces;
 
 namespace ProductModule.Application.DependencyInjection
 {

@@ -1,9 +1,9 @@
-﻿using Marketplace.Abstractions;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ProductModule.Application.DependencyInjection;
 using ProductModule.Persistence;
 using ProductModule.Persistence.DependencyInjection;
+using SharedKernel.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 
@@ -18,7 +18,7 @@ namespace ProductModule.Composition.DependencyInjection
             services.AddProductApplication();
             services.AddProductPersistence(configuration);
 
-            services.AddScoped<IModuleInitializer, ProductModuleInitializer>();
+            services.AddModuleInitializer<ProductDbContext>();
             services.AddScoped<IUnitOfWork<ProductDbContext>, UnitOfWork<ProductDbContext>>();
             return services;
         }

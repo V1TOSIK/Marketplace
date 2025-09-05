@@ -1,6 +1,6 @@
-﻿using Marketplace.Abstractions;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 using UserModule.Application.DependencyInjection;
@@ -17,7 +17,7 @@ namespace UserModule.Composition.DependencyInjection
             services.AddUserApplication();
             services.AddUserPersistence(configuration);
 
-            services.AddScoped<IModuleInitializer, UserModuleInitializer>();
+            services.AddModuleInitializer<UserDbContext>();
             services.AddScoped<IUnitOfWork<UserDbContext>, UnitOfWork<UserDbContext>>();
 
             return services;
