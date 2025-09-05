@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using SharedKernel.Interfaces;
 
 namespace SharedKernel.Events
 {
-    public class UpdateUserRoleDomainEvent : INotification
+    public class UpdateUserRoleDomainEvent : IDomainEvent
     {
         public Guid UserId { get; }
         public string NewRole { get; }

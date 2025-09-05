@@ -4,7 +4,7 @@ using SharedKernel.Events;
 using UserModule.Application.Interfaces;
 using UserModule.Application.Interfaces.Repositories;
 
-namespace UserModule.Application.Commands.RestoreUser
+namespace UserModule.Application.User.Commands.RestoreUser
 {
     public class RestoreUserEventHandler : INotificationHandler<RestoreUserDomainEvent>
     {

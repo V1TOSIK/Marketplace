@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using SharedKernel.Interfaces;
 
 namespace SharedKernel.Events
 {
-    public class UnbanUserDomainEvent : INotification
+    public class UnbanUserDomainEvent : IDomainEvent
     {
         public Guid UserId { get; }
         public UnbanUserDomainEvent(Guid userId)

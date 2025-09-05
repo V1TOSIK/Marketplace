@@ -116,11 +116,8 @@ namespace ProductModule.Domain.Entities
             Status = Status.Published;
         }
 
-        public void UpdateStatus(string statusValue)
+        public void UpdateStatus(Status status)
         {
-            if (!Enum.TryParse<Status>(statusValue, true, out var status))
-                throw new InvalidProductDataException("Invalid product status.");
-
             if (status == Status.Published)
             {
                 if (string.IsNullOrWhiteSpace(Name) ||

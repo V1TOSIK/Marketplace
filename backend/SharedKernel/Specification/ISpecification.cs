@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace SharedKernel.Interfaces
+namespace SharedKernel.Specification
 {
     public interface ISpecification<T>
     {

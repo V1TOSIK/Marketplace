@@ -1,9 +1,9 @@
 ﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
 using ProductModule.Application.Dtos;
 using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Interfaces;
+using SharedKernel.Specification;
 
 namespace ProductModule.Application.Product.Queries.GetFilteredProducts
 {
@@ -19,19 +19,19 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
         }
         public async Task<IEnumerable<ProductDto>> Handle(GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
-            var dbQuery = _productRepository.Query(cancellationToken);
+            var spec = new Specification<ProductModule.Domain.Entities.Product>();
+            spec.AddCriteria(p => p.Status == Status.Published);
 
-            dbQuery = dbQuery.Where(p => p.Status == Status.Published);
             if (query.MaxPrice.HasValue)
-                dbQuery = dbQuery.Where(p => p.Price.Amount <= query.MaxPrice);
+                spec.AddCriteria(p => p.Price.Amount <= query.MaxPrice);
             if (query.MinPrice.HasValue)
-                dbQuery = dbQuery.Where(p => p.Price.Amount >= query.MinPrice);
+                spec.AddCriteria(p => p.Price.Amount >= query.MinPrice);
 
             if (query.Location?.Any() == true)
-                dbQuery = dbQuery.Where(p => query.Location.Contains(p.Location));
+                spec.AddCriteria(p => query.Location.Contains(p.Location));
 
             if (query.CategoryId.HasValue)
-                dbQuery = dbQuery.Where(p => p.CategoryId == query.CategoryId);
+                spec.AddCriteria(p => p.CategoryId == query.CategoryId);
 
             if (query.Characteristics?.Any() == true)
             {
@@ -40,10 +40,18 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
                     .ToList();
                 var productIds = await _productRepository
                     .GetProductIdsFilteredByCharacteristics(queries, cancellationToken);
-                dbQuery = dbQuery.Where(p => productIds.Contains(p.Id));
+                spec.AddCriteria(p => productIds.Contains(p.Id));
             }
 
-            var result = await dbQuery.ToListAsync(cancellationToken);
+            if (!string.IsNullOrEmpty(query.SortedBy))
+            {
+                spec.ApplyOrderByProperty(query.SortedBy, query.SortDescending);
+            }
+
+            if (query.PageSize.HasValue && query.Page.HasValue)
+                spec.ApplyPaging((query.Page.Value - 1) * query.PageSize.Value, query.PageSize.Value);
+
+            var result = await _productRepository.GetBySpecificationAsync(spec, cancellationToken);
 
             var mainMediaUrls = await _mediaManager
                 .GetAllMainMediaUrls(result.Select(r => r.Id), cancellationToken);

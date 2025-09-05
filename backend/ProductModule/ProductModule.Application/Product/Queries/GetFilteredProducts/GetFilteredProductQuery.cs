@@ -12,7 +12,7 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
         public bool SortDescending { get; set; }
         public int? CategoryId { get; set; }
         public List<CharacteristicFilter>? Characteristics { get; set; } = [];
-        public int Page { get; set; } = 0;
-        public int PageSize { get; set; } = 20;
+        public int? Page { get; set; } = 1;
+        public int? PageSize { get; set; } = 10;
     }
 }

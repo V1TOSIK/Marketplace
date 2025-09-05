@@ -1,0 +1,44 @@
+﻿using MediatR;
+using Microsoft.Extensions.Logging;
+using ProductModule.SharedKernel.Interfaces;
+using UserModule.Application.Interfaces;
+using UserModule.Application.Interfaces.Repositories;
+using UserModule.Domain.Entities;
+
+namespace UserModule.Application.User.Commands.DeactivateUser
+{
+    public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserCommand>
+    {
+        private readonly IUserRepository _userRepository;
+        private readonly IUserUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly ILogger<DeactivateUserCommandHandler> _logger;
+        public DeactivateUserCommandHandler(IUserRepository userRepository,
+            IUserUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService,
+            ILogger<DeactivateUserCommandHandler> logger)
+        {
+            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
+            _logger = logger;
+        }
+
+        public async Task Handle(DeactivateUserCommand command, CancellationToken cancellationToken)
+        {
+            var userId = _currentUserService.UserId;
+            if (userId == null || userId.Value != command.UserId)
+            {
+                _logger.LogWarning("[User Module] User ID is empty or does not match the command. Cannot soft delete user.");
+                throw new UnauthorizedAccessException("User is not authenticated or not authorized to delete this profile.");
+            }
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, false, true);
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                user.MarkAsDeleted();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+            _logger.LogInformation("[User Module] Profile for user with ID {userId} has been soft deleted.", command.UserId);
+        }
+    }
+}

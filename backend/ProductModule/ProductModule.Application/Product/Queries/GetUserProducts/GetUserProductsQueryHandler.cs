@@ -2,7 +2,6 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Enums;
-using ProductModule.SharedKernel.Interfaces;
 using SharedKernel.Interfaces;
 
 namespace ProductModule.Application.Product.Queries.GetUserProducts

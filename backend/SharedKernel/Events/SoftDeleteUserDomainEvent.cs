@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using SharedKernel.Interfaces;
 
 namespace SharedKernel.Events
 {
-    public class SoftDeleteUserDomainEvent : INotification
+    public class SoftDeleteUserDomainEvent : IDomainEvent
     {
         public Guid UserId { get; }
         public SoftDeleteUserDomainEvent(Guid userId)

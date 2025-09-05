@@ -3,6 +3,8 @@ using UserModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using UserModule.Application.Interfaces.Repositories;
+using UserModule.Application.Dtos;
+using System.Security.Cryptography;
 
 namespace UserModule.Persistence.Repositories
 {
@@ -24,27 +26,35 @@ namespace UserModule.Persistence.Repositories
                 && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
-                _logger.LogError($"User with ID {userId} not found.");
+                _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
                 throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
             return user;
         }
 
-        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
+        public async Task<UserDto> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
             var user = await _dbContext.Users
-                .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId
-                && (includeDeleted || !u.IsDeleted)
-                && (includeBanned || !u.IsBanned), cancellationToken);
+                .Join(_dbContext.UserPhoneNumbers,
+                    u => u.Id,
+                    pn => pn.UserId,
+                    (u, pn) => new { User = u, PhoneNumber = pn })
+                .FirstOrDefaultAsync(u => u.User.Id == userId
+                && (includeDeleted || !u.User.IsDeleted)
+                && (includeBanned || !u.User.IsBanned), cancellationToken);
             if (user == null)
             {
-                _logger.LogError($"User with ID {userId} not found.");
+                _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
                 throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
-            return user;
+            // need to fetch phone numbers separately to avoid multiple records due to join
+            var userDto = new UserDto()
+            {
+                Name = user.User.Name,
+                Location = user.User.Location,
+                PhoneNumbers = []
+            };
+            return userDto;
         }
 
         public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken)
@@ -59,12 +69,12 @@ namespace UserModule.Persistence.Repositories
         {
             if (await ExistsAsync(user.Id, cancellationToken))
             {
-                _logger.LogError($"User with ID {user.Id} already exists in the repository.");
+                _logger.LogError("[User Module(Repository)] User with ID {Id} already exists in the repository.", user.Id);
                 throw new UserExistException($"User with ID {user.Id} already exists.");
             }
 
             await _dbContext.Users.AddAsync(user, cancellationToken);
-            _logger.LogInformation($"User with ID {user.Id} added successfully.");
+            _logger.LogInformation("[User Module(Repository)] User with ID {Id} added successfully.", user.Id);
         }
 
         public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)
