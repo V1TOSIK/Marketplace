@@ -3,8 +3,9 @@ using ProductModule.Application.Dtos;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
-using SharedKernel.Interfaces;
 using ProductModule.SharedKernel.Interfaces;
+using ProductModule.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {
@@ -14,22 +15,26 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
         private readonly IProductUnitOfWork _productUnitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly ICharacteristicRepository _characteristicRepository;
+        private readonly ILogger<CreateProductCommandHandler> _logger;
 
         public CreateProductCommandHandler(IProductRepository productRepository,
             IProductUnitOfWork productUnitOfWork,
             ICurrentUserService currentUserService,
-            ICharacteristicRepository characteristicRepository)
+            ICharacteristicRepository characteristicRepository,
+            ILogger<CreateProductCommandHandler> logger)
         {
             _productRepository = productRepository;
             _productUnitOfWork = productUnitOfWork;
             _currentUserService = currentUserService;
             _characteristicRepository = characteristicRepository;
+            _logger = logger;
         }
         public async Task<Guid> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             var userId = _currentUserService.UserId;
             if (userId == null)
             {
+                _logger.LogWarning("[Product Module] User ID is empty. Cannot create product.");
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
@@ -61,6 +66,7 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
             await _productRepository.AddAsync(product, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);
 
+            _logger.LogInformation("[Product Module] Product '{ProductName}' (ID: {ProductId}) successfully created", product.Name, product.Id);
             return product.Id;
         }
 

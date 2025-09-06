@@ -2,22 +2,29 @@
 using MediaModule.Domain.Entities;
 using MediaModule.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MediaModule.Persistence.Repositories
 {
     public class MediaRepository : IMediaRepository
     {
         private readonly MediaDbContext _dbContext;
-        public MediaRepository(MediaDbContext dbContext)
+        private readonly ILogger<MediaRepository> _logger;
+        public MediaRepository(MediaDbContext dbContext,
+            ILogger<MediaRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         public async Task AddMediaAsync(Media media, CancellationToken cancellationToken)
         {
             var exist = await _dbContext.Medias.AnyAsync(m => m.Url == media.Url, cancellationToken);
             if (exist)
+            {
+                _logger.LogWarning("[Media Module(Repository)] Media with Url:{Url} already exist.", media.Url);
                 throw new MediaAlreadyExistException($"Media with Url:{media.Url} already exist");
+            }
             await _dbContext.Medias.AddAsync(media, cancellationToken);
         }
 
@@ -38,17 +45,27 @@ namespace MediaModule.Persistence.Repositories
                     cancellationToken);
         }
 
-        public async Task<Media?> GetMainMediaByEntityIdAsync(Guid entityId, CancellationToken cancellationToken)
+        public async Task<Media> GetMainMediaByEntityIdAsync(Guid entityId, CancellationToken cancellationToken)
         {
-            return await _dbContext.Medias
+            var media = await _dbContext.Medias
                 .FirstOrDefaultAsync(m => m.EntityId == entityId && m.IsMain && !m.IsDeleted, cancellationToken);
+
+            if (media == null)
+            {
+                _logger.LogWarning("[Media Module(Repository)] Main media for EntityId:{entityId} not found.", entityId);
+                throw new MediaNotFoundException($"Main media for EntityId:{entityId} not found");
+            }
+            return media;
         }
 
         public async Task<Media> GetMediaByIdAsync(Guid mediaId, CancellationToken cancellationToken)
         {
             var media = await _dbContext.Medias.FirstOrDefaultAsync(m => m.Id == mediaId, cancellationToken);
             if (media == null)
+            {
+                _logger.LogWarning("[Media Module(Repository)] Media with Id:{mediaId} not found.", mediaId);
                 throw new MediaNotFoundException($"Media with Id:{mediaId} not found");
+            }
             return media;
         }
 

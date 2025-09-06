@@ -1,5 +1,7 @@
-﻿using AuthModule.Application.Interfaces.Repositories;
+﻿using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Repositories;
 using AuthModule.Persistence.Repositories;
+using AuthModule.Persistence.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +21,7 @@ namespace AuthModule.Persistence.DependencyInjection
 
             services.AddScoped<IAuthUserRepository, AuthUserRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IAuthUnitOfWork, AuthUnitOfWork>();
 
 
             return services;

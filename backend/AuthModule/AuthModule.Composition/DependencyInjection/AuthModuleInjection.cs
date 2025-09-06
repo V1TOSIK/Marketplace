@@ -3,10 +3,11 @@ using AuthModule.Infrastructure.DependencyInjection;
 using AuthModule.Application.DependencyInjection;
 using AuthModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Marketplace.Abstractions;
 using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 using AuthModule.Persistence;
-using AuthModule.Persistence.UnitOfWork;
+using SharedKernel.ModuleInitializer;
+using SharedKernel.Extensions.DependencyInjection;
 
 namespace AuthModule.Composition.DependencyInjection
 {
@@ -21,12 +22,8 @@ namespace AuthModule.Composition.DependencyInjection
             services.AddAuthPersistence(configuration);
             services.AddAuthInfrastructure(configuration);
 
-            services.AddScoped<IModuleInitializer, AuthModuleInitializer>();
-            services.AddScoped<IAuthUnitOfWork>(provider =>
-            {
-                var context = provider.GetRequiredService<AuthDbContext>();
-                return new AuthUnitOfWork<AuthDbContext>(context);
-            });
+            services.AddModuleInitializer<AuthDbContext>();
+            services.AddScoped<IUnitOfWork<AuthDbContext>, UnitOfWork<AuthDbContext>>();
             return services;
         }
     }

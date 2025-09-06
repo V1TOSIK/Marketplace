@@ -1,11 +1,11 @@
 using Marketplace.Api.Middleware;
 using Serilog;
-using Marketplace.Abstractions;
 using AuthModule.Composition.DependencyInjection;
 using UserModule.Composition.DependencyInjection;
 using ProductModule.Composition.DependencyInjection;
 using MediaModule.Composition.DependencyInjection;
 using StackExchange.Redis;
+using SharedKernel.ModuleInitializer;
 
 var builder = WebApplication.CreateBuilder(args);
 

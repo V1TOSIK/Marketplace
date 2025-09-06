@@ -1,11 +1,11 @@
-﻿using Marketplace.Abstractions;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernel.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 using UserModule.Application.DependencyInjection;
 using UserModule.Persistence;
 using UserModule.Persistence.DependencyInjection;
-using UserModule.Persistence.UnitOfWork;
 
 namespace UserModule.Composition.DependencyInjection
 {
@@ -17,12 +17,8 @@ namespace UserModule.Composition.DependencyInjection
             services.AddUserApplication();
             services.AddUserPersistence(configuration);
 
-            services.AddScoped<IModuleInitializer, UserModuleInitializer>();
-            services.AddScoped<IUserUnitOfWork>(provider =>
-            {
-                var context = provider.GetRequiredService<UserDbContext>();
-                return new UserUnitOfWork<UserDbContext>(context);
-            });
+            services.AddModuleInitializer<UserDbContext>();
+            services.AddScoped<IUnitOfWork<UserDbContext>, UnitOfWork<UserDbContext>>();
 
             return services;
         }

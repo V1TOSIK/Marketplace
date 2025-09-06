@@ -19,7 +19,6 @@ namespace UserModule.Persistence
 
         public DbSet<User> Users { get; set; }
         public DbSet<UserPhoneNumber> UserPhoneNumbers { get; set; }
-        public DbSet<UserBlock> UserBlocks { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder

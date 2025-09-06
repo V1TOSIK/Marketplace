@@ -3,6 +3,8 @@ using UserModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using UserModule.Application.Interfaces.Repositories;
+using UserModule.Application.Dtos;
+using System.Security.Cryptography;
 
 namespace UserModule.Persistence.Repositories
 {
@@ -24,10 +26,9 @@ namespace UserModule.Persistence.Repositories
                 && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
-                _logger.LogError($"User with ID {userId} not found.");
+                _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
                 throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
             return user;
         }
 
@@ -40,10 +41,9 @@ namespace UserModule.Persistence.Repositories
                 && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
-                _logger.LogError($"User with ID {userId} not found.");
+                _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
                 throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-            _logger.LogInformation($"User with ID {userId} retrieved successfully.");
             return user;
         }
 
@@ -59,12 +59,12 @@ namespace UserModule.Persistence.Repositories
         {
             if (await ExistsAsync(user.Id, cancellationToken))
             {
-                _logger.LogError($"User with ID {user.Id} already exists in the repository.");
+                _logger.LogError("[User Module(Repository)] User with ID {Id} already exists in the repository.", user.Id);
                 throw new UserExistException($"User with ID {user.Id} already exists.");
             }
 
             await _dbContext.Users.AddAsync(user, cancellationToken);
-            _logger.LogInformation($"User with ID {user.Id} added successfully.");
+            _logger.LogInformation("[User Module(Repository)] User with ID {Id} added successfully.", user.Id);
         }
 
         public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)

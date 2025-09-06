@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Marketplace.Abstractions\Marketplace.Abstractions.csproj" />
     <ProjectReference Include="..\MediaModule.Application\MediaModule.Application.csproj" />
     <ProjectReference Include="..\MediaModule.Domain\MediaModule.Domain.csproj" />
     <ProjectReference Include="..\MediaModule.Infrastructure\MediaModule.Infrastructure.csproj" />

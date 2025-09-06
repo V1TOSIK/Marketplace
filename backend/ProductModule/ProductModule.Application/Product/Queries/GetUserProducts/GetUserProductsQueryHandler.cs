@@ -2,20 +2,19 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Enums;
-using ProductModule.SharedKernel.Interfaces;
-using SharedKernel.Interfaces;
+using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetUserProducts
 {
     public class GetUserProductsQueryHandler : IRequestHandler<GetUserProductsQuery, IEnumerable<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
-        private readonly IMediaManager _mediaManager;
+        private readonly IMediator _mediator;
         public GetUserProductsQueryHandler(IProductRepository productRepository,
-            IMediaManager mediaManager)
+            IMediator mediator)
         {
             _productRepository = productRepository;
-            _mediaManager = mediaManager;
+            _mediator = mediator;
         }
 
         public async Task<IEnumerable<ProductDto>> Handle(GetUserProductsQuery query, CancellationToken cancellationToken)
@@ -23,8 +22,7 @@ namespace ProductModule.Application.Product.Queries.GetUserProducts
             IEnumerable<Status> statuses = [Status.Published];
             var products = await _productRepository.GetByUserIdAsync(query.UserId, statuses, cancellationToken);
 
-            var mainMediaUrls = await _mediaManager
-                .GetAllMainMediaUrls(products.Select(p => p.Id), cancellationToken);
+            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
 
             var response = products.Select(p =>
             {

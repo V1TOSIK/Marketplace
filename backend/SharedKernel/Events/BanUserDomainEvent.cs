@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using SharedKernel.Interfaces;
 
 namespace SharedKernel.Events
 {
-    public class BanUserDomainEvent : INotification
+    public class BanUserDomainEvent : IDomainEvent
     {
         public Guid UserId { get; }
         public BanUserDomainEvent(Guid userId)

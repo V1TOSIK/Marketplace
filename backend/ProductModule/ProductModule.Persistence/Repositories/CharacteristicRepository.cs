@@ -83,33 +83,5 @@ namespace ProductModule.Persistence.Repositories
             }
             return template;
         }
-
-        public async Task DeleteGroupAsync(int groupId, CancellationToken cancellationToken)
-        {
-            await _dbContext.CharacteristicValues
-                .Where(cv => cv.GroupId == groupId)
-                .AsNoTracking()
-                .ExecuteDeleteAsync(cancellationToken);
-
-            await _dbContext.CharacteristicGroups
-                .Where(g => g.Id == groupId)
-                .AsNoTracking()
-                .ExecuteDeleteAsync(cancellationToken);
-
-            _logger.LogInformation($"Characteristic group with ID {groupId} deleted successfully.");
-        }
-
-        public async Task DeleteValueAsync(string value, int templateId, int groupId, CancellationToken cancellationToken)
-        {
-            var characteristicValue = await _dbContext.CharacteristicValues
-                .FirstOrDefaultAsync(cv => cv.Value == value && cv.CharacteristicTemplateId == templateId && cv.GroupId == groupId, cancellationToken);
-            if (characteristicValue == null)
-            {
-                _logger.LogWarning($"Characteristic value with value '{value}', template ID {templateId}, and group ID {groupId} not found.");
-                throw new NullableCharacteristicValueException("Characteristic value not found.");
-            }
-            _dbContext.CharacteristicValues.Remove(characteristicValue);
-            _logger.LogInformation($"Characteristic value '{value}' deleted successfully.");
-        }
     }
 }

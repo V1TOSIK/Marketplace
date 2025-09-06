@@ -57,39 +57,6 @@ namespace UserModule.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("UserModule.Domain.Entities.UserBlock", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("BlockedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("blocked_at");
-
-                    b.Property<Guid>("BlockedUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("blocked_user_id");
-
-                    b.Property<DateTime?>("UnblockedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("unblocked_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "BlockedUserId", "UnblockedAt")
-                        .IsUnique();
-
-                    b.ToTable("user_blocks", (string)null);
-                });
-
             modelBuilder.Entity("UserModule.Domain.Entities.UserPhoneNumber", b =>
                 {
                     b.Property<int>("Id")
@@ -114,15 +81,6 @@ namespace UserModule.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("user_phone_numbers", (string)null);
-                });
-
-            modelBuilder.Entity("UserModule.Domain.Entities.UserBlock", b =>
-                {
-                    b.HasOne("UserModule.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("UserModule.Domain.Entities.UserPhoneNumber", b =>

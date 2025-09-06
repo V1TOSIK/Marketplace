@@ -1,8 +1,8 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using ProductModule.Application.Interfaces;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.SharedKernel.Interfaces;
-using SharedKernel.Interfaces;
 
 namespace ProductModule.Application.Product.Commands.DeleteProduct
 {
@@ -29,7 +29,7 @@ namespace ProductModule.Application.Product.Commands.DeleteProduct
             var userId = _currentUserService.UserId;
             if (userId == null)
             {
-                _logger.LogWarning("User ID is empty. Cannot delete product.");
+                _logger.LogWarning("[Product Module] User ID is empty. Cannot delete product.");
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 

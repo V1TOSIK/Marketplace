@@ -1,8 +1,9 @@
-﻿using MediaModule.Application.Dtos.Requests;
-using MediaModule.Application.Dtos.Responses;
-using MediaModule.Application.Interfaces.Services;
+﻿using MediaModule.Application.Media.Commands.DeleteMedia;
+using MediaModule.Application.Media.Commands.UploadMedia;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Queries;
 
 namespace Marketplace.Api.Controllers
 {
@@ -10,34 +11,34 @@ namespace Marketplace.Api.Controllers
     [ApiController]
     public class MediaController : ControllerBase
     {
-        private readonly IMediaService _mediaService;
-        public MediaController(IMediaService mediaService)
+        private readonly IMediator _mediator;
+        public MediaController(IMediator mediator)
         {
-            _mediaService = mediaService;
+            _mediator = mediator;
         }
 
         [HttpGet("{entityId}")]
-        public async Task<ActionResult<IEnumerable<MediaResponse>>> GetAllEntityMedias(Guid entityId, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<string>>> GetAllEntityMedias(Guid entityId, CancellationToken cancellationToken)
         {
             if (entityId == Guid.Empty)
                 return BadRequest("Invalid request.");
 
-            var mediaFiles = await _mediaService.GetAllEntityMediaUrls(entityId, cancellationToken);
-            if (mediaFiles == null || !mediaFiles.Any())
+            var mediaUrls = await _mediator.Send(new GetEntityMediasQuery(entityId), cancellationToken);
+            if (mediaUrls == null || !mediaUrls.Any())
                 return NotFound("No media files found for the specified entity.");
 
-            return Ok(mediaFiles);
+            return Ok(mediaUrls);
         }
 
         [Authorize]
         [HttpPost]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult> UploadMedia([FromForm] UploadMediaRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> UploadMedia([FromForm] UploadMediaCommand command, CancellationToken cancellationToken)
         {
-            if (request == null || request.File == null)
+            if (command == null || command.File == null)
                 return BadRequest("No files provided for upload.");
 
-            await _mediaService.AddMedia(request, cancellationToken);
+            await _mediator.Send(command, cancellationToken);
             return Ok("Files uploaded successfully.");
         }
 
@@ -47,7 +48,7 @@ namespace Marketplace.Api.Controllers
             if (mediaId == Guid.Empty)
                 return BadRequest("Invalid media ID.");
 
-            await _mediaService.SoftDeleteMedia(mediaId, cancellationToken);
+            await _mediator.Send(new DeleteMediaCommand(mediaId), cancellationToken);
             return NoContent();
         }
     }

@@ -4,8 +4,7 @@ using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
-using System.Linq;
-
+using SharedKernel.Specification;
 
 namespace ProductModule.Persistence.Repositories
 {
@@ -20,9 +19,49 @@ namespace ProductModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public IQueryable<Product> Query(CancellationToken cancellationToken)
+        public async Task ShowUserProductsAsync(Guid userId, CancellationToken cancellationToken)
         {
-            return _dbContext.Products.AsNoTracking();
+            var products = await _dbContext.Products
+                .Where(p => p.UserId == userId && p.Status != Status.Published)
+                .ToListAsync(cancellationToken);
+            foreach (var product in products)
+            {
+                product.UpdateStatus(Status.Published);
+            }
+            _logger.LogInformation($"All products for banned user {userId} have been set to Banned status.");
+        }
+
+        public async Task HideUserProductsAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            var products = await _dbContext.Products
+                .Where(p => p.UserId == userId && p.Status == Status.Published)
+                .ToListAsync(cancellationToken);
+            foreach (var product in products)
+            {
+                product.UpdateStatus(Status.Hidden);
+            }
+            _logger.LogInformation($"All products for banned user {userId} have been set to Banned status.");
+        }
+
+        public async Task<IEnumerable<Product>> GetBySpecificationAsync(Specification<Product> spec, CancellationToken cancellationToken)
+        {
+            IQueryable<Product> query = _dbContext.Products.AsNoTracking();
+
+            foreach (var criteria in spec.Criteria)
+                query = query.Where(criteria);
+
+            foreach (var include in spec.Includes)
+                query = query.Include(include);
+
+            if (spec.OrderBy != null)
+                query = query.OrderBy(spec.OrderBy);
+            else if (spec.OrderByDescending != null)
+                query = query.OrderByDescending(spec.OrderByDescending);
+
+            if (spec.IsPagingEnabled && spec.PageNumber.HasValue && spec.PageSize.HasValue)
+                query = query.Skip(spec.PageNumber.Value).Take(spec.PageSize.Value);
+
+            return await query.ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken)
@@ -51,12 +90,14 @@ namespace ProductModule.Persistence.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status>? statuses, CancellationToken cancellationToken)
         {
-            var statusStrings = statuses.Select(s => s.ToString()).ToList();
+            var statusesList = statuses?.ToList() ?? new List<Status> { Status.Published, Status.Draft };
+
+            var statusStrings = statusesList.Select(s => s.ToString()).ToList();
 
             return await _dbContext.Products
-                .Where(p => p.UserId == userId && statusStrings.Contains(EF.Property<string>(p, "Status")))
+                .Where(p => p.UserId == userId && statusStrings.Contains(p.Status.ToString()))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
@@ -101,6 +142,20 @@ namespace ProductModule.Persistence.Repositories
 
             _dbContext.Products.Remove(product);
             _logger.LogInformation($"Product with ID {productId} deleted successfully.");
+        }
+
+        public async Task DeleteUserProductsAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            var products = await _dbContext.Products
+                .Where(p => p.UserId == userId)
+                .ToListAsync(cancellationToken);
+            if (products.Count == 0)
+            {
+                _logger.LogInformation($"No products found for user {userId} to delete.");
+                return;
+            }
+            _dbContext.Products.RemoveRange(products);
+            _logger.LogInformation($"All products for user {userId} deleted successfully.");
         }
     }
 }

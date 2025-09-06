@@ -1,38 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AuthModule.Application.Interfaces;
 using SharedKernel.Interfaces;
 
 namespace AuthModule.Persistence.UnitOfWork
 {
-    public class AuthUnitOfWork<TContext> : IAuthUnitOfWork where TContext : DbContext
+    public class AuthUnitOfWork : IAuthUnitOfWork
     {
-        private readonly TContext _dbContext;
-
-        public AuthUnitOfWork(TContext dbContext)
+        private readonly IUnitOfWork<AuthDbContext> _unitOfWork;
+        public AuthUnitOfWork(IUnitOfWork<AuthDbContext> unitOfWork)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
         }
-        public async Task SaveChangesAsync(CancellationToken cancellationToken) => await _dbContext.SaveChangesAsync(cancellationToken);
+        public async Task SaveChangesAsync(CancellationToken cancellationToken)
+            => await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken)
-        {
-            if (_dbContext.Database.CurrentTransaction != null)
-            {
-                await action();
-                return;
-            }
-
-            using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-            try
-            {
-                await action();
-                await transaction.CommitAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                Console.WriteLine($"Transaction rolled back: {ex.Message}");
-                throw;
-            }
-        }
+            => await _unitOfWork.ExecuteInTransactionAsync(action, cancellationToken);
     }
 }
