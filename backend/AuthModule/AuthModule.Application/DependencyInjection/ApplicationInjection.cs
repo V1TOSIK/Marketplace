@@ -12,10 +12,11 @@ namespace AuthModule.Application.DependencyInjection
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
+            
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IVerificationService, VerificationService>();
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
 
             services.Configure<GoogleOptions>(configuration.GetSection("GOOGLE"));
 

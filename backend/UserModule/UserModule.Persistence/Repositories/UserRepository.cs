@@ -32,29 +32,19 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<UserDto> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
+        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
         {
             var user = await _dbContext.Users
-                .Join(_dbContext.UserPhoneNumbers,
-                    u => u.Id,
-                    pn => pn.UserId,
-                    (u, pn) => new { User = u, PhoneNumber = pn })
-                .FirstOrDefaultAsync(u => u.User.Id == userId
-                && (includeDeleted || !u.User.IsDeleted)
-                && (includeBanned || !u.User.IsBanned), cancellationToken);
+                .Include(u => u.PhoneNumbers)
+                .FirstOrDefaultAsync(u => u.Id == userId
+                && (includeDeleted || !u.IsDeleted)
+                && (includeBanned || !u.IsBanned), cancellationToken);
             if (user == null)
             {
                 _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
                 throw new UserNotFoundException($"User with ID {userId} not found.");
             }
-            // need to fetch phone numbers separately to avoid multiple records due to join
-            var userDto = new UserDto()
-            {
-                Name = user.User.Name,
-                Location = user.User.Location,
-                PhoneNumbers = []
-            };
-            return userDto;
+            return user;
         }
 
         public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken)

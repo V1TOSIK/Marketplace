@@ -5,23 +5,24 @@ using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Enums;
 using ProductModule.SharedKernel.Interfaces;
 using SharedKernel.Interfaces;
+using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetMyProducts
 {
     public class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQuery, IEnumerable<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
-        private readonly IMediaManager _mediaManager;
+        private readonly IMediator _mediator;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILogger<GetMyProductsQueryHandler> _logger;
 
         public GetMyProductsQueryHandler(IProductRepository productRepository,
-            IMediaManager mediaManager,
+            IMediator mediator,
             ICurrentUserService currentUserService,
             ILogger<GetMyProductsQueryHandler> logger)
         {
             _productRepository = productRepository;
-            _mediaManager = mediaManager;
+            _mediator = mediator;
             _currentUserService = currentUserService;
             _logger = logger;
         }
@@ -42,8 +43,7 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
                 Status.Draft
             };
             var products = await _productRepository.GetByUserIdAsync(userId.Value, statuses, cancellationToken);
-            var mainMediaUrls = await _mediaManager
-                .GetAllMainMediaUrls(products.Select(p => p.Id), cancellationToken);
+            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
             var response = products.Select(p =>
             {
                 var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;

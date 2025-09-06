@@ -2,15 +2,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProductModule.SharedKernel.Interfaces;
-using SharedKernel.Interfaces;
 using System.Security.Claims;
-using UserModule.Application.Commands.BanUser;
-using UserModule.Application.Commands.DeactivateUser;
-using UserModule.Application.Commands.UnbanUser;
 using UserModule.Application.Dtos;
-using UserModule.Application.Dtos.Requests;
-using UserModule.Application.Interfaces.Services;
+using UserModule.Application.User.Commands.BanUser;
+using UserModule.Application.User.Commands.CreateUser;
+using UserModule.Application.User.Commands.DeactivateUser;
+using UserModule.Application.User.Commands.DeleteUser;
+using UserModule.Application.User.Commands.UnbanUser;
+using UserModule.Application.User.Commands.UpdateUser;
+using UserModule.Application.User.Queries.GetProfile;
 
 
 namespace Marketplace.Api.Controllers
@@ -19,20 +19,13 @@ namespace Marketplace.Api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-
-        private readonly IUserService _userService;
         private readonly ICookieService _cookieService;
-        private readonly IUserBlockService _userBlockService;
         private readonly IMediator _mediator;
 
-        public UserController(IUserService userService,
-            ICookieService cookieService,
-            IUserBlockService userBlockService,
+        public UserController(ICookieService cookieService,
             IMediator mediator)
         {
-            _userService = userService;
             _cookieService = cookieService;
-            _userBlockService = userBlockService;
             _mediator = mediator;
         }
 
@@ -44,9 +37,7 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
-            var response = await _userService.GetProfile(userId, cancellationToken);
-            if (response == null)
-                return NotFound();
+            var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
 
             return Ok(response);
         }
@@ -55,38 +46,19 @@ namespace Marketplace.Api.Controllers
         public async Task<ActionResult<UserDto>> GetUserProfile(Guid userId, CancellationToken cancellationToken)
         {
             if (userId ==  Guid.Empty)
-                return BadRequest();
+                return BadRequest("Invalid user ID");
 
-            var response = await _userService.GetProfile(userId, cancellationToken);
-            if (response == null)
-                return NotFound();
+            var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
 
             return Ok(response);
         }
 
         [Authorize]
-        [HttpGet("me/blocked")]
-        public async Task<ActionResult<IEnumerable<UserDto>>> MyBlockedUsers(CancellationToken cancellationToken)
-        {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            var blockedUsers = await _userBlockService.GetBlockedUsers(userId, cancellationToken);
-
-            return Ok(blockedUsers);
-        }
-
-        [Authorize]
         [HttpPost("me/profile")]
-        public async Task<ActionResult> CreateProfile([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> CreateProfile([FromBody] CreateUserCommand command, CancellationToken cancellationToken)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            await _userService.CreateNewProfile(userId, request, cancellationToken);
-            return Ok();
+            await _mediator.Send(command, cancellationToken);
+            return Ok("User profile successful ccreated");
         }
 
         [Authorize(Roles = "Admin")]
@@ -96,7 +68,7 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
             await _mediator.Send(new BanUserCommand(userId), cancellationToken);
-            return Ok();
+            return Ok("User successful baned");
         }
 
         [Authorize(Roles = "Admin")]
@@ -106,49 +78,16 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
             await _mediator.Send(new UnbanUserCommand(userId), cancellationToken);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPost("{userId}/block")]
-        public async Task<ActionResult> BlockUser(Guid userId, CancellationToken cancellationToken)
-        {
-            var currentUserId = GetUserId();
-            if (currentUserId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            if (userId == Guid.Empty || userId == currentUserId)
-                return BadRequest("Invalid user ID");
-
-            await _userBlockService.BlockUser(currentUserId, userId, cancellationToken);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpDelete("{userId}/block")]
-        public async Task<ActionResult> UnblockUser(Guid userId, CancellationToken cancellationToken)
-        {
-            var currentUserId = GetUserId();
-            if (currentUserId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            if (userId == Guid.Empty || userId == currentUserId)
-                return BadRequest("Invalid user ID");
-
-            await _userBlockService.UnblockUser(currentUserId, userId, cancellationToken);
-            return Ok();
+            return Ok("User successful unbaned");
         }
 
         [Authorize]
         [HttpPut("me/profile")]
-        public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserCommand command, CancellationToken cancellationToken)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
+            await _mediator.Send(command, cancellationToken);
 
-            await _userService.UpdateProfile(userId, request, cancellationToken);
-            return Ok();
+            return Ok("Account successful updated");
         }
 
         [Authorize]
@@ -159,10 +98,10 @@ namespace Marketplace.Api.Controllers
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
-            await _userService.HardDeleteProfile(userId, cancellationToken);
+            await _mediator.Send(new DeleteUserCommand(userId), cancellationToken);
             _cookieService.Delete("refreshToken");
 
-            return Ok();
+            return Ok("User successful deleted");
         }
 
         [Authorize]
@@ -176,7 +115,7 @@ namespace Marketplace.Api.Controllers
             await _mediator.Send(new DeactivateUserCommand(userId), cancellationToken);
             _cookieService.Delete("refreshToken");
 
-            return Ok();
+            return Ok("User successful deactivated");
         }
 
         private Guid GetUserId()

@@ -1,7 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
-using UserModule.Application.Interfaces.Services;
-using UserModule.Application.Services;
 
 namespace UserModule.Application.DependencyInjection
 {
@@ -9,8 +6,8 @@ namespace UserModule.Application.DependencyInjection
     {
         public static IServiceCollection AddUserApplication(this IServiceCollection services)
         {
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IUserBlockService, UserBlockService>();
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
+
             return services;
         }
     }

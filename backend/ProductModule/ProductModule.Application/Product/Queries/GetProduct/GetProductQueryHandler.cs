@@ -1,27 +1,27 @@
 ﻿using MediatR;
 using ProductModule.Application.Dtos;
-using ProductModule.Domain.Entities;
 using ProductModule.Application.Interfaces.Repositories;
-using SharedKernel.Interfaces;
+using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetProduct
 {
     public class GetProductQueryHandler : IRequestHandler<GetProductQuery, ProductDto>
     {
         private readonly IProductRepository _productRepository;
-        private readonly IMediaManager _mediaManager;
+        private readonly IMediator _mediator;
 
         public GetProductQueryHandler(IProductRepository productRepository,
-            IMediaManager mediaManager)
+            IMediator mediator)
         {
             _productRepository = productRepository;
-            _mediaManager = mediaManager;
+            _mediator = mediator;
         }
         public async Task<ProductDto> Handle(GetProductQuery query, CancellationToken cancellationToken)
         {
             var product = await _productRepository.GetByIdAsync(query.ProductId, cancellationToken);
-            var mainMediaUrl = await _mediaManager.GetMainMediaUrl(product.Id, cancellationToken);
-            var entityMediaUrls = await _mediaManager.GetAllEntityMediaUrls(product.Id, cancellationToken);
+            var entityMediaUrls = await _mediator.Send(new GetEntityMediasQuery(product.Id), cancellationToken);
+
+            var mainMediaUrl = entityMediaUrls.FirstOrDefault() ?? string.Empty;
 
             var response = new ProductDto
             {

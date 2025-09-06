@@ -1,13 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
 using SharedKernel.Specification;
-using System.Linq;
-
 
 namespace ProductModule.Persistence.Repositories
 {
@@ -37,7 +34,7 @@ namespace ProductModule.Persistence.Repositories
         public async Task HideUserProductsAsync(Guid userId, CancellationToken cancellationToken)
         {
             var products = await _dbContext.Products
-                .Where(p => p.UserId == userId && p.Status != Status.Published)
+                .Where(p => p.UserId == userId && p.Status == Status.Published)
                 .ToListAsync(cancellationToken);
             foreach (var product in products)
             {
@@ -95,10 +92,12 @@ namespace ProductModule.Persistence.Repositories
 
         public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status>? statuses, CancellationToken cancellationToken)
         {
-            var statusStrings = statuses?.Select(s => s.ToString()).ToList() ?? [];
+            var statusesList = statuses?.ToList() ?? new List<Status> { Status.Published, Status.Draft };
+
+            var statusStrings = statusesList.Select(s => s.ToString()).ToList();
 
             return await _dbContext.Products
-                .Where(p => p.UserId == userId && statusStrings.Contains(EF.Property<string>(p, "Status")))
+                .Where(p => p.UserId == userId && statusStrings.Contains(p.Status.ToString()))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }

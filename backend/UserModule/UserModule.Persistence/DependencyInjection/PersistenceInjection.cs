@@ -20,7 +20,6 @@ namespace UserModule.Persistence.DependencyInjection
             });
 
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IUserBlockRepository, UserBlockRepository>();
             services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
 
 

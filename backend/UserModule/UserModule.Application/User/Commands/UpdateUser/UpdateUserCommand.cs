@@ -1,6 +1,8 @@
-﻿namespace UserModule.Application.Dtos.Requests
+﻿using MediatR;
+
+namespace UserModule.Application.User.Commands.UpdateUser
 {
-    public class UpdateUserRequest
+    public class UpdateUserCommand : IRequest
     {
         public string? Name { get; set; }
         public string? Location { get; set; }

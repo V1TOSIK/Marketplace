@@ -1,7 +1,4 @@
-﻿using MediaModule.Application.Interfaces.Services;
-using MediaModule.Application.Services;
-using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace MediaModule.Application.DependencyInjection
 {
@@ -9,8 +6,8 @@ namespace MediaModule.Application.DependencyInjection
     {
         public static IServiceCollection AddMediaApplication(this IServiceCollection services)
         {
-            services.AddScoped<IMediaService, MediaService>();
-            services.AddScoped<IMediaManager, MediaManager>();
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
+
             return services;
         }
     }

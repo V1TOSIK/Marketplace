@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 
-namespace MediaModule.Application.Dtos.Requests
+namespace MediaModule.Application.Media.Commands.UploadMedia
 {
-    public class UploadMediaRequest
+    public class UploadMediaCommand : IRequest
     {
         public Guid EntityId { get; set; }
         public string EntityType { get; set; } = string.Empty;

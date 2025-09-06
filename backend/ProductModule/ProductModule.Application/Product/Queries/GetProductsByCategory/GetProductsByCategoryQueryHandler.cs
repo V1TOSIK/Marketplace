@@ -2,25 +2,25 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Interfaces;
+using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetProductByCategory
 {
-    public class GetProductByCategoryQueryHandler : IRequestHandler<GetProductsByCategoryQuery, IEnumerable<ProductDto>>
+    public class GetProductsByCategoryQueryHandler : IRequestHandler<GetProductsByCategoryQuery, IEnumerable<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
-        private readonly IMediaManager _mediaManager;
-        public GetProductByCategoryQueryHandler(IProductRepository productRepository,
-            IMediaManager mediaManager)
+        private readonly IMediator _mediator;
+        public GetProductsByCategoryQueryHandler(IProductRepository productRepository,
+            IMediator mediator)
         {
             _productRepository = productRepository;
-            _mediaManager = mediaManager;
+            _mediator = mediator;
         }
 
         public async Task<IEnumerable<ProductDto>> Handle(GetProductsByCategoryQuery query, CancellationToken cancellationToken)
         {
             var products = await _productRepository.GetByCategoryIdAsync(query.CategoryId, cancellationToken);
-            var mainMediaUrls = await _mediaManager
-                .GetAllMainMediaUrls(products.Select(p => p.Id), cancellationToken);
+            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
             var response = products.Select(p => new ProductDto
             {
                 Id = p.Id,
