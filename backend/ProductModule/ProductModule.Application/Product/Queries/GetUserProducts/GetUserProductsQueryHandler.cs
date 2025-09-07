@@ -37,7 +37,8 @@ namespace ProductModule.Application.Product.Queries.GetUserProducts
                     PriceAmount = p.Price.Amount,
                     Location = p.Location,
                     CategoryId = p.CategoryId,
-                    UserId = p.UserId
+                    UserId = p.UserId,
+                    Status = p.Status.ToString()
                 };
             });
             return response;

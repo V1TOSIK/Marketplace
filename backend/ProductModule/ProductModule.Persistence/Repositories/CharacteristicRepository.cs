@@ -53,7 +53,10 @@ namespace ProductModule.Persistence.Repositories
         public async Task AddTemplateAsync(CharacteristicTemplate template, CancellationToken cancellationToken)
         {
             if (template == null)
+            {
+                _logger.LogError("[Product Module(Repository)] Attempted to add a null CharacteristicTemplate.");
                 throw new NullableCharacteristicTemplateException("Template cannot be null");
+            }
 
             await _dbContext.CharacteristicTemplates.AddAsync(template, cancellationToken);
             await _dbContext.SaveChangesAsync();

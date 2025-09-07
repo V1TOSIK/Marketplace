@@ -34,7 +34,8 @@ namespace ProductModule.Application.Product.Queries.GetProduct
                 Location = product.Location,
                 Description = product.Description,
                 CategoryId = product.CategoryId,
-                UserId = product.UserId
+                UserId = product.UserId,
+                Status = product.Status.ToString()
             };
 
             return response;

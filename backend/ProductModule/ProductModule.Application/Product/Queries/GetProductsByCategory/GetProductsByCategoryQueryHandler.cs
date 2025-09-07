@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
-using SharedKernel.Interfaces;
 using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetProductByCategory
@@ -30,7 +29,8 @@ namespace ProductModule.Application.Product.Queries.GetProductByCategory
                 PriceAmount = p.Price.Amount,
                 Location = p.Location,
                 CategoryId = p.CategoryId,
-                UserId = p.UserId
+                UserId = p.UserId,
+                Status = p.Status.ToString()
             });
             return response;
         }

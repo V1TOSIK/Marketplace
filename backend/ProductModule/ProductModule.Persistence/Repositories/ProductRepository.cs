@@ -28,7 +28,6 @@ namespace ProductModule.Persistence.Repositories
             {
                 product.UpdateStatus(Status.Published);
             }
-            _logger.LogInformation($"All products for banned user {userId} have been set to Banned status.");
         }
 
         public async Task HideUserProductsAsync(Guid userId, CancellationToken cancellationToken)
@@ -40,7 +39,6 @@ namespace ProductModule.Persistence.Repositories
             {
                 product.UpdateStatus(Status.Hidden);
             }
-            _logger.LogInformation($"All products for banned user {userId} have been set to Banned status.");
         }
 
         public async Task<IEnumerable<Product>> GetBySpecificationAsync(Specification<Product> spec, CancellationToken cancellationToken)
@@ -90,16 +88,18 @@ namespace ProductModule.Persistence.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status>? statuses, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
         {
-            var statusesList = statuses?.ToList() ?? new List<Status> { Status.Published, Status.Draft };
+            var query = _dbContext.Products
+                .Where(p => p.UserId == userId)
+                .AsNoTracking();
 
-            var statusStrings = statusesList.Select(s => s.ToString()).ToList();
+            if (statuses != null && statuses.Any())
+            {
+                query = query.Where(p => statuses.Contains(p.Status));
+            }
 
-            return await _dbContext.Products
-                .Where(p => p.UserId == userId && statusStrings.Contains(p.Status.ToString()))
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
+            return await query.ToListAsync(cancellationToken);
         }
 
         public async Task<Product> GetByIdAsync(Guid productId, CancellationToken cancellationToken)
@@ -108,7 +108,10 @@ namespace ProductModule.Persistence.Repositories
                 .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
             if (product == null)
+            {
+                _logger.LogWarning("[Product Module(Repository)] Product with ID {productId} not found.", productId);
                 throw new ProductNotFoundException($"Product with ID {productId} not found.");
+            }
 
             return product;
 
@@ -118,11 +121,10 @@ namespace ProductModule.Persistence.Repositories
         {
             if (product == null)
             {
-                _logger.LogError("Attempted to add a null product.");
+                _logger.LogError("[Product Module(Repository)] Attempted to add a null product.");
                 throw new NullableProductException("Product cannot be null.");
             }
             await _dbContext.Products.AddAsync(product, cancellationToken);
-            _logger.LogInformation($"Product with ID {product.Id} added successfully.");
         }
 
         public async Task DeleteAsync(Guid productId, Guid userId, CancellationToken cancellationToken)
@@ -130,18 +132,17 @@ namespace ProductModule.Persistence.Repositories
             var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
             if (product == null)
             {
-                _logger.LogWarning($"Product with ID {productId} not found for deletion.");
+                _logger.LogWarning("[Product Module(Repository)] Product with ID {productId} not found for deletion.", productId);
                 return;
             }
 
             if (product.UserId != userId)
             {
-                _logger.LogWarning($"User {userId} attempted to delete product {productId} they do not own.");
+                _logger.LogWarning("[Product Module(Repository)] User {userId} attempted to delete product {productId} they do not own.", userId, productId);
                 throw new UnauthorizedAccessException($"User {userId} is not authorized to delete product {productId}.");
             }
 
             _dbContext.Products.Remove(product);
-            _logger.LogInformation($"Product with ID {productId} deleted successfully.");
         }
 
         public async Task DeleteUserProductsAsync(Guid userId, CancellationToken cancellationToken)
@@ -151,11 +152,10 @@ namespace ProductModule.Persistence.Repositories
                 .ToListAsync(cancellationToken);
             if (products.Count == 0)
             {
-                _logger.LogInformation($"No products found for user {userId} to delete.");
+                _logger.LogInformation("[Product Module(Repository)] No products found for user {userId} to delete.", userId);
                 return;
             }
             _dbContext.Products.RemoveRange(products);
-            _logger.LogInformation($"All products for user {userId} deleted successfully.");
         }
     }
 }

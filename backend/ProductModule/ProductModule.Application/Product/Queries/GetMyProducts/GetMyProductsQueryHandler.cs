@@ -36,12 +36,12 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            var parsedStatuses = query.GetParsedStatuses();
-            var statuses = parsedStatuses?.ToList() ?? new List<Status>
-            {
-                Status.Published,
-                Status.Draft
-            };
+            var parsedStatuses = query.GetParsedStatuses()?.ToList();
+
+            var statuses = parsedStatuses != null && parsedStatuses.Any()
+                ? parsedStatuses
+                : [];
+
             var products = await _productRepository.GetByUserIdAsync(userId.Value, statuses, cancellationToken);
             var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
             var response = products.Select(p =>
@@ -56,7 +56,8 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
                     PriceAmount = p.Price.Amount,
                     Location = p.Location,
                     CategoryId = p.CategoryId,
-                    UserId = p.UserId
+                    UserId = p.UserId,
+                    Status = p.Status.ToString()
                 };
             });
             return response;

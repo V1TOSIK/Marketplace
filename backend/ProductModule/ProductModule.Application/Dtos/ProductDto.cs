@@ -11,6 +11,7 @@
         public string Location { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int CategoryId { get; set; }
+        public string Status { get; set; } = string.Empty;
         public Guid UserId { get; set; }
     }
 }
