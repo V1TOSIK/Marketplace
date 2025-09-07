@@ -1,9 +1,13 @@
-﻿using AuthModule.Application.Dtos.Requests;
+﻿using AuthModule.Application.Auth.Commands.Login;
+using AuthModule.Application.Auth.Commands.Register;
+using AuthModule.Application.Dtos.Requests;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Models;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Claims;
 
 namespace Marketplace.Api.Controllers
@@ -15,85 +19,58 @@ namespace Marketplace.Api.Controllers
         private readonly IAuthService _authService;
         private readonly IJwtProvider _jwtProvider;
         private readonly ICookieService _cookieService;
+        private readonly IMediator _mediator;
         private readonly ILogger<AuthController> _logger;
+
         public AuthController(
             IAuthService authService,
             IJwtProvider jwtProvider,
             ICookieService cookieService,
+            IMediator mediator,
             ILogger<AuthController> logger)
         {
             _authService = authService;
             _jwtProvider = jwtProvider;
             _cookieService = cookieService;
+            _mediator = mediator;
             _logger = logger;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterLocalRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Password))
-            {
-                _logger.LogError("Password is empty or null in register request");
+            if (string.IsNullOrWhiteSpace(command.Password))
                 return BadRequest("Password cannot be empty or null");
-            }
 
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                _logger.LogError("Both email and phone number are empty in register request");
-                return BadRequest("Either email or phone number must be provided");
-            }
+            if (string.IsNullOrWhiteSpace(command.Credential))
+                return BadRequest("Cretential must be provided");
 
-            var clientInfo = GetClientInfo();
-
-            var result = await _authService.RegisterLocalUser(request, clientInfo, cancellationToken);
-
-            if (result == null)
-            {
-                _logger.LogError("Registration failed.");
-                return BadRequest("Registration failed.");
-            }
-
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+            var result = await _mediator.Send(command, cancellationToken);
 
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
             return Ok(result.Response);
         }
 
-        [HttpPost("local/login")]
-        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Password))
-            {
-                _logger.LogError("Password is empty or null in login request");
+            if (string.IsNullOrWhiteSpace(command.Password))
                 return BadRequest("Password cannot be empty or null");
-            }
 
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                _logger.LogError("Both email and phone number are empty in login request");
+            if (string.IsNullOrWhiteSpace(command.Credential))
                 return BadRequest("Either email or phone number must be provided");
-            }
 
-            var clientInfo = GetClientInfo();
+            var result = await _mediator.Send(command, cancellationToken);
 
-            var result = await _authService.Login(request, clientInfo, cancellationToken);
-            if (result == null)
-            {
-                _logger.LogError("Login failed. Invalid credentials.");
-                return Unauthorized("Invalid credentials");
-            }
-
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
-
+            if (result.RefreshToken != null)
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
-            _logger.LogInformation("User logged in successfully with ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
         }
 
         [HttpPost("restore")]
-        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
             {
@@ -107,15 +84,15 @@ namespace Marketplace.Api.Controllers
                 _logger.LogError("Restore failed. Invalid credentials.");
                 return Unauthorized("Invalid credentials");
             }
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId.Value, result.Response.Role);
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
             _logger.LogInformation("User restored successfully with ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
         }
 
         [Authorize]
-        [HttpPost("change-password")]
-        public async Task<ActionResult> ChangePassword([FromBody]ChangePasswordRequest request, CancellationToken cancellationToken)
+        [HttpPost("change/password")]
+        public async Task<ActionResult> ChangePassword([FromBody]ChangePasswordRequest request, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
             {
@@ -136,7 +113,7 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpPost("email")]
-        public async Task<ActionResult> AddEmail([FromBody] AddEmailRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> AddEmail([FromBody] AddEmailRequest request, CancellationToken cancellationToken = default)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty)
@@ -154,7 +131,7 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpPost("phone")]
-        public async Task<ActionResult> AddPhone([FromBody] AddPhoneRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> AddPhone([FromBody] AddPhoneRequest request, CancellationToken cancellationToken = default)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty)
@@ -171,8 +148,8 @@ namespace Marketplace.Api.Controllers
         }
 
         [Authorize]
-        [HttpPost("logout-all")]
-        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken)
+        [HttpPost("logout/all")]
+        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken = default)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty)
@@ -191,7 +168,7 @@ namespace Marketplace.Api.Controllers
 
         [Authorize]
         [HttpPost("logout")]
-        public async Task<ActionResult> Logout(CancellationToken cancellationToken)
+        public async Task<ActionResult> Logout(CancellationToken cancellationToken = default)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
@@ -208,7 +185,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("refresh")]
-        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken = default)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
@@ -227,7 +204,7 @@ namespace Marketplace.Api.Controllers
                 return Forbid("Invalid refresh token");
             }
 
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId.Value, result.Response.Role);
 
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 

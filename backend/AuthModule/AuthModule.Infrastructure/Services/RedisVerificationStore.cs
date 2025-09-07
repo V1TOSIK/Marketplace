@@ -34,10 +34,9 @@ namespace AuthModule.Infrastructure.Services
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(code))
                 throw new ArgumentException("Key and code cannot be null or empty.");
 
-            var storedCode = await _database.StringGetAsync(key);
-            if (storedCode.IsNullOrEmpty)
-                return false;
-            if (storedCode.ToString() == code)
+            var storedCode = await GetCodeAsync(key, cancellationToken);
+
+            if (storedCode == code)
             {
                 await _database.KeyDeleteAsync(key);
                 return true;

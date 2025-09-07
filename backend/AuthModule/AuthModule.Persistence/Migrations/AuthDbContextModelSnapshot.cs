@@ -29,6 +29,11 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BanReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("ban_reason");
+
                     b.Property<DateTime?>("BannedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("banned_at");

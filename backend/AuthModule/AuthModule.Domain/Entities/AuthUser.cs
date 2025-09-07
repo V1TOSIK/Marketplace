@@ -41,6 +41,7 @@ namespace AuthModule.Domain.Entities
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
         public bool IsBanned { get; private set; } = false;
+        public string? BanReason { get; private set; } = null;
         public DateTime? BannedAt { get; private set; } = null;
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
@@ -102,11 +103,12 @@ namespace AuthModule.Domain.Entities
             AddDomainEvent(new RestoreUserDomainEvent(Id));
         }
 
-        public void Ban()
+        public void Ban(string reason)
         {
             if (IsBanned)
                 throw new UserOperationException("User is already baned.");
             IsBanned = true;
+            BanReason = reason;
             BannedAt = DateTime.UtcNow;
         }
 
@@ -115,6 +117,7 @@ namespace AuthModule.Domain.Entities
             if (!IsBanned)
                 throw new UserOperationException("User is not baned.");
             IsBanned = false;
+            BanReason = null;
             BannedAt = null;
         }
 

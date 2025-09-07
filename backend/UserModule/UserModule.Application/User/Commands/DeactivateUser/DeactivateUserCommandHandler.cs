@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
-using ProductModule.SharedKernel.Interfaces;
+using SharedKernel.Interfaces;
 using UserModule.Application.Interfaces;
 using UserModule.Application.Interfaces.Repositories;
 using UserModule.Domain.Entities;

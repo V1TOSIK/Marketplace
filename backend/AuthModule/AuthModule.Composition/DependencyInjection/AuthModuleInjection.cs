@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 using AuthModule.Persistence;
-using SharedKernel.ModuleInitializer;
 using SharedKernel.Extensions.DependencyInjection;
 
 namespace AuthModule.Composition.DependencyInjection

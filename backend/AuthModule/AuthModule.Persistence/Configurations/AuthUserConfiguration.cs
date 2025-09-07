@@ -75,6 +75,11 @@ namespace AuthModule.Persistence.Configurations
                 .HasDefaultValue(false)
                 .IsRequired();
 
+            builder.Property(u => u.BanReason)
+                .HasColumnName("ban_reason")
+                .HasMaxLength(500)
+                .IsRequired(false);
+
             builder.Property(u => u.BannedAt)
                 .HasColumnName("banned_at")
                 .IsRequired(false);

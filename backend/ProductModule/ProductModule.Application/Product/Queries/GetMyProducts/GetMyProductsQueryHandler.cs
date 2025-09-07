@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Logging;
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
-using ProductModule.Domain.Enums;
-using ProductModule.SharedKernel.Interfaces;
 using SharedKernel.Interfaces;
 using SharedKernel.Queries;
 

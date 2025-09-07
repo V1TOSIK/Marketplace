@@ -18,7 +18,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpGet("{entityId}")]
-        public async Task<ActionResult<IEnumerable<string>>> GetAllEntityMedias(Guid entityId, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<string>>> GetAllEntityMedias([FromRoute] Guid entityId, CancellationToken cancellationToken)
         {
             if (entityId == Guid.Empty)
                 return BadRequest("Invalid request.");
@@ -43,7 +43,7 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpDelete("{mediaId}")]
-        public async Task<ActionResult> DeleteMedia(Guid mediaId, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteMedia([FromRoute] Guid mediaId, CancellationToken cancellationToken)
         {
             if (mediaId == Guid.Empty)
                 return BadRequest("Invalid media ID.");

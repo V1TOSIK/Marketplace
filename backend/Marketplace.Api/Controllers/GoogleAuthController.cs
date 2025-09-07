@@ -45,9 +45,8 @@ public class GoogleAuthController : Controller
             Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
         };
 
-        var loginRequest = new LoginRequest
+        var loginRequest = new OAuthLoginRequest
         {
-            Email = payload.Email,
             Provider = "Google",
             ProviderUserId = payload.Subject
         };
@@ -56,7 +55,7 @@ public class GoogleAuthController : Controller
         if (result == null)
             return BadRequest("Authentication failed");
 
-        result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+        result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId.Value, result.Response.Role);
 
         _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 

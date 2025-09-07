@@ -43,9 +43,9 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<UserDto>> GetUserProfile(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDto>> GetUserProfile([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            if (userId ==  Guid.Empty)
+            if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
             var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
@@ -63,17 +63,17 @@ namespace Marketplace.Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{userId}/ban")]
-        public async Task<ActionResult> BanUser(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
         {
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
-            await _mediator.Send(new BanUserCommand(userId), cancellationToken);
+            await _mediator.Send(new BanUserCommand(userId, request.BanReason), cancellationToken);
             return Ok("User successful baned");
         }
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{userId}/ban")]
-        public async Task<ActionResult> UnBanUser(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult> UnBanUser([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
