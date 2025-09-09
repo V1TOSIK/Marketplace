@@ -132,7 +132,7 @@ namespace UserModule.Domain.Entities
             IsDeleted = false;
         }
 
-        public void Ban(string reason)
+        public void Ban(string? reason)
         {
             if (IsBanned)
                 throw new BanUserException("User is already banned.");

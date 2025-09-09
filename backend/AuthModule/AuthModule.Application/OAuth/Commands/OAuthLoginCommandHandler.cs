@@ -1,0 +1,54 @@
+﻿using AuthModule.Application.Interfaces;
+using AuthModule.Application.Interfaces.Repositories;
+using AuthModule.Application.Interfaces.Services;
+using AuthModule.Application.Models;
+using AuthModule.Domain.Entities;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using SharedKernel.Interfaces;
+
+namespace AuthModule.Application.OAuth.Commands
+{
+    public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, AuthResult>
+    {
+        private readonly IAuthUserRepository _authUserRepository;
+        private readonly IAuthService _authService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IAuthUnitOfWork _unitOfWork;
+        private readonly ILogger<OAuthLoginCommandHandler> _logger;
+        public OAuthLoginCommandHandler(IAuthUserRepository authUserRepository,
+            IAuthService authService,
+            ICurrentUserService currentUserService,
+            IAuthUnitOfWork unitOfWork,
+            ILogger<OAuthLoginCommandHandler> logger)
+        {
+            _authUserRepository = authUserRepository;
+            _authService = authService;
+            _currentUserService = currentUserService;
+            _unitOfWork = unitOfWork;
+            _logger = logger;
+        }
+
+        public async Task<AuthResult> Handle(OAuthLoginCommand command, CancellationToken cancellationToken)
+        {
+            var user = await _authUserRepository.GetByOAuthAsync(command.Provider, command.ProviderUserId, true, true, cancellationToken);
+            if (user == null)
+            {
+                var email = string.IsNullOrWhiteSpace(command.Email) ? null : command.Email;
+                user = AuthUser.CreateOAuth(command.ProviderUserId, email, command.Provider);
+                await _authUserRepository.AddAsync(user, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            var failResponse = _authService.CheckIfInvalid(user);
+            if (failResponse != null)
+                return failResponse;
+
+            AuthResult response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("[Auth Module] User with Id: {UserId} logged in by OAuth successfully.", user.Id);
+            return response;
+
+        }
+    }
+}

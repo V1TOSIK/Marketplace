@@ -51,11 +51,11 @@ namespace AuthModule.Application.Auth.Commands.Register
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 var user = command.Credential.Contains("@")
-                    ? AuthUser.Create(command.Credential, null, hashPassword, "User")
-                    : AuthUser.Create(null, command.Credential, hashPassword, "User");
+                    ? AuthUser.Create(command.Credential, null, hashPassword)
+                    : AuthUser.Create(null, command.Credential, hashPassword);
                 await _authUserRepository.AddAsync(user, cancellationToken);
 
-                response = await _authService.BuildAuthResult(user, false, cancellationToken);
+                response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
 

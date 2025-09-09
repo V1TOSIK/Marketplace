@@ -1,7 +1,6 @@
 ﻿using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.ValueObjects;
-using MediatR;
 using SharedKernel.AgregateRoot;
 using SharedKernel.Events;
 using SharedKernel.Exceptions;
@@ -46,7 +45,7 @@ namespace AuthModule.Domain.Entities
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
 
-        public static AuthUser CreateOAuth(string providerUserId, string email, string roleText, string providerText)
+        public static AuthUser CreateOAuth(string providerUserId, string? email, string providerText)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new MissingAuthCredentialException("Email is required for OAuth users.");
@@ -55,7 +54,6 @@ namespace AuthModule.Domain.Entities
                 throw new InvalidProviderException("Provider user id cannot be null or empty");
 
             var provider = ParseProvider(providerText);
-            var role = ParseRole(roleText);
 
             return new AuthUser(
                 providerUserId,
@@ -63,17 +61,16 @@ namespace AuthModule.Domain.Entities
                 null,
                 null,
                 provider,
-                role
+                UserRole.User
             );
         }
 
-        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, string roleText)
+        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue)
         {
             var email = string.IsNullOrWhiteSpace(emailValue) ? null : new Email(emailValue);
             var phoneNumber = string.IsNullOrWhiteSpace(phoneNumberValue) ? null : new PhoneNumber(phoneNumberValue);
 
             var password = new Password(passwordValue);
-            var role = ParseRole(roleText);
 
             return new AuthUser(
                 null,
@@ -81,7 +78,7 @@ namespace AuthModule.Domain.Entities
                 phoneNumber,
                 password,
                 AuthProvider.Local,
-                role);
+                UserRole.User);
         }
 
         public void MarkAsDeleted()

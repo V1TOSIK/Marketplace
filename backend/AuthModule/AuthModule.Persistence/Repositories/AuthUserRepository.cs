@@ -36,18 +36,13 @@ namespace AuthModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<AuthUser?> GetByProviderAsync(string providerUserId, string providerText, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByOAuthAsync(string idToken, string providerText, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
         {
             var provider = ParseProvider(providerText);
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.ProviderUserId == providerUserId
+            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.ProviderUserId == idToken
             && u.Provider == provider
             && (includeDeleted || !u.IsDeleted)
             && (includeBanned || !u.IsBanned), cancellationToken);
-            if (user == null)
-            {
-                _logger.LogError("[Auth Module(Repository)] User with providerId: {providerUserId} not found", providerUserId);
-                throw new UserNotFoundException($"User with providerId: {providerUserId} not found");
-            }
 
             return user;
         }

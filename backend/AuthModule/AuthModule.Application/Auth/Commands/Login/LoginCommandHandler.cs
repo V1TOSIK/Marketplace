@@ -52,11 +52,11 @@ namespace AuthModule.Application.Auth.Commands.Login
                 throw new InvalidPasswordException("Invalid password.");
             }
 
-            var failResponse = _authService.ThrowIfInvalid(user);
+            var failResponse = _authService.CheckIfInvalid(user);
             if (failResponse != null)
                 return failResponse;
 
-            AuthResult response = await _authService.BuildAuthResult(user, true, cancellationToken);
+            AuthResult response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
 
             _logger.LogInformation("[Auth Module] User with Id: {UserId} logged in successfully.", user.Id);
             return response;

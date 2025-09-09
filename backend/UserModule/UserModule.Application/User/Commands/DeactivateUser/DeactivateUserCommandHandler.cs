@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;
 using UserModule.Application.Interfaces;
 using UserModule.Application.Interfaces.Repositories;
-using UserModule.Domain.Entities;
 
 namespace UserModule.Application.User.Commands.DeactivateUser
 {

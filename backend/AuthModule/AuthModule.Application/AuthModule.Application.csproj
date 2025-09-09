@@ -18,10 +18,4 @@
     <ProjectReference Include="..\AuthModule.Domain\AuthModule.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Auth\Commands\ChangePassword\" />
-    <Folder Include="OAuth\Commands\" />
-    <Folder Include="OAuth\Queries\" />
-  </ItemGroup>
-
 </Project>

@@ -24,7 +24,7 @@ namespace AuthModule.Application.Events.BanUser
         }
         public async Task Handle(BanUserDomainEvent notification, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(notification.UserId, false, false, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.Ban(notification.BanReason);

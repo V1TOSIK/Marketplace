@@ -9,7 +9,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Marketplace.Api/Marketplace.Api.csproj", "Marketplace.Api/"]
 COPY ["SharedKernel/SharedKernel.csproj", "SharedKernel/"]
-COPY ["Marketplace.Abstractions/Marketplace.Abstractions.csproj", "Marketplace.Abstractions/"]
 COPY ["AuthModule/AuthModule.Application/AuthModule.Application.csproj", "AuthModule/AuthModule.Application/"]
 COPY ["AuthModule/AuthModule.Domain/AuthModule.Domain.csproj", "AuthModule/AuthModule.Domain/"]
 COPY ["AuthModule/AuthModule.Persistence/AuthModule.Persistence.csproj", "AuthModule/AuthModule.Persistence/"]
@@ -24,7 +23,6 @@ COPY ["UserModule/UserModule.Composition/UserModule.Composition.csproj", "UserMo
 COPY ["ProductModule/ProductModule.Application/ProductModule.Application.csproj", "ProductModule/ProductModule.Application/"]
 COPY ["ProductModule/ProductModule.Domain/ProductModule.Domain.csproj", "ProductModule/ProductModule.Domain/"]
 COPY ["ProductModule/ProductModule.Persistence/ProductModule.Persistence.csproj", "ProductModule/ProductModule.Persistence/"]
-COPY ["ProductModule/ProductModule.Infrastructure/ProductModule.Infrastructure.csproj", "ProductModule/ProductModule.Infrastructure/"]
 COPY ["ProductModule/ProductModule.Composition/ProductModule.Composition.csproj", "ProductModule/ProductModule.Composition/"]
 
 COPY ["MediaModule/MediaModule.Application/MediaModule.Application.csproj", "MediaModule/MediaModule.Application/"]
