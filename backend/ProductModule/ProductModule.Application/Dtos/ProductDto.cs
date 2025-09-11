@@ -1,10 +1,11 @@
-﻿namespace ProductModule.Application.Dtos
+﻿using SharedKernel.Dtos;
+
+namespace ProductModule.Application.Dtos
 {
     public class ProductDto
     {
         public Guid Id { get; set; }
-        public string MainMediaUrl { get; set; } = string.Empty;
-        public IEnumerable<string>? MediaUrls { get; set; }
+        public IEnumerable<MediaDto>? Medias { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal PriceAmount { get; set; }
         public string PriceCurrency { get; set; } = string.Empty;

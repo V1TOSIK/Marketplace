@@ -157,5 +157,18 @@ namespace ProductModule.Persistence.Repositories
             }
             _dbContext.Products.RemoveRange(products);
         }
+
+        public async Task DeleteByCategoryAsync(int categoryId, CancellationToken cancellationToken)
+        {
+            var products = await _dbContext.Products
+                .Where(p => p.CategoryId == categoryId)
+                .ToListAsync(cancellationToken);
+            if (products.Count == 0)
+            {
+                _logger.LogInformation("[Product Module(Repository)] No products found for category {categoryId} to delete.", categoryId);
+                return;
+            }
+            _dbContext.Products.RemoveRange(products);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using AuthModule.Domain.Entities;
 using MediatR;
+using SharedKernel.AgregateRoot;
 
 namespace AuthModule.Persistence
 {
@@ -31,9 +32,9 @@ namespace AuthModule.Persistence
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var domainEntities = ChangeTracker
-            .Entries<AuthUser>()
-            .Where(x => x.Entity.DomainEvents.Any())
-            .ToList();
+                .Entries<IAggregateRoot>()
+                .Where(x => x.Entity.DomainEvents.Any())
+                .ToList();
 
             var domainEvents = domainEntities
                 .SelectMany(x => x.Entity.DomainEvents)

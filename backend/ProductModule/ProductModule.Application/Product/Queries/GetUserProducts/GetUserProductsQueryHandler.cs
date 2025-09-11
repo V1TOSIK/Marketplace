@@ -2,6 +2,7 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Enums;
+using SharedKernel.Dtos;
 using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetUserProducts
@@ -22,16 +23,16 @@ namespace ProductModule.Application.Product.Queries.GetUserProducts
             IEnumerable<Status> statuses = [Status.Published];
             var products = await _productRepository.GetByUserIdAsync(query.UserId, statuses, cancellationToken);
 
-            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
 
             var response = products.Select(p =>
             {
-                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+                var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
 
                 return new ProductDto
                 {
                     Id = p.Id,
-                    MainMediaUrl = url,
+                    Medias = [media],
                     Name = p.Name,
                     PriceCurrency = p.Price.Currency,
                     PriceAmount = p.Price.Amount,

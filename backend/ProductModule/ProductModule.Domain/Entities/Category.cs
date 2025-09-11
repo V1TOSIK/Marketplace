@@ -1,9 +1,10 @@
 ﻿using ProductModule.Domain.Exceptions;
-using SharedKernel.Entity;
+using SharedKernel.AgregateRoot;
+using SharedKernel.Events;
 
 namespace ProductModule.Domain.Entities
 {
-    public class Category : Entity<int>
+    public class Category : AggregateRoot<int>
     {
         private Category(string name)
         {
@@ -28,6 +29,11 @@ namespace ProductModule.Domain.Entities
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidCategoryDataException("Category name cannot be empty or null.");
             Name = name;
+        }
+
+        public void Delete()
+        {
+            AddDomainEvent(new DeleteCategoryDomainEvent(Id));
         }
     }
 }

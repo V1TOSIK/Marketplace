@@ -3,6 +3,7 @@ using MediaModule.Domain.Entities;
 using MediaModule.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SharedKernel.Dtos;
 
 namespace MediaModule.Persistence.Repositories
 {
@@ -35,13 +36,25 @@ namespace MediaModule.Persistence.Repositories
                 .ExecuteDeleteAsync(cancellationToken);
         }
 
-        public async Task<Dictionary<Guid, string>> GetMainMediaUrlByEntityIdsAsync(IEnumerable<Guid> entityIds, CancellationToken cancellationToken)
+        public async Task DeleteEntityMediasAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            var deleteResult = await _dbContext.Medias
+                .Where(m => m.EntityId == userId)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        public async Task<Dictionary<Guid, MediaDto>> GetMainMediaByEntityIdsAsync(IEnumerable<Guid> entityIds, CancellationToken cancellationToken)
         {
             return await _dbContext.Medias
                 .Where(m => !m.IsDeleted && m.IsMain && entityIds.Contains(m.EntityId))
                 .ToDictionaryAsync(
                     m => m.EntityId,
-                    m => m.Url,
+                    m => new MediaDto
+                    {
+                        Id = m.Id,
+                        Url = m.Url,
+                        IsMain = m.IsMain
+                    },
                     cancellationToken);
         }
 

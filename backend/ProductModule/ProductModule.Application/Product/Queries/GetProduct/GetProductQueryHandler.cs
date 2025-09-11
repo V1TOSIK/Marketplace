@@ -2,6 +2,7 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Queries;
+using SharedKernel.Dtos;
 
 namespace ProductModule.Application.Product.Queries.GetProduct
 {
@@ -19,15 +20,12 @@ namespace ProductModule.Application.Product.Queries.GetProduct
         public async Task<ProductDto> Handle(GetProductQuery query, CancellationToken cancellationToken)
         {
             var product = await _productRepository.GetByIdAsync(query.ProductId, cancellationToken);
-            var entityMediaUrls = await _mediator.Send(new GetEntityMediasQuery(product.Id), cancellationToken);
-
-            var mainMediaUrl = entityMediaUrls.FirstOrDefault() ?? string.Empty;
+            var entityMedias = await _mediator.Send(new GetEntityMediasQuery(product.Id), cancellationToken);
 
             var response = new ProductDto
             {
                 Id = product.Id,
-                MainMediaUrl = mainMediaUrl,
-                MediaUrls = entityMediaUrls,
+                Medias = entityMedias,
                 Name = product.Name,
                 PriceCurrency = product.Price.Currency,
                 PriceAmount = product.Price.Amount,

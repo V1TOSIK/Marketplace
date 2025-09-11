@@ -29,6 +29,7 @@ namespace ProductModule.Application.Category.Commands.AddCategory
                 throw new ArgumentNullException(nameof(command.Name), "Category name cannot be null or empty.");
             }
             var category = Domain.Entities.Category.Create(command.Name);
+            _logger.LogInformation("[Product Module] Adding new category with name: {categoryName}", command.Name);
 
             await _categoryRepository.AddAsync(category, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
