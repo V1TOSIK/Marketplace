@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.HideBannedUserProducts
 {
-    public class HideBannedUserProductsEventHandler : INotificationHandler<BanUserDomainEvent>
+    public class HideBannedUserProductsEventHandler : INotificationHandler<BanUserEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
@@ -21,7 +21,7 @@ namespace ProductModule.Application.Events.HideBannedUserProducts
             _logger = logger;
         }
 
-        public async Task Handle(BanUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(BanUserEvent notification, CancellationToken cancellationToken)
         {
             await _productRepository.HideUserProductsAsync(notification.UserId, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);

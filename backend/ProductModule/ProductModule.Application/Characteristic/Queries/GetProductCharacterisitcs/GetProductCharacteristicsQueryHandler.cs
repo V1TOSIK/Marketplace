@@ -4,10 +4,10 @@ using ProductModule.Application.Interfaces.Repositories;
 
 namespace ProductModule.Application.Characteristic.Queries.GetProductCharacterisitcs
 {
-    public class GetProductCharacterisitcsQueryHandler : IRequestHandler<GetProductCharacteristicsQuery, IEnumerable<CharacteristicGroupDto>>
+    public class GetProductCharacteristicsQueryHandler : IRequestHandler<GetProductCharacteristicsQuery, IEnumerable<CharacteristicGroupDto>>
     {
         private readonly ICharacteristicRepository _characteristicRepository;
-        public GetProductCharacterisitcsQueryHandler(ICharacteristicRepository characteristicRepository)
+        public GetProductCharacteristicsQueryHandler(ICharacteristicRepository characteristicRepository)
         {
             _characteristicRepository = characteristicRepository;
         }

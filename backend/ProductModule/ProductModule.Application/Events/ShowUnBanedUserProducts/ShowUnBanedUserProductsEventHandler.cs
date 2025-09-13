@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.ShowUnBanedUserProducts
 {
-    public class ShowUnBanedUserProductsEventHandler : INotificationHandler<UnbanUserDomainEvent>
+    public class ShowUnBanedUserProductsEventHandler : INotificationHandler<UnbanUserEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
@@ -21,7 +21,7 @@ namespace ProductModule.Application.Events.ShowUnBanedUserProducts
             _productUnitOfWork = productUnitOfWork;
         }
         
-        public async Task Handle(UnbanUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(UnbanUserEvent notification, CancellationToken cancellationToken)
         {
             await _productRepository.ShowUserProductsAsync(notification.UserId, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);

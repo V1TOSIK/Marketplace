@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.DeleteCategoryProducts
 {
-    public class DeleteCategoryProductsEventHandler : INotificationHandler<DeleteCategoryDomainEvent>
+    public class DeleteCategoryProductsEventHandler : INotificationHandler<DeleteCategoryEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _unitOfWork;
@@ -21,7 +21,7 @@ namespace ProductModule.Application.Events.DeleteCategoryProducts
             _logger = logger;
         }
 
-        public async Task Handle(DeleteCategoryDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(DeleteCategoryEvent notification, CancellationToken cancellationToken)
         {
 
             await _productRepository.DeleteByCategoryAsync(notification.CategoryId, cancellationToken);

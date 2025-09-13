@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProductModule.Application.Characteristic.Queries.GetProductCharacterisitcs;
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Product.Commands.CreateProduct;
 using ProductModule.Application.Product.Commands.DeleteProduct;
 using ProductModule.Application.Product.Commands.PublishProduct;
+using ProductModule.Application.Product.Commands.UpdateProduct;
 using ProductModule.Application.Product.Queries.GetFilteredProducts;
 using ProductModule.Application.Product.Queries.GetMyProducts;
 using ProductModule.Application.Product.Queries.GetProduct;
@@ -59,6 +61,13 @@ namespace Marketplace.Api.Controllers
             return Ok(product);
         }
 
+        [HttpGet("{id}/characteristics")]
+        public async Task<ActionResult<IEnumerable<CharacteristicGroupDto>>> GetProductCharacteristics([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var response = await _mediator.Send(new GetProductCharacteristicsQuery(id), cancellationToken);
+            return Ok(response);
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByFilter([FromQuery] GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
@@ -81,6 +90,14 @@ namespace Marketplace.Api.Controllers
         {
             var productId = await _mediator.Send(command, cancellationToken);
             return Ok(productId);
+        }
+
+        [Authorize]
+        [HttpPut]
+        public async Task<ActionResult> UpdateProduct([FromBody] UpdateProductCommand command, CancellationToken cancellationToken)
+        {
+            await _mediator.Send(command, cancellationToken);
+            return Ok("Product updated successfully.");
         }
 
         [Authorize]

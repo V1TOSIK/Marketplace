@@ -6,7 +6,7 @@ using UserModule.Application.Interfaces.Repositories;
 
 namespace UserModule.Application.Events.RestoreUser
 {
-    public class RestoreUserEventHandler : INotificationHandler<RestoreUserDomainEvent>
+    public class RestoreUserEventHandler : INotificationHandler<RestoreUserEvent>
     {
         private readonly IUserRepository _userRepository;
         private readonly IUserUnitOfWork _unitOfWork;
@@ -20,7 +20,7 @@ namespace UserModule.Application.Events.RestoreUser
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task Handle(RestoreUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(RestoreUserEvent notification, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetByIdAsync(notification.UserId, cancellationToken, true, true);
             user.Restore();

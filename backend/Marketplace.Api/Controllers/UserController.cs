@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using UserModule.Application.Dtos;
 using UserModule.Application.User.Commands.BanUser;
-using UserModule.Application.User.Commands.CreateUser;
 using UserModule.Application.User.Commands.DeactivateUser;
 using UserModule.Application.User.Commands.DeleteUser;
 using UserModule.Application.User.Commands.UnbanUser;
@@ -51,14 +50,6 @@ namespace Marketplace.Api.Controllers
             var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
 
             return Ok(response);
-        }
-
-        [Authorize]
-        [HttpPost("me/profile")]
-        public async Task<ActionResult> CreateProfile([FromBody] CreateUserCommand command, CancellationToken cancellationToken)
-        {
-            await _mediator.Send(command, cancellationToken);
-            return Ok("User profile successful ccreated");
         }
 
         [Authorize(Roles = "Admin")]

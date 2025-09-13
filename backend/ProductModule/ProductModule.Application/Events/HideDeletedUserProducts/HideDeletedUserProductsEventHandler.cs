@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.HideDeletedUserProducts
 {
-    public class HideDeletedUserProductsEventHandler : INotificationHandler<SoftDeleteUserDomainEvent>
+    public class HideDeletedUserProductsEventHandler : INotificationHandler<SoftDeleteUserEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
@@ -19,7 +19,7 @@ namespace ProductModule.Application.Events.HideDeletedUserProducts
             _productRepository = productRepository;
             _productUnitOfWork = productUnitOfWork;
         }
-        public async Task Handle(SoftDeleteUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(SoftDeleteUserEvent notification, CancellationToken cancellationToken)
         {
             await _productRepository.HideUserProductsAsync(notification.UserId, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);

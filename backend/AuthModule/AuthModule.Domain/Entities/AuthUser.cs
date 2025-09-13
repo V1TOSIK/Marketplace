@@ -30,6 +30,7 @@ namespace AuthModule.Domain.Entities
             Provider = provider;
             Role = role;
             RegistrationDate = DateTime.UtcNow;
+            AddDomainEvent(new UserRegisteredEvent(Id));
         }
 
         public string? ProviderUserId { get; private set; }
@@ -97,7 +98,7 @@ namespace AuthModule.Domain.Entities
 
             IsDeleted = false;
             DeletedAt = null;
-            AddDomainEvent(new RestoreUserDomainEvent(Id));
+            AddDomainEvent(new RestoreUserEvent(Id));
         }
 
         public void Ban(string reason)

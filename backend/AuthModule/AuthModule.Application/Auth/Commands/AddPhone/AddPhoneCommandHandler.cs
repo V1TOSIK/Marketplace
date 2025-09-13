@@ -35,10 +35,10 @@ namespace AuthModule.Application.Auth.Commands.AddPhone
                 throw new UnauthorizedAccessException("No authenticated user found.");
             }
             var user = await _authUserRepository.GetByIdAsync(userId.Value, false, false, cancellationToken);
-            if (await _authUserRepository.IsEmailRegisteredAsync(command.Phone, cancellationToken))
+            if (await _authUserRepository.IsPhoneNumberRegisteredAsync(command.Phone, cancellationToken))
             {
                 _logger.LogWarning("[Auth Module] Phone {Phone} is already registered.", command.Phone);
-                throw new EmailAlreadyExistsException($"Phone {command.Phone} is already registered.");
+                throw new PhoneNumberAlreadyExistsException($"Phone {command.Phone} is already registered.");
             }
             user.AddPhone(command.Phone);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

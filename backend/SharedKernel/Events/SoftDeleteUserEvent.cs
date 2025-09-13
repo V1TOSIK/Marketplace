@@ -2,10 +2,10 @@
 
 namespace SharedKernel.Events
 {
-    public class SoftDeleteUserDomainEvent : IDomainEvent
+    public class SoftDeleteUserEvent : IDomainEvent
     {
         public Guid UserId { get; }
-        public SoftDeleteUserDomainEvent(Guid userId)
+        public SoftDeleteUserEvent(Guid userId)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("User ID cannot be empty.", nameof(userId));

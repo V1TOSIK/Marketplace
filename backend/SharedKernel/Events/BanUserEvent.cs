@@ -2,14 +2,18 @@
 
 namespace SharedKernel.Events
 {
-    public class HardDeleteUserDomainEvent : IDomainEvent
+    public class BanUserEvent : IDomainEvent
     {
         public Guid UserId { get; }
-        public HardDeleteUserDomainEvent(Guid userId)
+        public string BanReason { get; } = "Violation of terms of service";
+
+        public BanUserEvent(Guid userId, string? banReason)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("User ID cannot be empty.", nameof(userId));
             UserId = userId;
+            if (!string.IsNullOrWhiteSpace(banReason))
+                BanReason = banReason;
         }
     }
 }

@@ -6,7 +6,6 @@ using SharedKernel.Interfaces;
 using SharedKernel.Specification;
 using SharedKernel.Queries;
 using SharedKernel.Dtos;
-using ProductModule.Domain.Entities;
 
 namespace ProductModule.Application.Product.Queries.GetFilteredProducts
 {
@@ -21,7 +20,7 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
         }
         public async Task<IEnumerable<ProductDto>> Handle(GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
-            var spec = new Specification<ProductModule.Domain.Entities.Product>();
+            var spec = new Specification<Domain.Entities.Product>();
             spec.AddCriteria(p => p.Status == Status.Published);
 
             if (query.MaxPrice.HasValue)

@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.ShowRestoredUserProducts
 {
-    public class ShowRestoredUserProductsEventHandler : INotificationHandler<RestoreUserDomainEvent>
+    public class ShowRestoredUserProductsEventHandler : INotificationHandler<RestoreUserEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
@@ -21,7 +21,7 @@ namespace ProductModule.Application.Events.ShowRestoredUserProducts
             _productUnitOfWork = productUnitOfWork;
         }
 
-        public async Task Handle(RestoreUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(RestoreUserEvent notification, CancellationToken cancellationToken)
         {
             await _productRepository.ShowUserProductsAsync(notification.UserId, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);

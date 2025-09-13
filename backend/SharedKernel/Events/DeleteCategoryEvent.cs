@@ -2,10 +2,10 @@
 
 namespace SharedKernel.Events
 {
-    public class DeleteCategoryDomainEvent : IDomainEvent
+    public class DeleteCategoryEvent : IDomainEvent
     {
         public int CategoryId { get; }
-        public DeleteCategoryDomainEvent(int categoryId)
+        public DeleteCategoryEvent(int categoryId)
         {
             CategoryId = categoryId;
         }

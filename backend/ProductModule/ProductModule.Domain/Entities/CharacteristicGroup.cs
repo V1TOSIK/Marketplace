@@ -47,5 +47,13 @@ namespace ProductModule.Domain.Entities
             var characteristicTemplate = CharacteristicValue.Create(value, templateId);
             _characteristicValues.Add(characteristicTemplate);
         }
+
+        public void RemoveCharacteristic(int charId)
+        {
+            var characteristic = _characteristicValues.FirstOrDefault(c => c.Id == charId);
+            if (characteristic == null)
+                throw new InvalidCharacteristicValueDataException("Characteristic not found.");
+            _characteristicValues.Remove(characteristic);
+        }
     }
 }

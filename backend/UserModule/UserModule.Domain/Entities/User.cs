@@ -117,12 +117,12 @@ namespace UserModule.Domain.Entities
             if (IsDeleted)
                 throw new DeleteUserException("User is already deleted.");
             IsDeleted = true;
-            AddDomainEvent(new SoftDeleteUserDomainEvent(Id));
+            AddDomainEvent(new SoftDeleteUserEvent(Id));
         }
 
         public void Delete()
         {
-            AddDomainEvent(new HardDeleteUserDomainEvent(Id));
+            AddDomainEvent(new HardDeleteUserEvent(Id));
         }
 
         public void Restore()
@@ -137,7 +137,7 @@ namespace UserModule.Domain.Entities
             if (IsBanned)
                 throw new BanUserException("User is already banned.");
             IsBanned = true;
-            AddDomainEvent(new BanUserDomainEvent(Id, reason));
+            AddDomainEvent(new BanUserEvent(Id, reason));
         }
 
         public void UnBan()
@@ -145,7 +145,7 @@ namespace UserModule.Domain.Entities
             if (!IsBanned)
                 throw new UnbanUserException("User is not banned.");
             IsBanned = false;
-            AddDomainEvent(new UnbanUserDomainEvent(Id));
+            AddDomainEvent(new UnbanUserEvent(Id));
         }
     }
 }

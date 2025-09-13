@@ -7,7 +7,7 @@ using SharedKernel.Events;
 
 namespace MediaModule.Application.Events.DeleteUser
 {
-    public class DeleteUserEventHandler : INotificationHandler<HardDeleteUserDomainEvent>
+    public class DeleteUserEventHandler : INotificationHandler<HardDeleteUserEvent>
     {
         private readonly IMediaRepository _mediaRepository;
         private readonly IMediaProvider _mediaProvider;
@@ -27,7 +27,7 @@ namespace MediaModule.Application.Events.DeleteUser
             _logger = logger;
         }
 
-        public async Task Handle(HardDeleteUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(HardDeleteUserEvent notification, CancellationToken cancellationToken)
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {

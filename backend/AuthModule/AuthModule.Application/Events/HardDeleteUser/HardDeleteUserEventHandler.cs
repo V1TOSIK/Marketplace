@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace AuthModule.Application.Events.HardDeleteUser
 {
-    public class HardDeleteUserEventHandler : INotificationHandler<HardDeleteUserDomainEvent>
+    public class HardDeleteUserEventHandler : INotificationHandler<HardDeleteUserEvent>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -24,7 +24,7 @@ namespace AuthModule.Application.Events.HardDeleteUser
             _logger = logger;
         }
 
-        public Task Handle(HardDeleteUserDomainEvent notification, CancellationToken cancellationToken)
+        public Task Handle(HardDeleteUserEvent notification, CancellationToken cancellationToken)
         {
             return _unitOfWork.ExecuteInTransactionAsync(async () =>
             {

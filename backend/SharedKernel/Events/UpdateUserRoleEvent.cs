@@ -2,11 +2,11 @@
 
 namespace SharedKernel.Events
 {
-    public class UpdateUserRoleDomainEvent : IDomainEvent
+    public class UpdateUserRoleEvent : IDomainEvent
     {
         public Guid UserId { get; }
         public string NewRole { get; }
-        public UpdateUserRoleDomainEvent(Guid userId, string newRole)
+        public UpdateUserRoleEvent(Guid userId, string newRole)
         {
             if (userId == Guid.Empty)
                 throw new ArgumentException("User ID cannot be empty.", nameof(userId));

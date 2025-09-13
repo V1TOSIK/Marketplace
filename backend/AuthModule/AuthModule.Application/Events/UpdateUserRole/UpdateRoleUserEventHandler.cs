@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace AuthModule.Application.Events.UpdateUserRole
 {
-    public class UpdateRoleUserEventHandler : INotificationHandler<UpdateUserRoleDomainEvent>
+    public class UpdateRoleUserEventHandler : INotificationHandler<UpdateUserRoleEvent>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IAuthUnitOfWork _unitOfWork;
@@ -19,7 +19,7 @@ namespace AuthModule.Application.Events.UpdateUserRole
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task Handle(UpdateUserRoleDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(UpdateUserRoleEvent notification, CancellationToken cancellationToken)
         {
             var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
             user.UpdateRole(notification.NewRole);

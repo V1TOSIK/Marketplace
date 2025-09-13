@@ -102,6 +102,21 @@ namespace ProductModule.Persistence.Repositories
             return await query.ToListAsync(cancellationToken);
         }
 
+        //only for command not for query
+        public async Task<Product> GetByIdWithCharacteristicsAsync(Guid productId, CancellationToken cancellationToken)
+        {
+            var product = await _dbContext.Products
+                .Include(p => p.CharacteristicGroups)
+                    .ThenInclude(g => g.CharacteristicValues)
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+            if (product == null)
+            {
+                _logger.LogWarning("[Product Module(Repository)] Product with ID {productId} not found.", productId);
+                throw new ProductNotFoundException($"Product with ID {productId} not found.");
+            }
+            return product;
+        }
+
         public async Task<Product> GetByIdAsync(Guid productId, CancellationToken cancellationToken)
         {
             var product = await _dbContext.Products

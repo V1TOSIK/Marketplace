@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace AuthModule.Application.Events.BanUser
 {
-    public class BanUserEventHandler : INotificationHandler<BanUserDomainEvent>
+    public class BanUserEventHandler : INotificationHandler<BanUserEvent>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IAuthUnitOfWork _unitOfWork;
@@ -22,7 +22,7 @@ namespace AuthModule.Application.Events.BanUser
             _refreshTokenRepository = refreshTokenRepository;
             _logger = logger;
         }
-        public async Task Handle(BanUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(BanUserEvent notification, CancellationToken cancellationToken)
         {
             var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>

@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace AuthModule.Application.Events.SoftDeleteUser
 {
-    public class SoftDeleteUserEventHandler : INotificationHandler<SoftDeleteUserDomainEvent>
+    public class SoftDeleteUserEventHandler : INotificationHandler<SoftDeleteUserEvent>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -24,7 +24,7 @@ namespace AuthModule.Application.Events.SoftDeleteUser
             _logger = logger;
         }
 
-        public async Task Handle(SoftDeleteUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(SoftDeleteUserEvent notification, CancellationToken cancellationToken)
         {
             var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>

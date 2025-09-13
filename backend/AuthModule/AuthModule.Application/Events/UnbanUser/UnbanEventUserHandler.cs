@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace AuthModule.Application.Events.UnbanUser
 {
-    public class UnbanEventUserHandler : INotificationHandler<UnbanUserDomainEvent>
+    public class UnbanEventUserHandler : INotificationHandler<UnbanUserEvent>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IAuthUnitOfWork _unitOfWork;
@@ -19,7 +19,7 @@ namespace AuthModule.Application.Events.UnbanUser
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
-        public async Task Handle(UnbanUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(UnbanUserEvent notification, CancellationToken cancellationToken)
         {
             var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
             user.Unban();

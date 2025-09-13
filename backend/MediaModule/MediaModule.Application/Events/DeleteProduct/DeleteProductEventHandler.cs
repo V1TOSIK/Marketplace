@@ -7,7 +7,7 @@ using SharedKernel.Events;
 
 namespace MediaModule.Application.Events.DeleteProduct
 {
-    public class DeleteProductEventHandler : INotificationHandler<DeleteProductDomainEvent>
+    public class DeleteProductEventHandler : INotificationHandler<DeleteProductEvent>
     {
         private readonly IMediaRepository _mediaRepository;
         private readonly IMediaService _mediaService;
@@ -27,7 +27,7 @@ namespace MediaModule.Application.Events.DeleteProduct
             _logger = logger;
         }
 
-        public async Task Handle(DeleteProductDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(DeleteProductEvent notification, CancellationToken cancellationToken)
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {

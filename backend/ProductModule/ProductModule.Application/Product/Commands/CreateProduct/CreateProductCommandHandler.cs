@@ -41,8 +41,8 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
             var product = Domain.Entities.Product.Create(
                 userId.Value,
                 request.Name,
-                request.PriceCurrency,
                 request.PriceAmount,
+                request.PriceCurrency,
                 request.Location,
                 request.Description,
                 request.CategoryId,

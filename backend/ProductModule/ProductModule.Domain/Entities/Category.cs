@@ -33,7 +33,7 @@ namespace ProductModule.Domain.Entities
 
         public void Delete()
         {
-            AddDomainEvent(new DeleteCategoryDomainEvent(Id));
+            AddDomainEvent(new DeleteCategoryEvent(Id));
         }
     }
 }

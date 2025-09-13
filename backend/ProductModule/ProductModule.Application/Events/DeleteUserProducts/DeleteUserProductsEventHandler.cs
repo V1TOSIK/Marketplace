@@ -6,7 +6,7 @@ using SharedKernel.Events;
 
 namespace ProductModule.Application.Events.DeleteUserProducts
 {
-    public class DeleteUserProductsEventHandler : INotificationHandler<HardDeleteUserDomainEvent>
+    public class DeleteUserProductsEventHandler : INotificationHandler<HardDeleteUserEvent>
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
@@ -21,7 +21,7 @@ namespace ProductModule.Application.Events.DeleteUserProducts
             _productUnitOfWork = productUnitOfWork;
         }
 
-        public async Task Handle(HardDeleteUserDomainEvent notification, CancellationToken cancellationToken)
+        public async Task Handle(HardDeleteUserEvent notification, CancellationToken cancellationToken)
         {
             await _productRepository.DeleteUserProductsAsync(notification.UserId, cancellationToken);
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);

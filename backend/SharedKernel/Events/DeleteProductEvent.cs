@@ -2,10 +2,10 @@
 
 namespace SharedKernel.Events
 {
-    public class DeleteProductDomainEvent : IDomainEvent
+    public class DeleteProductEvent : IDomainEvent
     {
         public Guid ProductId { get; private set; }
-        public DeleteProductDomainEvent(Guid productId)
+        public DeleteProductEvent(Guid productId)
         {
             ProductId = productId;
         }
