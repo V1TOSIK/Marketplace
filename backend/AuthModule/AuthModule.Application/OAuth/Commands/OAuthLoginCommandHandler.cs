@@ -31,7 +31,7 @@ namespace AuthModule.Application.OAuth.Commands
 
         public async Task<AuthResult> Handle(OAuthLoginCommand command, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByOAuthAsync(command.Provider, command.ProviderUserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByOAuthAsync(command.Provider, command.ProviderUserId, cancellationToken);
             if (user == null)
             {
                 var email = string.IsNullOrWhiteSpace(command.Email) ? null : command.Email;

@@ -21,7 +21,7 @@ namespace AuthModule.Application.Events.UnbanUser
         }
         public async Task Handle(UnbanUserEvent notification, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(notification.UserId, cancellationToken);
             user.Unban();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("[Auth Module] User with ID {UserId} unbanned successfully.", notification.UserId);

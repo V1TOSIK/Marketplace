@@ -1,7 +1,10 @@
 ﻿using AuthModule.Application.Interfaces.Services;
+using AuthModule.Infrastructure.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Authorization.Attributes;
+using SharedKernel.Authorization.Enums;
 using System.Security.Claims;
 using UserModule.Application.Dtos;
 using UserModule.Application.User.Commands.BanUser;
@@ -52,7 +55,7 @@ namespace Marketplace.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize(Roles = "Admin")]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
         [HttpPut("{userId}/ban")]
         public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
         {
@@ -62,7 +65,7 @@ namespace Marketplace.Api.Controllers
             return Ok("User successful baned");
         }
 
-        [Authorize(Roles = "Admin")]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
         [HttpDelete("{userId}/ban")]
         public async Task<ActionResult> UnBanUser([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
@@ -72,7 +75,7 @@ namespace Marketplace.Api.Controllers
             return Ok("User successful unbaned");
         }
 
-        [Authorize]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.SameUser))]
         [HttpPut("me/profile")]
         public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserCommand command, CancellationToken cancellationToken)
         {
@@ -81,28 +84,20 @@ namespace Marketplace.Api.Controllers
             return Ok("Account successful updated");
         }
 
-        [Authorize]
-        [HttpDelete("me/delete")]
-        public async Task<ActionResult> HardDeleteAccount(CancellationToken cancellationToken)
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
+        [HttpDelete("{userId}/delete")]
+        public async Task<ActionResult> HardDeleteAccount([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
             await _mediator.Send(new DeleteUserCommand(userId), cancellationToken);
             _cookieService.Delete("refreshToken");
 
             return Ok("User successful deleted");
         }
 
-        [Authorize]
-        [HttpPatch("me/deactivate")]
-        public async Task<ActionResult> SoftDeleteAccount(CancellationToken cancellationToken)
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
+        [HttpPatch("{userId}/deactivate")]
+        public async Task<ActionResult> SoftDeleteAccount([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
             await _mediator.Send(new DeactivateUserCommand(userId), cancellationToken);
             _cookieService.Delete("refreshToken");
 

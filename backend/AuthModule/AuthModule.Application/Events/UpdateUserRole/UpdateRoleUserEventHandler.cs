@@ -21,7 +21,7 @@ namespace AuthModule.Application.Events.UpdateUserRole
         }
         public async Task Handle(UpdateUserRoleEvent notification, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(notification.UserId, cancellationToken);
             user.UpdateRole(notification.NewRole);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("[Auth Module] User with ID {UserId} role updated to {NewRole} successfully.", notification.UserId, notification.NewRole);

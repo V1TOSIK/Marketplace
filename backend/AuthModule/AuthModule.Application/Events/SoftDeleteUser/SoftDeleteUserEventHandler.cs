@@ -26,7 +26,7 @@ namespace AuthModule.Application.Events.SoftDeleteUser
 
         public async Task Handle(SoftDeleteUserEvent notification, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(notification.UserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(notification.UserId, cancellationToken);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 user.MarkAsDeleted();

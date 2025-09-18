@@ -17,6 +17,9 @@ namespace Marketplace.Api
         public string? IpAddress
             => _httpContextAccessor.HttpContext?.Items["ClientIp"]?.ToString() ?? "unknown";
 
+        public string? Role
+            => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;
+
         public Guid? UserId
             => Guid.TryParse(
                 _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value,

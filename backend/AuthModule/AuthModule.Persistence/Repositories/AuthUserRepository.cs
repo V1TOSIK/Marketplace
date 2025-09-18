@@ -22,11 +22,9 @@ namespace AuthModule.Persistence.Repositories
         }
 
 
-        public async Task<AuthUser> GetByIdAsync(Guid userId, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Id == userId
-            && (includeDeleted || !u.IsDeleted)
-            && (includeBanned || !u.IsBanned), cancellationToken);
+            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
             if (user == null)
             {
                 _logger.LogError("[Auth Module(Repository)] User with Id: {userId} not found", userId);
@@ -36,13 +34,12 @@ namespace AuthModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<AuthUser?> GetByOAuthAsync(string idToken, string providerText, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByOAuthAsync(string idToken, string providerText, CancellationToken cancellationToken = default)
         {
             var provider = ParseProvider(providerText);
             var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.ProviderUserId == idToken
-            && u.Provider == provider
-            && (includeDeleted || !u.IsDeleted)
-            && (includeBanned || !u.IsBanned), cancellationToken);
+            && u.Provider == provider,
+            cancellationToken);
 
             return user;
         }
@@ -121,7 +118,7 @@ namespace AuthModule.Persistence.Repositories
 
         public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            var user = await GetByIdAsync(userId, true, true, cancellationToken);
+            var user = await GetByIdAsync(userId, cancellationToken);
             _dbContext.AuthUsers.Remove(user);
         }
 

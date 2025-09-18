@@ -34,7 +34,7 @@ namespace AuthModule.Application.Auth.Commands.AddPhone
                 _logger.LogWarning("[Auth Module] No authenticated user found for adding phone.");
                 throw new UnauthorizedAccessException("No authenticated user found.");
             }
-            var user = await _authUserRepository.GetByIdAsync(userId.Value, false, false, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(userId.Value, cancellationToken);
             if (await _authUserRepository.IsPhoneNumberRegisteredAsync(command.Phone, cancellationToken))
             {
                 _logger.LogWarning("[Auth Module] Phone {Phone} is already registered.", command.Phone);

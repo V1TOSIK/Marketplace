@@ -54,7 +54,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
                 throw new RefreshTokenOperationException("Refresh token has expired.");
             }
 
-            var user = await _authUserRepository.GetByIdAsync(token.UserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(token.UserId, cancellationToken);
 
             if (user == null)
             {
