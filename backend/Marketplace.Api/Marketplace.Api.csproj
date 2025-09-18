@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>9bcacc64-823b-4c5f-a772-601029982dce</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Auth" Version="1.70.0" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthModule\AuthModule.Application\AuthModule.Application.csproj" />
+    <ProjectReference Include="..\AuthModule\AuthModule.Composition\AuthModule.Composition.csproj" />
+    <ProjectReference Include="..\MediaModule\MediaModule.Application\MediaModule.Application.csproj" />
+    <ProjectReference Include="..\MediaModule\MediaModule.Composition\MediaModule.Composition.csproj" />
+    <ProjectReference Include="..\ProductModule\ProductModule.Application\ProductModule.Application.csproj" />
+    <ProjectReference Include="..\ProductModule\ProductModule.Composition\ProductModule.Composition.csproj" />
+    <ProjectReference Include="..\UserModule\UserModule.Application\UserModule.Application.csproj" />
+    <ProjectReference Include="..\UserModule\UserModule.Composition\UserModule.Composition.csproj" />
+  </ItemGroup>
+
+</Project>
