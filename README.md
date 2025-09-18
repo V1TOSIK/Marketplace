@@ -77,11 +77,8 @@ API включає **автентифікацію, управління кори
 
 ---
 
-## 🏗️ Архітектура
-
 ### 🔹 Високорівнева діаграма  
 
-```mermaid
 flowchart TD
     Client[Фронтенд / Mobile App] --> API[Marketplace.API]
 
@@ -96,6 +93,8 @@ flowchart TD
     API --> Storage[(MinIO S3)]
     API --> Mail[MailKit SMTP]
     API --> SMS[Twilio API]
+
+---
 
 ## 🏗️ Структура проекту
 
@@ -126,6 +125,8 @@ Marketplace/
 │   └── Infrastructure/
 ├── SharedKernel/              
 └── docker-compose.yml
+
+---
 
 ## 🏁 Getting Started
 
