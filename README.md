@@ -4,7 +4,6 @@
 [![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-blue)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Cache-Redis-red)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-informational?logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
@@ -16,50 +15,40 @@ API включає **автентифікацію, управління кори
 
 ## 🚀 Основний функціонал  
 
-### 🔐 Auth Module  
+### 🔐 Auth Module
 - Реєстрація користувачів (**Email / Phone / Google OAuth**)  
 - Авторизація за схемою **Access Token + Refresh Token**  
 - Керування акаунтом (видалення, відновлення, блокування)  
 - Ролі користувачів (**User, Admin, Guest**)  
 
-**Entities**:  
-- `AuthUser`  
-- `RefreshToken`  
+**Entities:** `AuthUser`, `RefreshToken`  
 
 ---
 
-### 👤 User Module  
+### 👤 User Module
 - Профіль користувача (ім’я, дані, контакти)  
 - Керування телефонними номерами  
 - Синхронізація з AuthModule  
 
-**Entities**:  
-- `User`  
-- `UserPhoneNumber`  
+**Entities:** `User`, `UserPhoneNumber`  
 
 ---
 
-### 📦 Product Module  
+### 📦 Product Module
 - Створення та управління товарами  
 - Категорії, характеристики, фільтрація  
 - Підтримка пагінації та пошуку  
 - Готовність до винесення в мікросервіс  
 
-**Entities**:  
-- `Product`  
-- `Category`  
-- `CharacteristicGroup`  
-- `CharacteristicTemplate`  
-- `CharacteristicValue`  
+**Entities:** `Product`, `Category`, `CharacteristicGroup`, `CharacteristicTemplate`, `CharacteristicValue`  
 
 ---
 
-### 🖼️ Media Module  
+### 🖼️ Media Module
 - Завантаження та зберігання медіа  
 - Інтеграція з **MinIO (S3 сумісне сховище)**  
 
-**Entities**:  
-- `Media`  
+**Entities:** `Media`  
 
 ---
 
@@ -77,28 +66,30 @@ API включає **автентифікацію, управління кори
 
 ---
 
-### 🔹 Високорівнева діаграма  
-
+```mermaid
 flowchart TD
-    Client[Фронтенд / Mobile App] --> API[Marketplace.API]
+    Client[Frontend or Mobile App] --> API[Marketplace API .NET 9]
 
-    subgraph API[Marketplace API (.NET 9)]
-        A[Auth Module] -->|JWT / OAuth| DB[(PostgreSQL)]
-        U[User Module] -->|Users, Phones| DB
-        P[Product Module] -->|Products, Categories| DB
+    subgraph API[Marketplace API]
+        A[Auth Module] -->|JWT or OAuth| DB[PostgreSQL]
+        U[User Module] -->|Users and Phones| DB
+        P[Product Module] -->|Products and Categories| DB
         M[Media Module] -->|Files Metadata| DB
     end
 
-    API --> Cache[(Redis)]
-    API --> Storage[(MinIO S3)]
+    API --> Cache[Redis]
+    API --> Storage[MinIO S3]
     API --> Mail[MailKit SMTP]
     API --> SMS[Twilio API]
+```
+
 
 ---
 
+
 ## 🏗️ Структура проекту
 
-Marketplace/
+Marketplace/           
 ├── Marketplace.Api/           
 ├── AuthModule/                
 │   ├── Application/           
@@ -106,23 +97,23 @@ Marketplace/
 │   ├── Composition/            
 │   ├── Persistence/           
 │   └── Infrastructure/        
-├── UserModule/                
-│   ├── Application/
-│   ├── Domain/
-│   ├── Composition/
-│   ├── Persistence/
-│   └── Infrastructure/
+├── UserModule/               
+│   ├── Application/           
+│   ├── Domain/    
+│   ├── Composition/            
+│   ├── Persistence/           
+│   └── Infrastructure/        
 ├── ProductModule/             
-│   ├── Application/
-│   ├── Domain/
-│   ├── Composition/
-│   └── Persistence/
-├── MediaModule/               
-│   ├── Application/
-│   ├── Domain/
-│   ├── Composition/
-│   ├── Persistence/
-│   └── Infrastructure/
+│   ├── Application/           
+│   ├── Domain/    
+│   ├── Composition/            
+│   └── Persistence/           
+├── MediaModule/                 
+│   ├── Application/           
+│   ├── Domain/    
+│   ├── Composition/            
+│   ├── Persistence/           
+│   └── Infrastructure/        
 ├── SharedKernel/              
 └── docker-compose.yml
 
@@ -138,15 +129,8 @@ Marketplace/
 
 ### 🔹 Запуск проекту
 
-1. Скласти проект:
+Зібрати і запустити Docker контейнери для проекту(PostgreSQL, Redis, MinIO, backend, frontend):
 ```bash
-dotnet build
-
-2. Запустити Docker контейнери для PostgreSQL, Redis та MinIO:
-```bash
-docker-compose up -d
-
-3. Запустити API:
-```bash
-cd Marketplace.Api
-dotnet run
+docker-compose up --build -d
+```
+backend працює на порту 8000
