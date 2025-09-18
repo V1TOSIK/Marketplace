@@ -1,6 +1,6 @@
 # 🛒 Marketplace API
 
-[![.NET 8](https://img.shields.io/badge/.NET-8-purple)](https://dotnet.microsoft.com/)
+[![.NET 9](https://img.shields.io/badge/.NET-9-purple)](https://dotnet.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-blue)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Cache-Redis-red)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-informational?logo=docker)](https://www.docker.com/)
@@ -9,7 +9,7 @@
 ---
 
 ## 📌 Опис  
-**Marketplace API** — це **backend частина маркетплейсу**, реалізована на **.NET 8** з використанням **CQRS, MediatR та Domain-Driven Design (DDD)**.  
+**Marketplace API** — це **backend частина маркетплейсу**, реалізована на **.NET 9** з використанням **CQRS, MediatR та Domain-Driven Design (DDD)**.  
 API включає **автентифікацію, управління користувачами, продуктами, медіа та інтеграції з зовнішніми сервісами**.  
 
 ---
@@ -85,7 +85,7 @@ API включає **автентифікацію, управління кори
 flowchart TD
     Client[Фронтенд / Mobile App] --> API[Marketplace.API]
 
-    subgraph API[Marketplace API (.NET 8)]
+    subgraph API[Marketplace API (.NET 9)]
         A[Auth Module] -->|JWT / OAuth| DB[(PostgreSQL)]
         U[User Module] -->|Users, Phones| DB
         P[Product Module] -->|Products, Categories| DB
@@ -97,37 +97,55 @@ flowchart TD
     API --> Mail[MailKit SMTP]
     API --> SMS[Twilio API]
 
+## 🏗️ Структура проекту
+
 Marketplace/
-├── Marketplace.Api/           # Вхідна точка (Controllers, DI, Middleware)
-│
-├── AuthModule/                # Авторизація та автентифікація
-│   ├── Application/           # CQRS (Commands, Queries, Handlers)
+├── Marketplace.Api/           
+├── AuthModule/                
+│   ├── Application/           
 │   ├── Domain/    
-│   ├── Composition/            # Entities, ValueObjects, Exceptions
-│   ├── Persistence/           # Repositories, DbContext
-│   └── Infrastructure/                   # Controllers, DTOs
-│
-├── UserModule/                # Профіль користувача
+│   ├── Composition/            
+│   ├── Persistence/           
+│   └── Infrastructure/        
+├── UserModule/                
 │   ├── Application/
 │   ├── Domain/
 │   ├── Composition/
 │   ├── Persistence/
 │   └── Infrastructure/
-│
-├── ProductModule/             # Продукти, категорії, характеристики
+├── ProductModule/             
 │   ├── Application/
 │   ├── Domain/
 │   ├── Composition/
 │   └── Persistence/
-│
-│
-├── MediaModule/               # Завантаження та зберігання медіа
+├── MediaModule/               
 │   ├── Application/
 │   ├── Domain/
 │   ├── Composition/
 │   ├── Persistence/
 │   └── Infrastructure/
-│
-├── SharedKernel/              # Базові абстракції (AggregateRoot, ValueObjects)
-│
+├── SharedKernel/              
 └── docker-compose.yml
+
+## 🏁 Getting Started
+
+### 🔹 Prerequisites
+- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+- Docker
+- PostgreSQL (можна через Docker)
+- Redis (можна через Docker)
+
+### 🔹 Запуск проекту
+
+1. Скласти проект:
+```bash
+dotnet build
+
+2. Запустити Docker контейнери для PostgreSQL, Redis та MinIO:
+```bash
+docker-compose up -d
+
+3. Запустити API:
+```bash
+cd Marketplace.Api
+dotnet run
