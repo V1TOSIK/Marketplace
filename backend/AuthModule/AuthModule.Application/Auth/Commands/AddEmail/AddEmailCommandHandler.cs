@@ -33,7 +33,7 @@ namespace AuthModule.Application.Auth.Commands.AddEmail
                 _logger.LogWarning("[Auth Module] No authenticated user found for adding email.");
                 throw new UnauthorizedAccessException("No authenticated user found.");
             }
-            var user = await _authUserRepository.GetByIdAsync(userId.Value, false, false, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(userId.Value, cancellationToken);
             if (await _authUserRepository.IsEmailRegisteredAsync(command.Email, cancellationToken))
             {
                 _logger.LogWarning("[Auth Module] Email {Email} is already registered.", command.Email);

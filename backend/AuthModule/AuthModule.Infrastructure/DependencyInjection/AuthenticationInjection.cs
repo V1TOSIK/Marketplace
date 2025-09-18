@@ -1,12 +1,11 @@
 ﻿using AuthModule.Infrastructure.Options;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace AuthModule.Composition.DependencyInjection
+namespace AuthModule.Infrastructure.DependencyInjection
 {
     public static class AuthenticationInjection
     {

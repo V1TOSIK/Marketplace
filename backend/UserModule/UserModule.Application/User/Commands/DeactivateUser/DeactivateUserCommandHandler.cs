@@ -31,9 +31,14 @@ namespace UserModule.Application.User.Commands.DeactivateUser
                 _logger.LogWarning("[User Module] User ID is empty or does not match the command. Cannot soft delete user.");
                 throw new UnauthorizedAccessException("User is not authenticated or not authorized to delete this profile.");
             }
-            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, false, true);
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, true, true);
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
+                if (user.IsDeleted)
+                {
+                    _logger.LogWarning("[User Module] User with ID {userId} is already marked as deleted.", command.UserId);
+                    return;
+                }
                 user.MarkAsDeleted();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);

@@ -38,7 +38,7 @@ namespace AuthModule.Application.Auth.Commands.ChangePassword
                 throw new UnauthorizedChangePasswordException("You are not authorized to change this user's password.");
             }
 
-            var user = await _authUserRepository.GetByIdAsync(userId.Value, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(userId.Value, cancellationToken);
 
             user.ThrowIfCannotLogin();
             if (user.IsOAuth())

@@ -17,6 +17,7 @@ namespace AuthModule.Composition.DependencyInjection
             IConfiguration configuration)
         {
             services.AddAuthentication(configuration);
+            services.AddAuthorization(configuration);
             services.AddAuthApplication(configuration);
             services.AddAuthPersistence(configuration);
             services.AddAuthInfrastructure(configuration);

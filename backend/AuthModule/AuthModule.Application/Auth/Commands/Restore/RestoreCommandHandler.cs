@@ -27,7 +27,7 @@ namespace AuthModule.Application.Auth.Commands.Restore
 
         public async Task<AuthResult> Handle(RestoreCommand command, CancellationToken cancellationToken)
         {
-            var user = await _authUserRepository.GetByIdAsync(command.UserId, true, true, cancellationToken);
+            var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
             AuthResult response = null!;
             await _unitOfWork.ExecuteInTransactionAsync(async () =>

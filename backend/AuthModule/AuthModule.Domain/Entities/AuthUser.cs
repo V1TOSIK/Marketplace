@@ -10,6 +10,7 @@ namespace AuthModule.Domain.Entities
 {
     public class AuthUser : AggregateRoot<Guid>
     {
+        private AuthUser() { }
         private AuthUser(
             string? providerUserId,
             Email? email,
@@ -30,6 +31,7 @@ namespace AuthModule.Domain.Entities
             Provider = provider;
             Role = role;
             RegistrationDate = DateTime.UtcNow;
+            Console.WriteLine($"[Auth Module(Entity)] New user created with ID {Id}");
             AddDomainEvent(new UserRegisteredEvent(Id));
         }
 
