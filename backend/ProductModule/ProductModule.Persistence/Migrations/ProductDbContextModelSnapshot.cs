@@ -109,10 +109,12 @@ namespace ProductModule.Persistence.Migrations
 
             modelBuilder.Entity("ProductModule.Domain.Entities.CharacteristicValue", b =>
                 {
-                    b.Property<string>("Value")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("value");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CharacteristicTemplateId")
                         .HasColumnType("integer")
@@ -122,7 +124,13 @@ namespace ProductModule.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("group_id");
 
-                    b.HasKey("Value", "CharacteristicTemplateId", "GroupId");
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("GroupId");
 

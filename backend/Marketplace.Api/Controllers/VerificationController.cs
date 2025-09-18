@@ -14,8 +14,8 @@ namespace Marketplace.Api.Controllers
             _verificationService = verificationService;
         }
 
-        [HttpPost("send-code")]
-        public async Task<IActionResult> SendVerificationCode([FromQuery] string destination, CancellationToken cancellationToken)
+        [HttpPost("code/send")]
+        public async Task<ActionResult> SendVerificationCode([FromQuery] string destination, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(destination))
                 return BadRequest("Destination cannot be empty.");
@@ -23,8 +23,8 @@ namespace Marketplace.Api.Controllers
             return Ok("Verification code sent successfully.");
         }
 
-        [HttpPost("verify")]
-        public async Task<IActionResult> VerifyCode([FromBody] VerificationRequest request, CancellationToken cancellationToken)
+        [HttpPut("code/verify")]
+        public async Task<ActionResult> VerifyCode([FromBody] VerificationRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Destination) || string.IsNullOrWhiteSpace(request.Code))
                 return BadRequest("Destination and code cannot be empty.");

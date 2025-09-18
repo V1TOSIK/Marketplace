@@ -6,11 +6,11 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
 {
     public class GetMyProductsQuery : IRequest<IEnumerable<ProductDto>>
     {
-        public IEnumerable<string>? Statuses { get; set; } = Array.Empty<string>();
+        public List<string>? Statuses { get; set; } = [];
 
         public IEnumerable<Status> GetParsedStatuses()
         {
-            foreach (var s in Statuses ?? Array.Empty<string>())
+            foreach (var s in Statuses ?? [])
             {
                 if (Enum.TryParse<Status>(s, true, out var status))
                     yield return status;

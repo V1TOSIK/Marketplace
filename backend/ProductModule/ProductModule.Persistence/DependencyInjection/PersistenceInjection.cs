@@ -16,6 +16,7 @@ namespace ProductModule.Persistence.DependencyInjection
 
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ICharacteristicRepository, CharacteristicRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IProductUnitOfWork, ProductUnitOfWork>();
 
             services.AddDbContext<ProductDbContext>(options =>

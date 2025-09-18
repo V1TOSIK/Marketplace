@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using ProductModule.Application.Interfaces;
 using ProductModule.Application.Interfaces.Repositories;
-using ProductModule.SharedKernel.Interfaces;
+using SharedKernel.Interfaces;
 
 namespace ProductModule.Application.Product.Commands.PublishProduct
 {

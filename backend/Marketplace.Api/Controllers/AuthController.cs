@@ -1,10 +1,17 @@
-﻿using AuthModule.Application.Dtos.Requests;
+﻿using AuthModule.Application.Auth.Commands.AddEmail;
+using AuthModule.Application.Auth.Commands.AddPhone;
+using AuthModule.Application.Auth.Commands.ChangePassword;
+using AuthModule.Application.Auth.Commands.Login;
+using AuthModule.Application.Auth.Commands.LogoutFromAllDevices;
+using AuthModule.Application.Auth.Commands.LoguotFromDevice;
+using AuthModule.Application.Auth.Commands.Refresh;
+using AuthModule.Application.Auth.Commands.Register;
+using AuthModule.Application.Auth.Commands.Restore;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Interfaces.Services;
-using AuthModule.Application.Models;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Marketplace.Api.Controllers
 {
@@ -12,245 +19,137 @@ namespace Marketplace.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
-        private readonly IJwtProvider _jwtProvider;
         private readonly ICookieService _cookieService;
-        private readonly ILogger<AuthController> _logger;
+        private readonly IMediator _mediator;
+
         public AuthController(
-            IAuthService authService,
-            IJwtProvider jwtProvider,
             ICookieService cookieService,
-            ILogger<AuthController> logger)
+            IMediator mediator)
         {
-            _authService = authService;
-            _jwtProvider = jwtProvider;
             _cookieService = cookieService;
-            _logger = logger;
+            _mediator = mediator;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterLocalRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Password))
-            {
-                _logger.LogError("Password is empty or null in register request");
+            if (string.IsNullOrWhiteSpace(command.Password))
                 return BadRequest("Password cannot be empty or null");
-            }
 
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                _logger.LogError("Both email and phone number are empty in register request");
-                return BadRequest("Either email or phone number must be provided");
-            }
+            if (string.IsNullOrWhiteSpace(command.Credential))
+                return BadRequest("Cretential must be provided");
 
-            var clientInfo = GetClientInfo();
-
-            var result = await _authService.RegisterLocalUser(request, clientInfo, cancellationToken);
-
-            if (result == null)
-            {
-                _logger.LogError("Registration failed.");
-                return BadRequest("Registration failed.");
-            }
-
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
+            var result = await _mediator.Send(command, cancellationToken);
 
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
             return Ok(result.Response);
         }
 
-        [HttpPost("local/login")]
-        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        [HttpPost("login")]
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Password))
-            {
-                _logger.LogError("Password is empty or null in login request");
+            if (string.IsNullOrWhiteSpace(command.Password))
                 return BadRequest("Password cannot be empty or null");
-            }
 
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                _logger.LogError("Both email and phone number are empty in login request");
+            if (string.IsNullOrWhiteSpace(command.Credential))
                 return BadRequest("Either email or phone number must be provided");
-            }
 
-            var clientInfo = GetClientInfo();
+            var result = await _mediator.Send(command, cancellationToken);
 
-            var result = await _authService.Login(request, clientInfo, cancellationToken);
-            if (result == null)
-            {
-                _logger.LogError("Login failed. Invalid credentials.");
-                return Unauthorized("Invalid credentials");
-            }
-
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
-
+            if (result.RefreshToken != null)
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
-            _logger.LogInformation("User logged in successfully with ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
         }
 
-        [HttpPost("restore")]
-        public async Task<ActionResult<AuthorizeResponse>> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken)
+        [HttpPut("{userId}/restore")]
+        public async Task<ActionResult<AuthorizeResponse>> Restore([FromRoute] Guid userId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Email) && string.IsNullOrWhiteSpace(request.PhoneNumber))
-            {
-                _logger.LogError("Both email and phone number are empty in restore request");
-                return BadRequest("Either email or phone number must be provided");
-            }
-            var clientInfo = GetClientInfo();
-            var result = await _authService.Restore(request, clientInfo, cancellationToken);
-            if (result == null)
-            {
-                _logger.LogError("Restore failed. Invalid credentials.");
-                return Unauthorized("Invalid credentials");
-            }
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
-            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
-            _logger.LogInformation("User restored successfully with ID: {UserId}", result.Response.UserId);
+            if (userId == Guid.Empty)
+                return BadRequest("User ID cannot be empty or null");
+
+            var result = await _mediator.Send(new RestoreCommand(userId), cancellationToken);
+
+            if (result.RefreshToken != null)
+                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+
             return Ok(result.Response);
         }
 
         [Authorize]
-        [HttpPost("change-password")]
-        public async Task<ActionResult> ChangePassword([FromBody]ChangePasswordRequest request, CancellationToken cancellationToken)
+        [HttpPut("change/password")]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
-            {
-                _logger.LogError("Old password or new password is empty");
+            if (string.IsNullOrWhiteSpace(command.CurrentPassword) || string.IsNullOrWhiteSpace(command.NewPassword))
                 return BadRequest("Old password and new password cannot be empty");
-            }
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-            {
-                _logger.LogError("User ID is null or invalid");
-                return BadRequest("Invalid user ID");
-            }
-            await _authService.ChangePassword(request, userId, cancellationToken);
 
-            _logger.LogInformation("Password changed successfully for user ID: {UserId}", userId);
+            await _mediator.Send(command, cancellationToken);
+
             return Ok("Password changed successfully");
         }
 
         [Authorize]
-        [HttpPost("email")]
-        public async Task<ActionResult> AddEmail([FromBody] AddEmailRequest request, CancellationToken cancellationToken)
+        [HttpPut("email")]
+        public async Task<ActionResult> AddEmail([FromBody] AddEmailCommand command, CancellationToken cancellationToken = default)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-            {
-                _logger.LogError("User ID is null or invalid");
-                return BadRequest("Invalid user ID");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Email))
+            if (string.IsNullOrWhiteSpace(command.Email))
                 return BadRequest("Email cannot be empty.");
 
-            await _authService.AddEmailAsync(userId, request.Email, cancellationToken);
+            await _mediator.Send(command, cancellationToken);
             return Ok(new { Message = "Email added successfully." });
         }
 
         [Authorize]
-        [HttpPost("phone")]
-        public async Task<ActionResult> AddPhone([FromBody] AddPhoneRequest request, CancellationToken cancellationToken)
+        [HttpPut("phone")]
+        public async Task<ActionResult> AddPhone([FromBody] AddPhoneCommand command, CancellationToken cancellationToken = default)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-            {
-                _logger.LogError("User ID is null or invalid");
-                return BadRequest("Invalid user ID");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+            if (string.IsNullOrWhiteSpace(command.Phone))
                 return BadRequest("Phone number cannot be empty.");
 
-            await _authService.AddPhoneAsync(userId, request.PhoneNumber, cancellationToken);
+            await _mediator.Send(command, cancellationToken);
             return Ok(new { Message = "Phone number added successfully." });
         }
 
         [Authorize]
-        [HttpPost("logout-all")]
-        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken)
+        [HttpDelete("logout/all")]
+        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken = default)
         {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-            {
-                _logger.LogError("User ID is null or invalid");
-                return BadRequest("Invalid user ID");
-            }
-
-            await _authService.LogoutFromAllDevices(userId, cancellationToken);
-
+            await _mediator.Send(new LogoutFromAllDevicesCommand(), cancellationToken);
             _cookieService.Delete("refreshToken");
-
-            _logger.LogInformation("User with ID: {UserId} logged out from all devices", userId);
             return Ok("User logged out successfully");
         }
 
         [Authorize]
-        [HttpPost("logout")]
-        public async Task<ActionResult> Logout(CancellationToken cancellationToken)
+        [HttpDelete("logout")]
+        public async Task<ActionResult> Logout(CancellationToken cancellationToken = default)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
             if (refreshToken == null)
-            {
-                _logger.LogError("Refresh token is null or empty");
                 return BadRequest("Invalid request");
-            }
 
-            await _authService.LogoutFromDevice(refreshToken, cancellationToken);
+            await _mediator.Send(new LogoutFromDeviceCommand(refreshToken), cancellationToken);
 
             _cookieService.Delete("refreshToken");
             return Ok("User logged out successfully");
         }
 
-        [HttpPost("refresh")]
-        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken)
+        [HttpPost("token/refresh")]
+        public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken = default)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
             if (refreshToken == null)
-            {
-                _logger.LogError("Refresh token is null or empty");
                 return BadRequest("Invalid request");
-            }
 
-            var clientInfo = GetClientInfo();
-
-            var result = await _authService.RefreshTokens(refreshToken, clientInfo, cancellationToken);
+            var result = await _mediator.Send(new RefreshCommand(refreshToken), cancellationToken);
             if (result == null)
-            {
-                _logger.LogError("Refresh token is invalid or expired");
                 return Forbid("Invalid refresh token");
-            }
-
-            result.Response.AccessToken = _jwtProvider.GenerateAccessToken(result.Response.UserId, result.Response.Role);
 
             _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
-            _logger.LogInformation("Tokens refreshed successfully for user ID: {UserId}", result.Response.UserId);
             return Ok(result.Response);
         }
-
-        private Guid GetUserId()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userId, out var parsedUserId))
-                return parsedUserId;
-            return Guid.Empty;
-        }
-
-        private ClientInfo GetClientInfo()
-        {
-            return new ClientInfo
-            {
-                IpAddress = HttpContext.Items["ClientIp"]?.ToString() ?? "unknown",
-                Device = HttpContext.Items["ClientDevice"]?.ToString() ?? "unknown"
-            };
-        }
-
     }
 }

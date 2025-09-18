@@ -5,6 +5,7 @@ using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Interfaces;
 using SharedKernel.Specification;
 using SharedKernel.Queries;
+using SharedKernel.Dtos;
 
 namespace ProductModule.Application.Product.Queries.GetFilteredProducts
 {
@@ -19,7 +20,7 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
         }
         public async Task<IEnumerable<ProductDto>> Handle(GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
-            var spec = new Specification<ProductModule.Domain.Entities.Product>();
+            var spec = new Specification<Domain.Entities.Product>();
             spec.AddCriteria(p => p.Status == Status.Published);
 
             if (query.MaxPrice.HasValue)
@@ -53,22 +54,23 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
 
             var result = await _productRepository.GetBySpecificationAsync(spec, cancellationToken);
 
-            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(result.Select(r => r.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(result.Select(r => r.Id)), cancellationToken);
 
             var response = result.Select(p =>
             {
-                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+                var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
 
                 return new ProductDto
                 {
                     Id = p.Id,
-                    MainMediaUrl = url,
+                    Medias = [media],
                     Name = p.Name,
                     PriceCurrency = p.Price.Currency,
                     PriceAmount = p.Price.Amount,
                     Location = p.Location,
                     CategoryId = p.CategoryId,
-                    UserId = p.UserId
+                    UserId = p.UserId,
+                    Status = p.Status.ToString()
                 };
             });
             return response;

@@ -1,10 +1,11 @@
 ﻿using MediaModule.Application.Interfaces.Repositories;
 using MediatR;
+using SharedKernel.Dtos;
 using SharedKernel.Queries;
 
 namespace MediaModule.Application.Media.Queries.GetMainMedia
 {
-    public class GetMainMediaQueryHandler : IRequestHandler<GetMainMediaQuery, string>
+    public class GetMainMediaQueryHandler : IRequestHandler<GetMainMediaQuery, MediaDto>
     {
         private readonly IMediaRepository _mediaRepository;
 
@@ -13,11 +14,16 @@ namespace MediaModule.Application.Media.Queries.GetMainMedia
             _mediaRepository = mediaRepository;
         }
 
-        public async Task<string> Handle(GetMainMediaQuery query, CancellationToken cancellationToken)
+        public async Task<MediaDto> Handle(GetMainMediaQuery query, CancellationToken cancellationToken)
         {
             var media = await _mediaRepository.GetMainMediaByEntityIdAsync(query.EntityId, cancellationToken);
 
-            return media.Url;
+            return new MediaDto
+            {
+                Id = media.Id,
+                Url = media.Url,
+                IsMain = media.IsMain
+            };
         }
     }
 }

@@ -3,9 +3,9 @@ using ProductModule.Application.Dtos;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
-using ProductModule.SharedKernel.Interfaces;
 using ProductModule.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using SharedKernel.Interfaces;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {
@@ -41,8 +41,8 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
             var product = Domain.Entities.Product.Create(
                 userId.Value,
                 request.Name,
-                request.PriceCurrency,
                 request.PriceAmount,
+                request.PriceCurrency,
                 request.Location,
                 request.Description,
                 request.CategoryId,

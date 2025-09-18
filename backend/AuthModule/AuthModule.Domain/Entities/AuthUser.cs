@@ -1,7 +1,6 @@
 ﻿using AuthModule.Domain.Enums;
 using AuthModule.Domain.Exceptions;
 using AuthModule.Domain.ValueObjects;
-using MediatR;
 using SharedKernel.AgregateRoot;
 using SharedKernel.Events;
 using SharedKernel.Exceptions;
@@ -31,6 +30,7 @@ namespace AuthModule.Domain.Entities
             Provider = provider;
             Role = role;
             RegistrationDate = DateTime.UtcNow;
+            AddDomainEvent(new UserRegisteredEvent(Id));
         }
 
         public string? ProviderUserId { get; private set; }
@@ -41,11 +41,12 @@ namespace AuthModule.Domain.Entities
         public UserRole Role { get; private set; } = UserRole.Guest;
         public DateTime RegistrationDate { get; }
         public bool IsBanned { get; private set; } = false;
+        public string? BanReason { get; private set; } = null;
         public DateTime? BannedAt { get; private set; } = null;
         public bool IsDeleted { get; private set; } = false;
         public DateTime? DeletedAt { get; private set; }
 
-        public static AuthUser CreateOAuth(string providerUserId, string email, string roleText, string providerText)
+        public static AuthUser CreateOAuth(string providerUserId, string? email, string providerText)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new MissingAuthCredentialException("Email is required for OAuth users.");
@@ -54,7 +55,6 @@ namespace AuthModule.Domain.Entities
                 throw new InvalidProviderException("Provider user id cannot be null or empty");
 
             var provider = ParseProvider(providerText);
-            var role = ParseRole(roleText);
 
             return new AuthUser(
                 providerUserId,
@@ -62,17 +62,16 @@ namespace AuthModule.Domain.Entities
                 null,
                 null,
                 provider,
-                role
+                UserRole.User
             );
         }
 
-        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue, string roleText)
+        public static AuthUser Create(string? emailValue, string? phoneNumberValue, string passwordValue)
         {
             var email = string.IsNullOrWhiteSpace(emailValue) ? null : new Email(emailValue);
             var phoneNumber = string.IsNullOrWhiteSpace(phoneNumberValue) ? null : new PhoneNumber(phoneNumberValue);
 
             var password = new Password(passwordValue);
-            var role = ParseRole(roleText);
 
             return new AuthUser(
                 null,
@@ -80,7 +79,7 @@ namespace AuthModule.Domain.Entities
                 phoneNumber,
                 password,
                 AuthProvider.Local,
-                role);
+                UserRole.User);
         }
 
         public void MarkAsDeleted()
@@ -99,14 +98,15 @@ namespace AuthModule.Domain.Entities
 
             IsDeleted = false;
             DeletedAt = null;
-            AddDomainEvent(new RestoreUserDomainEvent(Id));
+            AddDomainEvent(new RestoreUserEvent(Id));
         }
 
-        public void Ban()
+        public void Ban(string reason)
         {
             if (IsBanned)
                 throw new UserOperationException("User is already baned.");
             IsBanned = true;
+            BanReason = reason;
             BannedAt = DateTime.UtcNow;
         }
 
@@ -115,6 +115,7 @@ namespace AuthModule.Domain.Entities
             if (!IsBanned)
                 throw new UserOperationException("User is not baned.");
             IsBanned = false;
+            BanReason = null;
             BannedAt = null;
         }
 

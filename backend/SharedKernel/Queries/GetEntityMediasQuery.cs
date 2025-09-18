@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using SharedKernel.Dtos;
 
 namespace SharedKernel.Queries
 {
-    public class GetEntityMediasQuery : IRequest<IEnumerable<string>>
+    public class GetEntityMediasQuery : IRequest<IEnumerable<MediaDto>>
     {
         public GetEntityMediasQuery(Guid entityId)
         {

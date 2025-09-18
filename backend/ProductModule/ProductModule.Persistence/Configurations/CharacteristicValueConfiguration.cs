@@ -9,7 +9,12 @@ namespace ProductModule.Persistence.Configurations
         public void Configure(EntityTypeBuilder<CharacteristicValue> builder)
         {
             builder.ToTable("characteristic_values")
-                .HasKey(cv => new { cv.Value, cv.CharacteristicTemplateId, cv.GroupId});
+                .HasKey(cv => cv.Id);
+
+            builder.Property(cv => cv.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd()
+                .IsRequired();
 
             builder.Property(cv => cv.Value)
                 .HasColumnName("value")

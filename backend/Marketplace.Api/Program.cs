@@ -6,6 +6,8 @@ using ProductModule.Composition.DependencyInjection;
 using MediaModule.Composition.DependencyInjection;
 using StackExchange.Redis;
 using SharedKernel.ModuleInitializer;
+using SharedKernel.Interfaces;
+using Marketplace.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,8 @@ builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
 builder.Services.AddProductModule(builder.Configuration);
 builder.Services.AddMediaModule(builder.Configuration);
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SharedKernel.AgregateRoot;
 using UserModule.Domain.Entities;
 
 namespace UserModule.Persistence
@@ -28,9 +29,9 @@ namespace UserModule.Persistence
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var domainEntities = ChangeTracker
-            .Entries<User>()
-            .Where(x => x.Entity.DomainEvents.Any())
-            .ToList();
+                .Entries<IAggregateRoot>()
+                .Where(x => x.Entity.DomainEvents.Any())
+                .ToList();
 
             var domainEvents = domainEntities
                 .SelectMany(x => x.Entity.DomainEvents)

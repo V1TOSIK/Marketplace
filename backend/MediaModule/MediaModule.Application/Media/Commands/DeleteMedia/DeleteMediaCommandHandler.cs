@@ -12,15 +12,18 @@ namespace MediaModule.Application.Media.Commands.DeleteMedia
     public class DeleteMediaCommandHandler : IRequestHandler<DeleteMediaCommand>
     {
         private readonly IMediaRepository _mediaRepository;
+        private readonly IMediaService _mediaService;
         private readonly IMediaUnitOfWork _unitOfWork;
         private readonly IMediaProvider _mediaProvider;
         private readonly ILogger<DeleteMediaCommandHandler> _logger;
         public DeleteMediaCommandHandler(IMediaRepository mediaRepository,
+            IMediaService mediaService,
             IMediaUnitOfWork unitOfWork,
             IMediaProvider mediaProvider,
             ILogger<DeleteMediaCommandHandler> logger)
         {
             _mediaRepository = mediaRepository;
+            _mediaService = mediaService;
             _unitOfWork = unitOfWork;
             _mediaProvider = mediaProvider;
             _logger = logger;
@@ -29,7 +32,7 @@ namespace MediaModule.Application.Media.Commands.DeleteMedia
         public async Task Handle(DeleteMediaCommand command, CancellationToken cancellationToken)
         {
             var media = await _mediaRepository.GetMediaByIdAsync(command.MediaId, cancellationToken);
-            var mediaFileName = CombineFileName(media.EntityId.ToString(), media.Name);
+            var mediaFileName = _mediaService.CombineFileName(media.EntityId.ToString(), media.Name);
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
@@ -38,11 +41,6 @@ namespace MediaModule.Application.Media.Commands.DeleteMedia
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
             _logger.LogInformation("[Media Module] Media with ID {MediaId} successfully deleted", command.MediaId);
-        }
-
-        private string CombineFileName(string entityId, string fileName)
-        {
-            return $"{entityId}/{fileName}";
         }
     }
 }

@@ -23,7 +23,7 @@ namespace AuthModule.Persistence.Repositories
 
             if (refreshToken == null)
             {
-                _logger.LogError("Refresh token not found");
+                _logger.LogError("[Auth Module(Repository)] Refresh token not found");
                 throw new RefreshTokenNotFoundException("Refresh token not found");
             }
 
@@ -33,7 +33,6 @@ namespace AuthModule.Persistence.Repositories
         public async Task AddAsync(RefreshToken token, CancellationToken cancellationToken)
         {
             await _dbContext.RefreshTokens.AddAsync(token, cancellationToken);
-            _logger.LogInformation($"Refresh token added for user {token.UserId} with expiration date {token.ExpirationDate}", cancellationToken);
         }
 
         public async Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken)
@@ -45,8 +44,6 @@ namespace AuthModule.Persistence.Repositories
                 .SetProperty(rt => rt.RevokedAt, DateTime.UtcNow),
                 cancellationToken
             );
-
-            _logger.LogInformation($"All refresh tokens for user {userId} revoked successfully.", cancellationToken);
         }
     }
 }

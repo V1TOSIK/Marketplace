@@ -1,13 +1,14 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ProductModule.Domain.Entities;
+using SharedKernel.AgregateRoot;
 
 namespace ProductModule.Persistence
 {
     public class ProductDbContext : DbContext
     {
         private readonly IMediator _mediator;
-        public ProductDbContext(DbContextOptions<ProductDbContext> options, Mediator mediator) : base(options)
+        public ProductDbContext(DbContextOptions<ProductDbContext> options, IMediator mediator) : base(options)
         {
             _mediator = mediator;
         }
@@ -32,9 +33,9 @@ namespace ProductModule.Persistence
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var domainEntities = ChangeTracker
-            .Entries<Product>()
-            .Where(x => x.Entity.DomainEvents.Any())
-            .ToList();
+                .Entries<IAggregateRoot>()
+                .Where(x => x.Entity.DomainEvents.Any())
+                .ToList();
 
             var domainEvents = domainEntities
                 .SelectMany(x => x.Entity.DomainEvents)

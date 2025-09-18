@@ -24,26 +24,32 @@ namespace ProductModule.Persistence.Repositories
                 from g in _dbContext.CharacteristicGroups
                 join v in _dbContext.CharacteristicValues on g.Id equals v.GroupId
                 join t in _dbContext.CharacteristicTemplates on v.CharacteristicTemplateId equals t.Id
-                    where g.ProductId == productId
+                where g.ProductId == productId
                 select new
                 {
+                    GroupId = g.Id,
                     GroupName = g.Name,
-                    Characteristic = new CharacteristicDto
-                    {
-                        Name = t.Name,
-                        Value = v.Value,
-                        Unit = t.Unit,
-                    }
+                    CharacteristicId = v.Id,
+                    CharacteristicName = t.Name,
+                    CharacteristicValue = v.Value,
+                    CharacteristicUnit = t.Unit
                 })
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
             var response = result
-                .GroupBy(r => r.GroupName)
+                .GroupBy(x => new { x.GroupId, x.GroupName })
                 .Select(g => new CharacteristicGroupDto
                 {
-                    Name = g.Key,
-                    Characteristics = g.Select(c => c.Characteristic).ToList()
+                    Id = g.Key.GroupId,
+                    Name = g.Key.GroupName,
+                    Characteristics = g.Select(c => new CharacteristicDto
+                    {
+                        Id = c.CharacteristicId,
+                        Name = c.CharacteristicName,
+                        Value = c.CharacteristicValue,
+                        Unit = c.CharacteristicUnit
+                    }).ToList()
                 })
                 .ToList();
 
@@ -53,7 +59,10 @@ namespace ProductModule.Persistence.Repositories
         public async Task AddTemplateAsync(CharacteristicTemplate template, CancellationToken cancellationToken)
         {
             if (template == null)
+            {
+                _logger.LogError("[Product Module(Repository)] Attempted to add a null CharacteristicTemplate.");
                 throw new NullableCharacteristicTemplateException("Template cannot be null");
+            }
 
             await _dbContext.CharacteristicTemplates.AddAsync(template, cancellationToken);
             await _dbContext.SaveChangesAsync();

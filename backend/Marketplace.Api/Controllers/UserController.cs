@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using UserModule.Application.Dtos;
 using UserModule.Application.User.Commands.BanUser;
-using UserModule.Application.User.Commands.CreateUser;
 using UserModule.Application.User.Commands.DeactivateUser;
 using UserModule.Application.User.Commands.DeleteUser;
 using UserModule.Application.User.Commands.UnbanUser;
@@ -43,9 +42,9 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<UserDto>> GetUserProfile(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDto>> GetUserProfile([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            if (userId ==  Guid.Empty)
+            if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
 
             var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
@@ -53,27 +52,19 @@ namespace Marketplace.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize]
-        [HttpPost("me/profile")]
-        public async Task<ActionResult> CreateProfile([FromBody] CreateUserCommand command, CancellationToken cancellationToken)
-        {
-            await _mediator.Send(command, cancellationToken);
-            return Ok("User profile successful ccreated");
-        }
-
         [Authorize(Roles = "Admin")]
         [HttpPut("{userId}/ban")]
-        public async Task<ActionResult> BanUser(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
         {
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");
-            await _mediator.Send(new BanUserCommand(userId), cancellationToken);
+            await _mediator.Send(new BanUserCommand(userId, request.BanReason), cancellationToken);
             return Ok("User successful baned");
         }
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{userId}/ban")]
-        public async Task<ActionResult> UnBanUser(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult> UnBanUser([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
             if (userId == Guid.Empty)
                 return BadRequest("Invalid user ID");

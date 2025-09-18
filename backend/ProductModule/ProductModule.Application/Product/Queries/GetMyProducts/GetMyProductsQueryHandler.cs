@@ -2,8 +2,7 @@
 using Microsoft.Extensions.Logging;
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
-using ProductModule.Domain.Enums;
-using ProductModule.SharedKernel.Interfaces;
+using SharedKernel.Dtos;
 using SharedKernel.Interfaces;
 using SharedKernel.Queries;
 
@@ -36,27 +35,29 @@ namespace ProductModule.Application.Product.Queries.GetMyProducts
                 throw new UnauthorizedAccessException("User is not authenticated.");
             }
 
-            var parsedStatuses = query.GetParsedStatuses();
-            var statuses = parsedStatuses?.ToList() ?? new List<Status>
-            {
-                Status.Published,
-                Status.Draft
-            };
+            var parsedStatuses = query.GetParsedStatuses()?.ToList();
+
+            var statuses = parsedStatuses != null && parsedStatuses.Any()
+                ? parsedStatuses
+                : [];
+
             var products = await _productRepository.GetByUserIdAsync(userId.Value, statuses, cancellationToken);
-            var mainMediaUrls = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
             var response = products.Select(p =>
             {
-                var url = mainMediaUrls.TryGetValue(p.Id, out var result) ? result : string.Empty;
+                var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
+
                 return new ProductDto
                 {
                     Id = p.Id,
-                    MainMediaUrl = url,
+                    Medias = [media],
                     Name = p.Name,
                     PriceCurrency = p.Price.Currency,
                     PriceAmount = p.Price.Amount,
                     Location = p.Location,
                     CategoryId = p.CategoryId,
-                    UserId = p.UserId
+                    UserId = p.UserId,
+                    Status = p.Status.ToString()
                 };
             });
             return response;

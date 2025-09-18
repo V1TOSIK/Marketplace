@@ -1,7 +1,12 @@
-﻿using ProductModule.Domain.Enums;
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
 using ProductModule.Domain.ValueObjects;
 using SharedKernel.AgregateRoot;
+using System;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace ProductModule.Domain.Entities
 {
@@ -36,19 +41,19 @@ namespace ProductModule.Domain.Entities
 
         public int CategoryId { get; private set; }
 
-        private readonly List<CharacteristicGroup> _characteristicGroups = new ();
+        private readonly List<CharacteristicGroup> _characteristicGroups = new();
         public IReadOnlyCollection<CharacteristicGroup> CharacteristicGroups => _characteristicGroups.AsReadOnly();
 
         public static Product Create(Guid userId,
             string name,
-            string priceCurrency,
             decimal priceAmount,
+            string priceCurrency,
             string location,
             string description,
             int categoryId,
             string statusValue)
         {
-            var price = new Price(priceAmount,  priceCurrency);
+            var price = new Price(priceAmount, priceCurrency);
 
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidProductDataException("Product name cannot be empty or null.");
@@ -64,6 +69,20 @@ namespace ProductModule.Domain.Entities
             return new Product(userId, name, price, location, description, categoryId, status);
         }
 
+        public void UpdateProduct(string? name, decimal? priceAmount, string? priceCurrency, string? location, string? description, int? categoryId)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+                UpdateName(name);
+            if (!string.IsNullOrWhiteSpace(priceCurrency) && priceAmount.HasValue)
+                UpdatePrice(priceAmount.Value, priceCurrency);
+            if (!string.IsNullOrWhiteSpace(location))
+                UpdateLocation(location);
+            if (!string.IsNullOrWhiteSpace(description))
+                UpdateDescription(description);
+            if (categoryId.HasValue)
+                UpdateCategory(categoryId.Value);
+        }
+
         public void UpdateName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -71,14 +90,9 @@ namespace ProductModule.Domain.Entities
             Name = name;
         }
 
-        public void UpdatePrice(string priceValue)
+        public void UpdatePrice(decimal priceAmount, string priceCurrency)
         {
-            var priceParts = priceValue.Split(' ');
-            if (priceParts.Length != 2 || !decimal.TryParse(priceParts[0], out var amount) || string.IsNullOrWhiteSpace(priceParts[1]))
-            {
-                throw new InvalidProductDataException("Invalid price format. Expected format: 'amount currency'.");
-            }
-            Price = new Price(amount, priceParts[1]);
+            Price = new Price(priceAmount, priceCurrency);
         }
 
         public void UpdateLocation(string location)
@@ -138,6 +152,51 @@ namespace ProductModule.Domain.Entities
                 throw new InvalidCharacteristicGroupDataException("Characteristic group cannot be null.");
 
             _characteristicGroups.Add(characteristicGroup);
+        }
+
+        public void RemoveCharacteristicGroup(int groupId)
+        {
+            var group = _characteristicGroups.FirstOrDefault(g => g.Id == groupId);
+            if (group == null)
+                throw new InvalidCharacteristicGroupDataException("Characteristic group not found.");
+            _characteristicGroups.Remove(group);
+        }
+
+        public void UpdateCharacteristicGroup(int groupId, string? name)
+        {
+            var group = _characteristicGroups.FirstOrDefault(x => x.Id == groupId);
+            group?.UpdateName(name);
+        }
+
+        public void RemoveCharacteristic(int charId)
+        {
+            var characteristic = _characteristicGroups
+            .SelectMany(g => g.CharacteristicValues)
+                .FirstOrDefault(c => c.Id == charId);
+
+            if (characteristic == null)
+                throw new InvalidCharacteristicValueDataException("Characteristic not found.");
+
+            var group = _characteristicGroups.FirstOrDefault(g => g.Id == characteristic.GroupId);
+            group?.RemoveCharacteristic(characteristic.Id);
+        }
+
+        public async Task AddCharacteristic(int groupId, string value, Func<Task<int>> getTemplateId)
+        {
+            var group = _characteristicGroups.FirstOrDefault(g => g.Id == groupId)
+                ?? throw new InvalidCharacteristicGroupDataException("Characteristic group not found.");
+
+            var templateId = await getTemplateId();
+            group.AddCharacteristic(value, templateId);
+        }
+
+        public void UpdateCharacteristic(int charId, string? value)
+        {
+            var characteristic = _characteristicGroups
+                .SelectMany(g => g.CharacteristicValues)
+                .FirstOrDefault(c => c.Id == charId);
+
+            characteristic?.UpdateValue(value);
         }
     }
 }
