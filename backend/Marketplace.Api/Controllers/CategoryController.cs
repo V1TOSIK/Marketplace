@@ -5,6 +5,8 @@ using ProductModule.Application.Category.Commands.AddCategory;
 using ProductModule.Application.Category.Commands.DeleteCategory;
 using ProductModule.Application.Category.Commands.UpdateCategory;
 using ProductModule.Application.Category.Queries.GetAllCategories;
+using SharedKernel.Authorization.Attributes;
+using SharedKernel.Authorization.Enums;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Marketplace.Api.Controllers
@@ -25,7 +27,7 @@ namespace Marketplace.Api.Controllers
             return Ok(await _mediator.Send(new GetAllCategoriesQuery(), cancellationToken));
         }
 
-        [Authorize]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
         [HttpPost]
         public async Task<ActionResult> AddCategory([FromBody] AddCategoryCommand command, CancellationToken cancellationToken)
         {
@@ -33,7 +35,7 @@ namespace Marketplace.Api.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
         [HttpDelete("{categoryId}")]
         public async Task<ActionResult> DeleteCategory([FromRoute] int categoryId, CancellationToken cancellationToken)
         {
@@ -41,7 +43,7 @@ namespace Marketplace.Api.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
         [HttpPut("{categoryId}")]
         public async Task<ActionResult> UpdateCategory([FromRoute] int categoryId, [FromBody] string newName, CancellationToken cancellationToken)
         {
