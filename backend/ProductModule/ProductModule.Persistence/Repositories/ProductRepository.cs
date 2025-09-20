@@ -4,6 +4,7 @@ using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
+using SharedKernel.Pagination;
 using SharedKernel.Specification;
 
 namespace ProductModule.Persistence.Repositories
@@ -41,7 +42,7 @@ namespace ProductModule.Persistence.Repositories
             }
         }
 
-        public async Task<IEnumerable<Product>> GetBySpecificationAsync(Specification<Product> spec, CancellationToken cancellationToken)
+        public IQueryable<Product> AsQueryable(Specification<Product> spec, CancellationToken cancellationToken)
         {
             IQueryable<Product> query = _dbContext.Products.AsNoTracking();
 
@@ -53,14 +54,13 @@ namespace ProductModule.Persistence.Repositories
 
             if (spec.OrderBy != null)
                 query = query.OrderBy(spec.OrderBy);
+
             else if (spec.OrderByDescending != null)
                 query = query.OrderByDescending(spec.OrderByDescending);
 
-            if (spec.IsPagingEnabled && spec.PageNumber.HasValue && spec.PageSize.HasValue)
-                query = query.Skip(spec.PageNumber.Value).Take(spec.PageSize.Value);
-
-            return await query.ToListAsync(cancellationToken);
+            return query;
         }
+
 
         public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken)
         {
@@ -80,15 +80,14 @@ namespace ProductModule.Persistence.Repositories
             return productIds;
         }
 
-        public async Task<IEnumerable<Product>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken)
+        public IQueryable<Product> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken)
         {
-            return await _dbContext.Products
+            return _dbContext.Products
                 .Where(p => p.CategoryId == categoryId && p.Status == Status.Published)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
+                .AsNoTracking();
         }
 
-        public async Task<IEnumerable<Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
+        public IQueryable<Product> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken)
         {
             var query = _dbContext.Products
                 .Where(p => p.UserId == userId)
@@ -99,7 +98,7 @@ namespace ProductModule.Persistence.Repositories
                 query = query.Where(p => statuses.Contains(p.Status));
             }
 
-            return await query.ToListAsync(cancellationToken);
+            return query;
         }
 
         //only for command not for query

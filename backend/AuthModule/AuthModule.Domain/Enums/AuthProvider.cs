@@ -1,4 +1,6 @@
-﻿namespace AuthModule.Domain.Enums
+﻿using AuthModule.Domain.Exceptions;
+
+namespace AuthModule.Domain.Enums
 {
     public enum AuthProvider
     {

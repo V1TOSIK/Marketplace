@@ -1,7 +1,7 @@
 ﻿using AuthModule.Application.Models;
 using MediatR;
 
-namespace AuthModule.Application.OAuth.Commands
+namespace AuthModule.Application.OAuth.Commands.OAuthLogin
 {
     public class OAuthLoginCommand : IRequest<AuthResult>
     {

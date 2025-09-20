@@ -21,10 +21,10 @@ namespace UserModule.Application.User.Commands.BanUser
 
         public async Task Handle(BanUserCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, true, true);
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
             user.Ban(command.Reason);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[User Module] User {Name} with ID {UserId} has been banned.", user.Name, command.UserId);
+            _logger.LogInformation("[User Module(BanUserCommandHandler)] User {Name} with ID {UserId} has been banned.", user.Name, command.UserId);
         }
     }
 }

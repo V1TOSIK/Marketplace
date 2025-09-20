@@ -1,14 +1,10 @@
-﻿using AuthModule.Application.Auth.Commands.Login;
-using AuthModule.Application.Dtos.Responses;
-using AuthModule.Application.Interfaces;
+﻿using AuthModule.Application.Interfaces;
 using AuthModule.Application.Interfaces.Repositories;
 using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Models;
-using AuthModule.Domain.Entities;
 using AuthModule.Domain.Exceptions;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using SharedKernel.Interfaces;
 
 namespace AuthModule.Application.Auth.Commands.Refresh
 {
@@ -16,21 +12,18 @@ namespace AuthModule.Application.Auth.Commands.Refresh
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly ICurrentUserService _currentUserService;
         private readonly IAuthUnitOfWork _unitOfWork;
         private readonly IAuthService _authService;
         private readonly ILogger<RefreshCommandHandler> _logger;
         public RefreshCommandHandler(
             IAuthUserRepository authUserRepository,
             IRefreshTokenRepository refreshTokenRepository,
-            ICurrentUserService currentUserService,
             IAuthUnitOfWork unitOfWork,
             IAuthService authService,
             ILogger<RefreshCommandHandler> logger)
         {
             _authUserRepository = authUserRepository;
             _refreshTokenRepository = refreshTokenRepository;
-            _currentUserService = currentUserService;
             _unitOfWork = unitOfWork;
             _authService = authService;
             _logger = logger;
@@ -42,7 +35,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
 
             if (token == null || token.IsRevoked)
             {
-                _logger.LogWarning("[Auth Module] Refresh token {token} not found or already revoked.", command.RefreshToken);
+                _logger.LogWarning("[Auth Module(RefreshCommandHandler)] Refresh token {token} not found or already revoked.", command.RefreshToken);
                 throw new RefreshTokenOperationException("Refresh token not found or already revoked.");
             }
 
@@ -50,7 +43,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
             {
                 token.Revoke();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                _logger.LogWarning("[Auth Module] Refresh token {token} has expired.", command.RefreshToken);
+                _logger.LogWarning("[Auth Module(RefreshCommandHandler)] Refresh token {token} has expired.", command.RefreshToken);
                 throw new RefreshTokenOperationException("Refresh token has expired.");
             }
 
@@ -58,7 +51,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
 
             if (user == null)
             {
-                _logger.LogWarning("[Auth Module] User with ID {UserId} not found.", token.UserId);
+                _logger.LogWarning("[Auth Module(RefreshCommandHandler)] User with ID {UserId} not found.", token.UserId);
                 throw new UserOperationException("User not found.");
             }
             AuthResult response = null!;
@@ -69,7 +62,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
 
-            _logger.LogInformation("[Auth Module] Refresh token for user with ID {userId} refreshed successfully.", user.Id);
+            _logger.LogInformation("[Auth Module(RefreshCommandHandler)] Refresh token for user with ID {userId} refreshed successfully.", user.Id);
             return response;
         }
     }

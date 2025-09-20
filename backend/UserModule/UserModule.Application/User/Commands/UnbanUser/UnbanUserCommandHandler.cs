@@ -22,13 +22,10 @@ namespace UserModule.Application.User.Commands.UnbanUser
 
         public async Task Handle(UnbanUserCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, true, true);
-            await _unitOfWork.ExecuteInTransactionAsync(async () =>
-            {
-                user.UnBan();
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("[UserModule] Profile for user with ID {UserId} has been unbanned.", command.UserId);
-            }, cancellationToken);
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
+            user.UnBan();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("[User Module(UnBanUserCommandHandler)] Profile for user with ID {UserId} has been unbanned.", command.UserId);
         }
     }
 }

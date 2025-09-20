@@ -1,4 +1,4 @@
-﻿namespace AuthModule.Application.Dtos.Requests
+﻿namespace AuthModule.Application.OAuth.Commands.OAuthLogin
 {
     public class OAuthLoginRequest
     {

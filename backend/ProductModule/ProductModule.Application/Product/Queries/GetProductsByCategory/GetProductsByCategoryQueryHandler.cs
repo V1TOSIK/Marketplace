@@ -2,11 +2,12 @@
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Dtos;
+using SharedKernel.Pagination;
 using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetProductByCategory
 {
-    public class GetProductsByCategoryQueryHandler : IRequestHandler<GetProductsByCategoryQuery, IEnumerable<ProductDto>>
+    public class GetProductsByCategoryQueryHandler : IRequestHandler<GetProductsByCategoryQuery, PaginationResponse<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
         private readonly IMediator _mediator;
@@ -17,28 +18,29 @@ namespace ProductModule.Application.Product.Queries.GetProductByCategory
             _mediator = mediator;
         }
 
-        public async Task<IEnumerable<ProductDto>> Handle(GetProductsByCategoryQuery query, CancellationToken cancellationToken)
+        public async Task<PaginationResponse<ProductDto>> Handle(GetProductsByCategoryQuery query, CancellationToken cancellationToken)
         {
-            var products = await _productRepository.GetByCategoryIdAsync(query.CategoryId, cancellationToken);
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
-            var response = products.Select(p =>
+            var products = _productRepository.GetByCategoryIdAsync(query.CategoryId, cancellationToken);
+
+            var paginatedProducts = await products.ToPaginatedListAsync(query.PageNumber, query.PageSize, cancellationToken);
+
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedProducts.Items.Select(p => p.Id)), cancellationToken);
+            var items = paginatedProducts.Items.Select(p =>
             {
                 var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
 
-                return new ProductDto
-                {
-                    Id = p.Id,
-                    Medias = [media],
-                    Name = p.Name,
-                    PriceCurrency = p.Price.Currency,
-                    PriceAmount = p.Price.Amount,
-                    Location = p.Location,
-                    CategoryId = p.CategoryId,
-                    UserId = p.UserId,
-                    Status = p.Status.ToString()
-                };
-            });
-            return response;
+                return new ProductDto(p.Id,
+                    p.UserId,
+                    [media],
+                    p.Name,
+                    p.Price.Amount,
+                    p.Price.Currency,
+                    p.Location,
+                    p.Description,
+                    p.CategoryId,
+                    p.Status.ToString());
+            }).ToList();
+            return new PaginationResponse<ProductDto>(items, paginatedProducts.TotalCount, paginatedProducts.PageNumber, paginatedProducts.PageSize);
         }
     }
 }

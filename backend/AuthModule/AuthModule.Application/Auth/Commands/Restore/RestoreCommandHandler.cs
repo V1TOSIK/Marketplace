@@ -2,8 +2,8 @@
 using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Interfaces;
 using AuthModule.Application.Models;
-using MediatR;
 using Microsoft.Extensions.Logging;
+using MediatR;
 
 namespace AuthModule.Application.Auth.Commands.Restore
 {
@@ -12,22 +12,31 @@ namespace AuthModule.Application.Auth.Commands.Restore
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IAuthService _authService;
         private readonly IAuthUnitOfWork _unitOfWork;
+        private readonly IPasswordHasher _passwordHasher;
         private readonly ILogger<RestoreCommandHandler> _logger;
         public RestoreCommandHandler(
             IAuthUserRepository authUserRepository,
             IAuthService authService,
             IAuthUnitOfWork unitOfWork,
+            IPasswordHasher passwordHasher,
             ILogger<RestoreCommandHandler> logger)
         {
             _authUserRepository = authUserRepository;
             _authService = authService;
             _unitOfWork = unitOfWork;
+            _passwordHasher = passwordHasher;
             _logger = logger;
         }
 
         public async Task<AuthResult> Handle(RestoreCommand command, CancellationToken cancellationToken)
         {
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
+
+            if (_passwordHasher.VerifyHashedPassword(user.Password ?? "", command.Password))
+            {
+                _logger.LogWarning("[Auth Module(RestoreCommandHandler)] Invalid security stamp provided for user with ID {UserId}.", command.UserId);
+                throw new UnauthorizedAccessException("Invalid Password.");
+            }
 
             AuthResult response = null!;
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
@@ -45,7 +54,7 @@ namespace AuthModule.Application.Auth.Commands.Restore
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
             }, cancellationToken);
-            _logger.LogInformation("[Auth Module] User with ID {UserId} restored successfully.", command.UserId);
+            _logger.LogInformation("[Auth Module(RestoreCommandHandler)] User with ID {UserId} restored successfully.", command.UserId);
             return response;
         }
     }

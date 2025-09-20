@@ -12,6 +12,8 @@ using ProductModule.Application.Product.Queries.GetMyProducts;
 using ProductModule.Application.Product.Queries.GetProduct;
 using ProductModule.Application.Product.Queries.GetProductByCategory;
 using ProductModule.Application.Product.Queries.GetUserProducts;
+using SharedKernel.Authorization.Attributes;
+using SharedKernel.Pagination;
 
 namespace Marketplace.Api.Controllers
 {
@@ -25,26 +27,27 @@ namespace Marketplace.Api.Controllers
             _mediator = mediator;
         }
 
-        [Authorize]
-        [HttpGet("my")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetMyProducts([FromQuery] GetMyProductsQuery query, CancellationToken cancellationToken)
+        [AuthorizeSameUser]
+        [HttpGet("user/{userId}/my")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetMyProducts([FromRoute] Guid userId, [FromQuery] GetMyProductsRequest request, CancellationToken cancellationToken)
         {
+            var query = new GetMyProductsQuery(userId, request);
             var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetUserProducts([FromRoute] Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetUserProducts([FromRoute] Guid userId, [FromQuery] PaginationRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetUserProductsQuery(userId);
+            var query = new GetUserProductsQuery(userId, request);
             var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategoryId([FromRoute] int categoryId, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategoryId([FromRoute] int categoryId, [FromQuery] PaginationRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetProductsByCategoryQuery { CategoryId = categoryId };
+            var query = new GetProductsByCategoryQuery(categoryId, request);
             var products = await _mediator.Send(query, cancellationToken);
             return Ok(products);
         }
@@ -61,10 +64,10 @@ namespace Marketplace.Api.Controllers
             return Ok(product);
         }
 
-        [HttpGet("{id}/characteristics")]
-        public async Task<ActionResult<IEnumerable<CharacteristicGroupDto>>> GetProductCharacteristics([FromRoute] Guid id, CancellationToken cancellationToken)
+        [HttpGet("{productId}/characteristics")]
+        public async Task<ActionResult<IEnumerable<CharacteristicGroupDto>>> GetProductCharacteristics([FromRoute] Guid productId, CancellationToken cancellationToken)
         {
-            var response = await _mediator.Send(new GetProductCharacteristicsQuery(id), cancellationToken);
+            var response = await _mediator.Send(new GetProductCharacteristicsQuery(productId), cancellationToken);
             return Ok(response);
         }
 
@@ -84,27 +87,27 @@ namespace Marketplace.Api.Controllers
             return Ok("Product published successfully.");
         }
 
-        [Authorize]
-        [HttpPost]
-        public async Task<ActionResult<Guid>> AddProduct([FromBody] CreateProductCommand command, CancellationToken cancellationToken)
+        [AuthorizeSameUser]
+        [HttpPost("user/{userId}")]
+        public async Task<ActionResult<Guid>> AddProduct([FromRoute] Guid userId, [FromBody] CreateProductRequest request, CancellationToken cancellationToken)
         {
-            var productId = await _mediator.Send(command, cancellationToken);
+            var productId = await _mediator.Send(new CreateProductCommand(userId, request), cancellationToken);
             return Ok(productId);
         }
 
         [Authorize]
-        [HttpPut]
-        public async Task<ActionResult> UpdateProduct([FromBody] UpdateProductCommand command, CancellationToken cancellationToken)
+        [HttpPut("{productId}")]
+        public async Task<ActionResult> UpdateProduct([FromRoute] Guid productId, [FromBody] UpdateProductRequest request, CancellationToken cancellationToken)
         {
-            await _mediator.Send(command, cancellationToken);
+            await _mediator.Send(new UpdateProductCommand(productId, request), cancellationToken);
             return Ok("Product updated successfully.");
         }
 
-        [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteProduct([FromRoute] Guid id, CancellationToken cancellationToken)
+        [AuthorizeSameUser]
+        [HttpDelete("user/{userId}/product/{productId}")]
+        public async Task<ActionResult> DeleteProduct([FromRoute] Guid userId, [FromRoute] Guid productId, CancellationToken cancellationToken)
         {
-            var command = new DeleteProductCommand(id);
+            var command = new DeleteProductCommand(userId, productId);
             await _mediator.Send(command, cancellationToken);
             return Ok("Product deleted successfully.");
         }

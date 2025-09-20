@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Authorization.Enums;
-using SharedKernel.Interfaces;
+using SharedKernel.CurrentUser;
 
 namespace AuthModule.Infrastructure.Auth
 {

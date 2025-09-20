@@ -11,5 +11,11 @@ namespace UserModule.Application.User.Commands.BanUser
             UserId = userId;
             Reason = reason;
         }
+
+        public BanUserCommand(Guid userId, BanUserRequest request)
+        {
+            UserId = userId;
+            Reason = request.BanReason;
+        }
     }
 }

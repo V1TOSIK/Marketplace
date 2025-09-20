@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using SharedKernel.Interfaces;
+using SharedKernel.CurrentUser;
 
 namespace SharedKernel.Authorization.Filters
 {
@@ -9,7 +9,8 @@ namespace SharedKernel.Authorization.Filters
         private readonly ICurrentUserService _currentUserService;
         private readonly string[] _allowedRoles;
 
-        public SameUserOrRoleFilter(ICurrentUserService currentUserService, params string[] allowedRoles)
+        public SameUserOrRoleFilter(ICurrentUserService currentUserService,
+            params string[] allowedRoles)
         {
             _currentUserService = currentUserService;
             _allowedRoles = allowedRoles;

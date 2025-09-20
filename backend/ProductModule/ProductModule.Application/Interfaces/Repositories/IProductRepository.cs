@@ -1,4 +1,6 @@
-﻿using ProductModule.Domain.Enums;
+﻿using ProductModule.Domain.Entities;
+using ProductModule.Domain.Enums;
+using SharedKernel.Pagination;
 using SharedKernel.Specification;
 
 namespace ProductModule.Application.Interfaces.Repositories
@@ -7,10 +9,10 @@ namespace ProductModule.Application.Interfaces.Repositories
     {
         Task<Domain.Entities.Product> GetByIdAsync(Guid productId, CancellationToken cancellationToken);
         Task<Domain.Entities.Product> GetByIdWithCharacteristicsAsync(Guid productId, CancellationToken cancellationToken);
-        Task<IEnumerable<Domain.Entities.Product>> GetBySpecificationAsync(Specification<Domain.Entities.Product> spec, CancellationToken cancellationToken);
+        IQueryable<Domain.Entities.Product> AsQueryable(Specification<Domain.Entities.Product> spec, CancellationToken cancellationToken);
         Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken);
-        Task<IEnumerable<Domain.Entities.Product>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken);
-        Task<IEnumerable<Domain.Entities.Product>> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken);
+        IQueryable<Domain.Entities.Product> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken);
+        IQueryable<Domain.Entities.Product> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken);
         Task AddAsync(Domain.Entities.Product product, CancellationToken cancellationToken);
         Task ShowUserProductsAsync(Guid userId, CancellationToken cancellationToken);
         Task HideUserProductsAsync(Guid userId, CancellationToken cancellationToken);

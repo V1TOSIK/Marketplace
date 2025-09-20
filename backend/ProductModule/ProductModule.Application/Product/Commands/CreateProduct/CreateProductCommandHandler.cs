@@ -5,7 +5,7 @@ using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using SharedKernel.Interfaces;
+using SharedKernel.CurrentUser;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {
@@ -31,15 +31,8 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
         }
         public async Task<Guid> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
-            var userId = _currentUserService.UserId;
-            if (userId == null)
-            {
-                _logger.LogWarning("[Product Module] User ID is empty. Cannot create product.");
-                throw new UnauthorizedAccessException("User is not authenticated.");
-            }
-
             var product = Domain.Entities.Product.Create(
-                userId.Value,
+                request.UserId,
                 request.Name,
                 request.PriceAmount,
                 request.PriceCurrency,

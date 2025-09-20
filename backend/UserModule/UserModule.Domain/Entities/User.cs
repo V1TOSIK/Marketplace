@@ -30,6 +30,8 @@ namespace UserModule.Domain.Entities
             return new User(id, name, location);
         }
 
+
+        //Important if list is empty all phones will be removed
         public void UpdateUser(string? name, string? location, IEnumerable<string>? newPhones)
         {
             EnsureActive();

@@ -1,18 +1,15 @@
-﻿using AuthModule.Application.Interfaces.Services;
-using AuthModule.Infrastructure.Auth;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using SharedKernel.Authorization.Attributes;
-using SharedKernel.Authorization.Enums;
-using System.Security.Claims;
-using UserModule.Application.Dtos;
+﻿using UserModule.Application.User.Commands.DeactivateUser;
 using UserModule.Application.User.Commands.BanUser;
-using UserModule.Application.User.Commands.DeactivateUser;
-using UserModule.Application.User.Commands.DeleteUser;
 using UserModule.Application.User.Commands.UnbanUser;
 using UserModule.Application.User.Commands.UpdateUser;
-using UserModule.Application.User.Queries.GetProfile;
+using UserModule.Application.Dtos;
+using AuthModule.Application.Interfaces.Services;
+using SharedKernel.Authorization.Attributes;
+using SharedKernel.Authorization.Enums;
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using UserModule.Application.User.Queries.GetUserProfile;
+using UserModule.Application.User.Queries.GetMyProfile;
 
 
 namespace Marketplace.Api.Controllers
@@ -31,67 +28,48 @@ namespace Marketplace.Api.Controllers
             _mediator = mediator;
         }
 
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<ActionResult<UserDto>> MyProfile(CancellationToken cancellationToken)
-        {
-            var userId = GetUserId();
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
-
-            return Ok(response);
-        }
-
         [HttpGet("{userId}")]
         public async Task<ActionResult<UserDto>> GetUserProfile([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-
-            var response = await _mediator.Send(new GetProfileQuery(userId), cancellationToken);
+            var response = await _mediator.Send(new GetUserProfileQuery(userId), cancellationToken);
 
             return Ok(response);
         }
 
-        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
-        [HttpPut("{userId}/ban")]
-        public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
+        [AuthorizeSameUser]
+        [HttpGet("{userId}/me")]
+        public async Task<ActionResult<UserDto>> GetMyProfile([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-            await _mediator.Send(new BanUserCommand(userId, request.BanReason), cancellationToken);
-            return Ok("User successful baned");
+            var response = await _mediator.Send(new GetMyProfileQuery(userId), cancellationToken);
+
+            return Ok(response);
         }
 
-        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
-        [HttpDelete("{userId}/ban")]
-        public async Task<ActionResult> UnBanUser([FromRoute] Guid userId, CancellationToken cancellationToken)
+        [AuthorizeSameUser]
+        [HttpPut("{userId}/profile")]
+        public async Task<ActionResult> UpdateProfile([FromRoute] Guid userId, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
         {
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid user ID");
-            await _mediator.Send(new UnbanUserCommand(userId), cancellationToken);
-            return Ok("User successful unbaned");
-        }
-
-        [AuthorizeSameUserOrRole(nameof(AccessPolicy.SameUser))]
-        [HttpPut("me/profile")]
-        public async Task<ActionResult> UpdateProfile([FromBody] UpdateUserCommand command, CancellationToken cancellationToken)
-        {
-            await _mediator.Send(command, cancellationToken);
+            await _mediator.Send(new UpdateUserCommand(userId, request), cancellationToken);
 
             return Ok("Account successful updated");
         }
 
-        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
-        [HttpDelete("{userId}/delete")]
-        public async Task<ActionResult> HardDeleteAccount([FromRoute] Guid userId, CancellationToken cancellationToken)
+        [AuthorizeRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
+        [HttpPut("{userId}/ban")]
+        public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
         {
-            await _mediator.Send(new DeleteUserCommand(userId), cancellationToken);
-            _cookieService.Delete("refreshToken");
+            await _mediator.Send(new BanUserCommand(userId, request.BanReason), cancellationToken);
 
-            return Ok("User successful deleted");
+            return NoContent();
+        }
+
+        [AuthorizeRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
+        [HttpDelete("{userId}/ban")]
+        public async Task<ActionResult> UnBanUser([FromRoute] Guid userId, CancellationToken cancellationToken)
+        {
+            await _mediator.Send(new UnbanUserCommand(userId), cancellationToken);
+
+            return NoContent();
         }
 
         [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
@@ -99,18 +77,10 @@ namespace Marketplace.Api.Controllers
         public async Task<ActionResult> SoftDeleteAccount([FromRoute] Guid userId, CancellationToken cancellationToken)
         {
             await _mediator.Send(new DeactivateUserCommand(userId), cancellationToken);
+
             _cookieService.Delete("refreshToken");
 
-            return Ok("User successful deactivated");
-        }
-
-        private Guid GetUserId()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userId, out Guid parsedUserId))
-                return parsedUserId;
-
-            return Guid.Empty;
+            return NoContent();
         }
     }
 }
