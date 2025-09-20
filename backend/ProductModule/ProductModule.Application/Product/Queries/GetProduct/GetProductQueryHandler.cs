@@ -22,19 +22,16 @@ namespace ProductModule.Application.Product.Queries.GetProduct
             var product = await _productRepository.GetByIdAsync(query.ProductId, cancellationToken);
             var entityMedias = await _mediator.Send(new GetEntityMediasQuery(product.Id), cancellationToken);
 
-            var response = new ProductDto
-            {
-                Id = product.Id,
-                Medias = entityMedias,
-                Name = product.Name,
-                PriceCurrency = product.Price.Currency,
-                PriceAmount = product.Price.Amount,
-                Location = product.Location,
-                Description = product.Description,
-                CategoryId = product.CategoryId,
-                UserId = product.UserId,
-                Status = product.Status.ToString()
-            };
+            var response =  new ProductDto(product.Id,
+                    product.UserId,
+                    entityMedias,
+                    product.Name,
+                    product.Price.Amount,
+                    product.Price.Currency,
+                    product.Location,
+                    product.Description,
+                    product.CategoryId,
+                    product.Status.ToString());
 
             return response;
         }

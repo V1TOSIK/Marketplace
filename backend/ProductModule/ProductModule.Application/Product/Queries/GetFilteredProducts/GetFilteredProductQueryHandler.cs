@@ -6,10 +6,11 @@ using SharedKernel.Interfaces;
 using SharedKernel.Specification;
 using SharedKernel.Queries;
 using SharedKernel.Dtos;
+using SharedKernel.Pagination;
 
 namespace ProductModule.Application.Product.Queries.GetFilteredProducts
 {
-    public class GetFilteredProductQueryHandler : IRequestHandler<GetFilteredProductQuery, IEnumerable<ProductDto>>
+    public class GetFilteredProductQueryHandler : IRequestHandler<GetFilteredProductQuery, PaginationResponse<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
         private readonly IMediator _mediator;
@@ -18,7 +19,7 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
             _productRepository = productRepository;
             _mediator = mediator;
         }
-        public async Task<IEnumerable<ProductDto>> Handle(GetFilteredProductQuery query, CancellationToken cancellationToken)
+        public async Task<PaginationResponse<ProductDto>> Handle(GetFilteredProductQuery query, CancellationToken cancellationToken)
         {
             var spec = new Specification<Domain.Entities.Product>();
             spec.AddCriteria(p => p.Status == Status.Published);
@@ -49,31 +50,31 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
                 spec.ApplyOrderByProperty(query.SortedBy, query.SortDescending);
             }
 
-            if (query.PageSize.HasValue && query.Page.HasValue)
-                spec.ApplyPaging((query.Page.Value - 1) * query.PageSize.Value, query.PageSize.Value);
+            var queryable = _productRepository.AsQueryable(spec, cancellationToken);
 
-            var result = await _productRepository.GetBySpecificationAsync(spec, cancellationToken);
+            var paginatedResult = await queryable.ToPaginatedListAsync(
+                query.PageNumber,
+                query.PageSize,
+                cancellationToken
+            );
 
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(result.Select(r => r.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedResult.Items.Select(r => r.Id)), cancellationToken);
 
-            var response = result.Select(p =>
+            var items = paginatedResult.Items.Select(p =>
             {
                 var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
-
-                return new ProductDto
-                {
-                    Id = p.Id,
-                    Medias = [media],
-                    Name = p.Name,
-                    PriceCurrency = p.Price.Currency,
-                    PriceAmount = p.Price.Amount,
-                    Location = p.Location,
-                    CategoryId = p.CategoryId,
-                    UserId = p.UserId,
-                    Status = p.Status.ToString()
-                };
-            });
-            return response;
+                return new ProductDto(p.Id,
+                    p.UserId,
+                    [media],
+                    p.Name,
+                    p.Price.Amount,
+                    p.Price.Currency,
+                    p.Location,
+                    p.Description,
+                    p.CategoryId,
+                    p.Status.ToString());
+            }).ToList();
+            return new PaginationResponse<ProductDto>(items, paginatedResult.TotalCount, paginatedResult.PageNumber, paginatedResult.PageSize);
         }
     }
 }

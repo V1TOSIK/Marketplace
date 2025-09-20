@@ -20,6 +20,7 @@ namespace AuthModule.Persistence
         }
 
         public DbSet<AuthUser> AuthUsers { get; set; }
+        public DbSet<ExternalLogin> ExternalLogins { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 

@@ -34,83 +34,71 @@ namespace AuthModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<AuthUser?> GetByOAuthAsync(string idToken, string providerText, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByOAuthAsync(string providerUserId, string providerText, CancellationToken cancellationToken = default)
         {
             var provider = ParseProvider(providerText);
-            var user = await _dbContext.AuthUsers.FirstOrDefaultAsync(u => u.ProviderUserId == idToken
-            && u.Provider == provider,
-            cancellationToken);
+            var oAuthUser = await _dbContext.ExternalLogins
+                .FirstOrDefaultAsync(u => u.ProviderUserId == providerUserId
+                    && u.Provider == provider, cancellationToken);
+
+            if (oAuthUser == null)
+                throw new UserNotFoundException($"OAuthUser with providerUserId {providerUserId} and Provider {provider} not found");
+
+            var user = await _dbContext.AuthUsers
+                .Include(u => u.ExternalLogins)
+                .FirstOrDefaultAsync(u => u.Id == oAuthUser.UserId, cancellationToken);
 
             return user;
         }
 
-        public async Task<AuthUser?> GetByEmailAsync(string email, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             var emailValue = new Email(email);
 
             var user = await _dbContext.AuthUsers
                 .FirstOrDefaultAsync(u => u.Email != null
-                    && u.Email.Equals(emailValue)
-                    && (includeDeleted || !u.IsDeleted)
-                    && (includeBanned || !u.IsBanned), cancellationToken);
+                    && u.Email.Equals(emailValue),
+                    cancellationToken);
 
             return user;
         }
 
-        public async Task<AuthUser?> GetByPhoneNumberAsync(string phoneNumber,bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default)
         {
             var phoneNumberValue = new PhoneNumber(phoneNumber);
 
             var user = await _dbContext.AuthUsers
                 .FirstOrDefaultAsync(u => u.PhoneNumber != null
-                    && u.PhoneNumber.Equals(phoneNumberValue)
-                    && (includeDeleted || !u.IsDeleted)
-                    && (includeBanned || !u.IsBanned), cancellationToken);
+                    && u.PhoneNumber.Equals(phoneNumberValue),
+                    cancellationToken);
 
             return user;
         }
 
-        public async Task<AuthUser?> GetByCredentialAsync(string credential, bool includeDeleted = false, bool includeBanned = false, CancellationToken cancellationToken = default)
+        public async Task<AuthUser?> GetByCredentialAsync(string credential, CancellationToken cancellationToken = default)
         {
             if (credential.Contains("@"))
             {
-                return await GetByEmailAsync(credential, includeDeleted, includeBanned, cancellationToken);
+                return await GetByEmailAsync(credential, cancellationToken);
             }
             else
             {
-                return await GetByPhoneNumberAsync(credential, includeDeleted, includeBanned, cancellationToken);
+                return await GetByPhoneNumberAsync(credential, cancellationToken);
             }
         }
 
         public async Task AddAsync(AuthUser user, CancellationToken cancellationToken = default)
         {
-            if (user.IsOAuth())
+            if (user.Email is not null && await IsEmailRegisteredAsync(user.Email, cancellationToken))
             {
-                if (string.IsNullOrWhiteSpace(user.ProviderUserId))
-                {
-                    _logger.LogError("[Auth Module(Repository)] Provider user id cannot be null or empty");
-                    throw new InvalidProviderException("Provider user id cannot be null or empty");
-                }
-
-                if (await IsOAuthRegisteredAsync(user.ProviderUserId, user.Provider.ToString(), cancellationToken))
-                {
-                    _logger.LogError("[Auth Module(Repository)] User with provider user id {providerUserId} already exists", user.ProviderUserId);
-                    throw new OAuthUserAlreadyExistsException($"User with provider user id {user.ProviderUserId} already exists.");
-                }
+                _logger.LogError("[Auth Module(Repository)] User with email {email} already exists", user.Email.Value);
+                throw new EmailAlreadyExistsException($"User with email {user.Email.Value} already exists.");
             }
-            else
-            {
-                if (user.Email is not null && await IsEmailRegisteredAsync(user.Email, cancellationToken))
-                {
-                    _logger.LogError("[Auth Module(Repository)] User with email {email} already exists", user.Email.Value);
-                    throw new EmailAlreadyExistsException($"User with email {user.Email.Value} already exists.");
-                }
 
-                if (user.PhoneNumber is not null && await IsPhoneNumberRegisteredAsync(user.PhoneNumber, cancellationToken))
-                {
-                    _logger.LogError("[Auth Module(Repository)] User with phone number {phoneNumber} already exists", user.PhoneNumber.Value);
-                    throw new PhoneNumberAlreadyExistsException($"User with phone number {user.PhoneNumber.Value} already exists.");
-                }
+            if (user.PhoneNumber is not null && await IsPhoneNumberRegisteredAsync(user.PhoneNumber, cancellationToken))
+            {
+                _logger.LogError("[Auth Module(Repository)] User with phone number {phoneNumber} already exists", user.PhoneNumber.Value);
+                throw new PhoneNumberAlreadyExistsException($"User with phone number {user.PhoneNumber.Value} already exists.");
             }
 
             await _dbContext.AuthUsers.AddAsync(user, cancellationToken);
@@ -136,26 +124,6 @@ namespace AuthModule.Persistence.Repositories
 
             return await _dbContext.AuthUsers
                 .AnyAsync(u => u.PhoneNumber != null && u.PhoneNumber.Equals(phoneNumberValue) && !u.IsDeleted && !u.IsBanned, cancellationToken);
-        }
-
-        public async Task<bool> IsOAuthRegisteredAsync(string providerUserId, string providerText, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(providerUserId))
-            {
-                _logger.LogError("[Auth Module(Repository)] Provider user id cannot be null or empty");
-                throw new InvalidProviderException("Provider user id cannot be null or empty");
-            }
-
-            var provider = ParseProvider(providerText);
-
-            return await _dbContext.AuthUsers
-                .AnyAsync(u => u.ProviderUserId == providerUserId && u.Provider == provider && !u.IsDeleted && !u.IsBanned, cancellationToken);
-        }
-
-        public async Task<bool> IsExistsAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.AuthUsers
-                .AnyAsync(u => u.Id == userId && !u.IsDeleted && !u.IsBanned, cancellationToken);
         }
 
         private AuthProvider ParseProvider(string providerText)

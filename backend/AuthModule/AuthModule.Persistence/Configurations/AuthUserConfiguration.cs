@@ -32,11 +32,6 @@ namespace AuthModule.Persistence.Configurations
                 v => string.IsNullOrWhiteSpace(v) ? null : new Password(v)
             );
 
-            builder.Property(u => u.ProviderUserId)
-                .HasColumnName("provider_user_id")
-                .HasMaxLength(255)
-                .IsRequired(false);
-
             builder.Property(u => u.Email)
                 .HasColumnName("email")
                 .HasConversion(emailConverter)
@@ -54,11 +49,6 @@ namespace AuthModule.Persistence.Configurations
                 .HasConversion(passwordConverter)
                 .HasMaxLength(255)
                 .IsRequired(false);
-
-            builder.Property(u => u.Provider)
-                .HasColumnName("provider")
-                .HasConversion<string>()
-                .IsRequired();
 
             builder.Property(u => u.Role)
                 .HasColumnName("role")
@@ -92,6 +82,11 @@ namespace AuthModule.Persistence.Configurations
             builder.Property(u => u.DeletedAt)
                 .HasColumnName("deleted_at")
                 .IsRequired(false);
+
+            builder.HasMany(u => u.ExternalLogins)
+                .WithOne()
+                .HasForeignKey(el => el.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasIndex(u => u.Email).IsUnique();
             builder.HasIndex(u => u.PhoneNumber).IsUnique();

@@ -6,7 +6,7 @@ using AuthModule.Application.Models;
 using AuthModule.Domain.Entities;
 using AuthModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
-using SharedKernel.Interfaces;
+using SharedKernel.CurrentUser;
 
 namespace AuthModule.Application.Services
 {
@@ -62,7 +62,7 @@ namespace AuthModule.Application.Services
         {
             var refreshToken = RefreshToken.Create(userId, device, ipAddress, tokenId);
             await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
-            _logger.LogInformation($"New refresh token created for user with ID {userId}.");
+            _logger.LogInformation($"[Auth Module(AuthService)] New refresh token created for user with ID {userId}.");
             return refreshToken;
         }
 
@@ -72,15 +72,15 @@ namespace AuthModule.Application.Services
             {
                 if(credential.Contains("@"))
                 {
-                    return await _authUserRepository.GetByEmailAsync(credential, true, true, cancellationToken);
+                    return await _authUserRepository.GetByEmailAsync(credential, cancellationToken);
                 }
                 else
                 {
-                    return await _authUserRepository.GetByPhoneNumberAsync(credential, true, true, cancellationToken);
+                    return await _authUserRepository.GetByPhoneNumberAsync(credential, cancellationToken);
                 }
             }
 
-            _logger.LogError("Credential is null or empty.");
+            _logger.LogError("[Auth Module(AuthService)] Credential is null or empty.");
             throw new MissingAuthCredentialException("Credential is null or empty");
         }
 
@@ -104,7 +104,7 @@ namespace AuthModule.Application.Services
                         IsBanned = user.IsBanned,
                         Message = $"Ваш акаунт знаходиться на видаленні. До повного видалення акаунту залишилося днів: {timeLeft.Value.Days}"
                     },
-                    RefreshToken = null
+                    RefreshToken = null!
                 };
             }
             if (user.IsBanned)
@@ -118,7 +118,7 @@ namespace AuthModule.Application.Services
                         IsBanned = user.IsBanned,
                         Message = $"Ваш акаунт заблоковано по причині: {user.BanReason}."
                     },
-                    RefreshToken = null
+                    RefreshToken = null!
                 };
             }
             return null;

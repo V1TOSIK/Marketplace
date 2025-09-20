@@ -6,8 +6,7 @@ using ProductModule.Composition.DependencyInjection;
 using MediaModule.Composition.DependencyInjection;
 using StackExchange.Redis;
 using SharedKernel.ModuleInitializer;
-using SharedKernel.Interfaces;
-using Marketplace.Api;
+using SharedKernel.CurrentUser;
 
 var builder = WebApplication.CreateBuilder(args);
 

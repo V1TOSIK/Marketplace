@@ -3,8 +3,6 @@ using UserModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using UserModule.Application.Interfaces.Repositories;
-using UserModule.Application.Dtos;
-using System.Security.Cryptography;
 
 namespace UserModule.Persistence.Repositories
 {
@@ -18,12 +16,11 @@ namespace UserModule.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
+        public async Task<User> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             var user = await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Id == userId
-                && (includeDeleted || !u.IsDeleted)
-                && (includeBanned || !u.IsBanned), cancellationToken);
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
             if (user == null)
             {
                 _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
@@ -32,13 +29,12 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken, bool includeDeleted = false, bool includeBanned = false)
+        public async Task<User> GetByIdWithPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             var user = await _dbContext.Users
                 .Include(u => u.PhoneNumbers)
-                .FirstOrDefaultAsync(u => u.Id == userId
-                && (includeDeleted || !u.IsDeleted)
-                && (includeBanned || !u.IsBanned), cancellationToken);
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
             if (user == null)
             {
                 _logger.LogError("[User Module(Repository)] User with ID {userId} not found.", userId);
@@ -47,15 +43,15 @@ namespace UserModule.Persistence.Repositories
             return user;
         }
 
-        public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken)
+        public async Task<IEnumerable<string>> GetUserPhoneNumbersAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return await _dbContext.UserPhoneNumbers
                 .Where(pn => pn.UserId == userId)
                 .Select(pn => pn.PhoneNumber.Value)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task AddAsync(User user, CancellationToken cancellationToken)
+        public async Task AddAsync(User user, CancellationToken cancellationToken = default)
         {
             if (await ExistsAsync(user.Id, cancellationToken))
             {
@@ -67,13 +63,13 @@ namespace UserModule.Persistence.Repositories
             _logger.LogInformation("[User Module(Repository)] User with ID {Id} added successfully.", user.Id);
         }
 
-        public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken)
+        public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            var user = await GetByIdAsync(userId, cancellationToken, true, true);
+            var user = await GetByIdAsync(userId, cancellationToken);
             _dbContext.Users.Remove(user);
         }
 
-        private async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken)
+        private async Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return await _dbContext.Users.AnyAsync(u => u.Id == userId, cancellationToken);
         }

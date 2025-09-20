@@ -1,11 +1,11 @@
 ﻿using MediatR;
 using UserModule.Application.Dtos;
 
-namespace UserModule.Application.User.Queries.GetProfile
+namespace UserModule.Application.User.Queries.GetMyProfile
 {
-    public class GetProfileQuery : IRequest<UserDto>
+    public class GetMyProfileQuery : IRequest<UserDto>
     {
-        public GetProfileQuery(Guid userId)
+        public GetMyProfileQuery(Guid userId)
         {
             UserId = userId;
         }

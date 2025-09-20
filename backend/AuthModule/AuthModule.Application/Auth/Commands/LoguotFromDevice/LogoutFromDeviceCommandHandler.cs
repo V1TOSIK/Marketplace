@@ -19,18 +19,19 @@ namespace AuthModule.Application.Auth.Commands.LoguotFromDevice
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
+
         public async Task Handle(LogoutFromDeviceCommand command, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(command.RefreshToken))
             {
-                _logger.LogWarning("[Auth Module] Invalid refresh token provided for logout.");
+                _logger.LogWarning("[Auth Module(LogoutFromDeviceCommandhandler)] Invalid refresh token provided for logout.");
                 throw new InvalidRefreshTokenException("RefreshToken is not valid");
             }
 
             var token = await _refreshTokenRepository.GetByTokenAsync(command.RefreshToken, cancellationToken);
             token.Revoke();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[Auth Module] User logged out from device with refresh token {refreshToken}.", command.RefreshToken);
+            _logger.LogInformation("[Auth Module(LogoutFromDeviceCommandhandler)] User logged out from device with refresh token {refreshToken}.", command.RefreshToken);
         }
     }
 }

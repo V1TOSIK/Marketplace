@@ -22,7 +22,7 @@ namespace UserModule.Application.Events.RestoreUser
         }
         public async Task Handle(RestoreUserEvent notification, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(notification.UserId, cancellationToken, true, true);
+            var user = await _userRepository.GetByIdAsync(notification.UserId, cancellationToken);
             user.Restore();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("[User Module] Profile for user {Name} with ID {UserId} has been restored.", user.Name, notification.UserId);

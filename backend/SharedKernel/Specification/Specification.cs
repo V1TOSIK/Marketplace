@@ -9,9 +9,8 @@ namespace SharedKernel.Specification
         public List<Expression<Func<T, object>>> Includes { get; } = new();
         public Expression<Func<T, object>> OrderBy { get; private set; }
         public Expression<Func<T, object>> OrderByDescending { get; private set; }
-        public bool IsPagingEnabled { get; private set; } = false;
-        public int? PageNumber { get; private set; }
-        public int? PageSize { get; private set; }
+        public int PageNumber { get; private set; }
+        public int PageSize { get; private set; }
 
         public Specification<T> AddCriteria(Expression<Func<T, bool>> criterion)
         {
@@ -43,14 +42,6 @@ namespace SharedKernel.Specification
             else
                 OrderBy = lambda;
 
-            return this;
-        }
-
-        public Specification<T> ApplyPaging(int pageNumber, int pageSize)
-        {
-            IsPagingEnabled = true;
-            PageNumber = pageNumber;
-            PageSize = pageSize;
             return this;
         }
     }

@@ -35,16 +35,19 @@ namespace AuthModule.Application.Auth.Commands.Register
         {
             if (command.Credential == null)
             {
-                _logger.LogWarning("Credential can not be null.");
+                _logger.LogWarning("[Auth Module(RegisterCommandHandler)] Credential can not be null.");
                 throw new MissingAuthCredentialException("Credential can not be null.");
             }
 
-            var hashPassword = _passwordHasher.HashPassword(command.Password);
-
-            var existingUser = await _authUserRepository.GetByCredentialAsync(command.Credential, true, true, cancellationToken);
+            var existingUser = await _authUserRepository.GetByCredentialAsync(command.Credential, cancellationToken);
 
             if (existingUser != null)
+            {
+                _logger.LogWarning("[Auth Module(RegisterCommandHandler)] User with this credential already exists.");
                 throw new UserAlreadyRegisteredException("User with this credential already exists.");
+            }
+
+            var hashPassword = _passwordHasher.HashPassword(command.Password);
 
             AuthResult response = null!;
 
@@ -59,7 +62,7 @@ namespace AuthModule.Application.Auth.Commands.Register
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
 
-            _logger.LogInformation("[Auth Module] User with id: {UserId} registered successfully.", response.Response.UserId);
+            _logger.LogInformation("[Auth Module(RegisterCommandHandler)] User with id: {UserId} registered successfully.", response.Response.UserId);
             return response;
         }
     }

@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using UserModule.Application.Interfaces;
 using UserModule.Application.Interfaces.Repositories;
-using UserModule.Domain.Entities;
 
 namespace UserModule.Application.User.Commands.DeleteUser
 {
@@ -22,14 +21,11 @@ namespace UserModule.Application.User.Commands.DeleteUser
 
         public async Task Handle(DeleteUserCommand command, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken, true, true);
-            await _unitOfWork.ExecuteInTransactionAsync(async () =>
-            {
-                user.Delete();
-                await _userRepository.HardDeleteAsync(command.UserId, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-            }, cancellationToken);
-            _logger.LogInformation("[User Module] Profile for user with ID {UserId} has been hard deleted.", command.UserId);
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
+            user.Delete();
+            await _userRepository.HardDeleteAsync(command.UserId, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("[User Module(DeleteUserCommandHandler)] Profile for user with ID {UserId} has been hard deleted.", command.UserId);
         }
     }
 }

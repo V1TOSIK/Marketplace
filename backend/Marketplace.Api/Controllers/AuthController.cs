@@ -1,5 +1,5 @@
-﻿using AuthModule.Application.Auth.Commands.AddEmail;
-using AuthModule.Application.Auth.Commands.AddPhone;
+﻿using AuthModule.Application.Auth.Commands.SetEmail;
+using AuthModule.Application.Auth.Commands.SetPhone;
 using AuthModule.Application.Auth.Commands.ChangePassword;
 using AuthModule.Application.Auth.Commands.Login;
 using AuthModule.Application.Auth.Commands.LogoutFromAllDevices;
@@ -10,8 +10,10 @@ using AuthModule.Application.Auth.Commands.Restore;
 using AuthModule.Application.Dtos.Responses;
 using AuthModule.Application.Interfaces.Services;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedKernel.Authorization.Attributes;
+using SharedKernel.Authorization.Enums;
+using AuthModule.Application.Auth.Commands.SetPassword;
 
 namespace Marketplace.Api.Controllers
 {
@@ -58,18 +60,15 @@ namespace Marketplace.Api.Controllers
             var result = await _mediator.Send(command, cancellationToken);
 
             if (result.RefreshToken != null)
-            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
             return Ok(result.Response);
         }
 
         [HttpPut("{userId}/restore")]
-        public async Task<ActionResult<AuthorizeResponse>> Restore([FromRoute] Guid userId, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<AuthorizeResponse>> Restore([FromRoute] Guid userId, [FromBody] RestoreRequest request, CancellationToken cancellationToken = default)
         {
-            if (userId == Guid.Empty)
-                return BadRequest("User ID cannot be empty or null");
-
-            var result = await _mediator.Send(new RestoreCommand(userId), cancellationToken);
+            var result = await _mediator.Send(new RestoreCommand(userId, request), cancellationToken);
 
             if (result.RefreshToken != null)
                 _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
@@ -77,59 +76,69 @@ namespace Marketplace.Api.Controllers
             return Ok(result.Response);
         }
 
-        [Authorize]
-        [HttpPut("change/password")]
-        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken cancellationToken = default)
+        [AuthorizeSameUser]
+        [HttpPost("{userId}/password")]
+        public async Task<ActionResult> SetPassword([FromRoute] Guid userId, [FromBody] SetPasswordRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(command.CurrentPassword) || string.IsNullOrWhiteSpace(command.NewPassword))
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+                return BadRequest("New password cannot be empty");
+            await _mediator.Send(new SetPasswordCommand(userId, request), cancellationToken);
+            return Ok("Password set successfully");
+        }
+
+        [AuthorizeSameUser]
+        [HttpPut("{userId}/password/change")]
+        public async Task<ActionResult> ChangePassword([FromRoute] Guid userId, [FromBody] ChangePasswordRequest request, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
                 return BadRequest("Old password and new password cannot be empty");
 
-            await _mediator.Send(command, cancellationToken);
+            await _mediator.Send(new ChangePasswordCommand(userId, request), cancellationToken);
 
             return Ok("Password changed successfully");
         }
 
-        [Authorize]
-        [HttpPut("email")]
-        public async Task<ActionResult> AddEmail([FromBody] AddEmailCommand command, CancellationToken cancellationToken = default)
+        [AuthorizeSameUser]
+        [HttpPut("{userId}/email")]
+        public async Task<ActionResult> SetEmail([FromRoute] Guid userId, [FromBody] SetEmailRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(command.Email))
+            if (string.IsNullOrWhiteSpace(request.Email))
                 return BadRequest("Email cannot be empty.");
 
-            await _mediator.Send(command, cancellationToken);
-            return Ok(new { Message = "Email added successfully." });
+            await _mediator.Send(new SetEmailCommand(userId, request), cancellationToken);
+            return Ok("Email added successfully.");
         }
 
-        [Authorize]
-        [HttpPut("phone")]
-        public async Task<ActionResult> AddPhone([FromBody] AddPhoneCommand command, CancellationToken cancellationToken = default)
+        [AuthorizeSameUser]
+        [HttpPut("{userId}/phone")]
+        public async Task<ActionResult> SetPhone([FromRoute] Guid userId, [FromBody] SetPhoneRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(command.Phone))
+            if (string.IsNullOrWhiteSpace(request.Phone))
                 return BadRequest("Phone number cannot be empty.");
 
-            await _mediator.Send(command, cancellationToken);
-            return Ok(new { Message = "Phone number added successfully." });
+            await _mediator.Send(new SetPhoneCommand(userId, request), cancellationToken);
+            return Ok("Phone number added successfully.");
         }
 
-        [Authorize]
-        [HttpDelete("logout/all")]
-        public async Task<ActionResult> LogoutAll(CancellationToken cancellationToken = default)
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
+        [HttpDelete("{userId}/logout/all")]
+        public async Task<ActionResult> LogoutAll([FromRoute] Guid userId, CancellationToken cancellationToken = default)
         {
-            await _mediator.Send(new LogoutFromAllDevicesCommand(), cancellationToken);
+            await _mediator.Send(new LogoutFromAllDevicesCommand(userId), cancellationToken);
             _cookieService.Delete("refreshToken");
             return Ok("User logged out successfully");
         }
 
-        [Authorize]
-        [HttpDelete("logout")]
-        public async Task<ActionResult> Logout(CancellationToken cancellationToken = default)
+        [AuthorizeSameUserOrRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator), nameof(AccessPolicy.SameUser))]
+        [HttpDelete("{userId}/logout")]
+        public async Task<ActionResult> Logout([FromRoute] Guid userId, CancellationToken cancellationToken = default)
         {
             var refreshToken = _cookieService.Get("refreshToken");
 
             if (refreshToken == null)
                 return BadRequest("Invalid request");
 
-            await _mediator.Send(new LogoutFromDeviceCommand(refreshToken), cancellationToken);
+            await _mediator.Send(new LogoutFromDeviceCommand(userId, refreshToken), cancellationToken);
 
             _cookieService.Delete("refreshToken");
             return Ok("User logged out successfully");

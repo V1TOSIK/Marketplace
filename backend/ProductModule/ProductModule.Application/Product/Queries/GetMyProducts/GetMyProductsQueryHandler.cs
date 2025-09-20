@@ -1,66 +1,53 @@
 ﻿using MediatR;
-using Microsoft.Extensions.Logging;
 using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces.Repositories;
 using SharedKernel.Dtos;
-using SharedKernel.Interfaces;
+using SharedKernel.Pagination;
 using SharedKernel.Queries;
 
 namespace ProductModule.Application.Product.Queries.GetMyProducts
 {
-    public class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQuery, IEnumerable<ProductDto>>
+    public class GetMyProductsQueryHandler : IRequestHandler<GetMyProductsQuery, PaginationResponse<ProductDto>>
     {
         private readonly IProductRepository _productRepository;
         private readonly IMediator _mediator;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly ILogger<GetMyProductsQueryHandler> _logger;
 
         public GetMyProductsQueryHandler(IProductRepository productRepository,
-            IMediator mediator,
-            ICurrentUserService currentUserService,
-            ILogger<GetMyProductsQueryHandler> logger)
+            IMediator mediator)
         {
             _productRepository = productRepository;
             _mediator = mediator;
-            _currentUserService = currentUserService;
-            _logger = logger;
         }
 
-        public async Task<IEnumerable<ProductDto>> Handle(GetMyProductsQuery query, CancellationToken cancellationToken)
+        public async Task<PaginationResponse<ProductDto>> Handle(GetMyProductsQuery query, CancellationToken cancellationToken)
         {
-            var userId = _currentUserService.UserId;
-            if (userId == null)
-            {
-                _logger.LogWarning("[Product Module] User ID is empty. Cannot retrieve products.");
-                throw new UnauthorizedAccessException("User is not authenticated.");
-            }
-
             var parsedStatuses = query.GetParsedStatuses()?.ToList();
 
             var statuses = parsedStatuses != null && parsedStatuses.Any()
                 ? parsedStatuses
                 : [];
 
-            var products = await _productRepository.GetByUserIdAsync(userId.Value, statuses, cancellationToken);
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
-            var response = products.Select(p =>
+            var products = _productRepository.GetByUserIdAsync(query.UserId, statuses, cancellationToken);
+
+            var paginatedProducts = await products.ToPaginatedListAsync(query.PageNumber, query.PageSize, cancellationToken);
+
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedProducts.Items.Select(p => p.Id)), cancellationToken);
+            var items = paginatedProducts.Items.Select(p =>
             {
                 var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();
 
-                return new ProductDto
-                {
-                    Id = p.Id,
-                    Medias = [media],
-                    Name = p.Name,
-                    PriceCurrency = p.Price.Currency,
-                    PriceAmount = p.Price.Amount,
-                    Location = p.Location,
-                    CategoryId = p.CategoryId,
-                    UserId = p.UserId,
-                    Status = p.Status.ToString()
-                };
-            });
-            return response;
+                return new ProductDto(p.Id,
+                    p.UserId,
+                    [media],
+                    p.Name,
+                    p.Price.Amount,
+                    p.Price.Currency,
+                    p.Location,
+                    p.Description,
+                    p.CategoryId,
+                    p.Status.ToString());
+            }).ToList();
+            return new PaginationResponse<ProductDto>(items, paginatedProducts.TotalCount, paginatedProducts.PageNumber, paginatedProducts.PageSize);
         }
     }
 }

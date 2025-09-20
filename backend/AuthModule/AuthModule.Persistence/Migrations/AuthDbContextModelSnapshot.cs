@@ -69,16 +69,6 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone_number");
 
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("provider");
-
-                    b.Property<string>("ProviderUserId")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("provider_user_id");
-
                     b.Property<DateTime>("RegistrationDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -99,6 +89,26 @@ namespace AuthModule.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("auth_users", (string)null);
+                });
+
+            modelBuilder.Entity("AuthModule.Domain.Entities.ExternalLogin", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Provider")
+                        .HasColumnType("text")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ProviderUserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("provider_user_id");
+
+                    b.HasKey("UserId", "Provider");
+
+                    b.ToTable("ExternalLogins", (string)null);
                 });
 
             modelBuilder.Entity("AuthModule.Domain.Entities.RefreshToken", b =>
@@ -159,6 +169,15 @@ namespace AuthModule.Persistence.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("AuthModule.Domain.Entities.ExternalLogin", b =>
+                {
+                    b.HasOne("AuthModule.Domain.Entities.AuthUser", null)
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuthModule.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("AuthModule.Domain.Entities.AuthUser", null)
@@ -166,6 +185,11 @@ namespace AuthModule.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AuthModule.Domain.Entities.AuthUser", b =>
+                {
+                    b.Navigation("ExternalLogins");
                 });
 #pragma warning restore 612, 618
         }

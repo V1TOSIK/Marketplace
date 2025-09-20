@@ -8,8 +8,7 @@ namespace SharedKernel.Specification
         List<Expression<Func<T, object>>> Includes { get; }
         Expression<Func<T, object>> OrderBy { get; }
         Expression<Func<T, object>> OrderByDescending { get; }
-        bool IsPagingEnabled { get; }
-        int? PageNumber { get; }
-        int? PageSize { get; }
+        int PageNumber { get; }
+        int PageSize { get; }
     }
 }

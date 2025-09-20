@@ -1,7 +1,7 @@
-﻿using SharedKernel.Interfaces;
+﻿using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace Marketplace.Api
+namespace SharedKernel.CurrentUser
 {
     public class CurrentUserService : ICurrentUserService
     {

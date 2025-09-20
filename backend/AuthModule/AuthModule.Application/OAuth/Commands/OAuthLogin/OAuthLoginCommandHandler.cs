@@ -5,26 +5,22 @@ using AuthModule.Application.Models;
 using AuthModule.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using SharedKernel.Interfaces;
 
-namespace AuthModule.Application.OAuth.Commands
+namespace AuthModule.Application.OAuth.Commands.OAuthLogin
 {
     public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, AuthResult>
     {
         private readonly IAuthUserRepository _authUserRepository;
         private readonly IAuthService _authService;
-        private readonly ICurrentUserService _currentUserService;
         private readonly IAuthUnitOfWork _unitOfWork;
         private readonly ILogger<OAuthLoginCommandHandler> _logger;
         public OAuthLoginCommandHandler(IAuthUserRepository authUserRepository,
             IAuthService authService,
-            ICurrentUserService currentUserService,
             IAuthUnitOfWork unitOfWork,
             ILogger<OAuthLoginCommandHandler> logger)
         {
             _authUserRepository = authUserRepository;
             _authService = authService;
-            _currentUserService = currentUserService;
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
@@ -35,7 +31,8 @@ namespace AuthModule.Application.OAuth.Commands
             if (user == null)
             {
                 var email = string.IsNullOrWhiteSpace(command.Email) ? null : command.Email;
-                user = AuthUser.CreateOAuth(command.ProviderUserId, email, command.Provider);
+                user = AuthUser.Create(email, null, null);
+                user.AddExternalLogin(command.ProviderUserId, command.Provider);
                 await _authUserRepository.AddAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -46,7 +43,7 @@ namespace AuthModule.Application.OAuth.Commands
 
             AuthResult response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
 
-            _logger.LogInformation("[Auth Module] User with Id: {UserId} logged in by OAuth successfully.", user.Id);
+            _logger.LogInformation("[Auth Module(OAuthLoginCommandHandler)] User with Id: {UserId} logged in by OAuth successfully.", user.Id);
             return response;
 
         }
