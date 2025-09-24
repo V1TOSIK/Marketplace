@@ -23,7 +23,7 @@ namespace UserModule.Application.User.Commands.UpdateUser
         {
             var user = await _userRepository.GetByIdWithPhoneNumbersAsync(command.UserId, cancellationToken);
 
-            user.UpdateUser(command.Name, command.Location, command.PhoneNumbers);
+            user.UpdateUser(command.Request.Name, command.Request.Location, command.Request.PhoneNumbers);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("[User Module(UpdateUserCommandHandler)] Profile for user {Name} with ID {userId} has been updated.", user.Name, user.Id);

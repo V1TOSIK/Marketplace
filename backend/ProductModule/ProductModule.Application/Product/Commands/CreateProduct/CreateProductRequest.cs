@@ -4,7 +4,6 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
 {
     public class CreateProductRequest
     {
-
         public string Name { get; set; } = string.Empty;
         public decimal PriceAmount { get; set; }
         public string PriceCurrency { get; set; } = string.Empty;

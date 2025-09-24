@@ -58,7 +58,7 @@ namespace Marketplace.Api.Controllers
         [HttpPut("{userId}/ban")]
         public async Task<ActionResult> BanUser([FromRoute] Guid userId, [FromBody] BanUserRequest request, CancellationToken cancellationToken)
         {
-            await _mediator.Send(new BanUserCommand(userId, request.BanReason), cancellationToken);
+            await _mediator.Send(new BanUserCommand(userId, request), cancellationToken);
 
             return NoContent();
         }

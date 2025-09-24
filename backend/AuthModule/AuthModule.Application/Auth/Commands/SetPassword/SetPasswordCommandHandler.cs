@@ -33,7 +33,7 @@ namespace AuthModule.Application.Auth.Commands.SetPassword
                 throw new InvalidOperationException("Password is already set.");
             }
 
-            var hashedPassword = _passwordHasher.HashPassword(command.Password);
+            var hashedPassword = _passwordHasher.HashPassword(command.Request.Password);
 
             user.SetPassword(hashedPassword);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
