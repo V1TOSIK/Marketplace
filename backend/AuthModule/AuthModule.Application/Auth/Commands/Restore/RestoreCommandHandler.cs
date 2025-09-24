@@ -32,7 +32,7 @@ namespace AuthModule.Application.Auth.Commands.Restore
         {
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
-            if (_passwordHasher.VerifyHashedPassword(user.Password ?? "", command.Password))
+            if (_passwordHasher.VerifyHashedPassword(user.Password ?? "", command.Request.Password))
             {
                 _logger.LogWarning("[Auth Module(RestoreCommandHandler)] Invalid security stamp provided for user with ID {UserId}.", command.UserId);
                 throw new UnauthorizedAccessException("Invalid Password.");

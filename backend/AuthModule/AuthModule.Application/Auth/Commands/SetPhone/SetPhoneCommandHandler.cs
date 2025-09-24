@@ -24,15 +24,15 @@ namespace AuthModule.Application.Auth.Commands.SetPhone
         {
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
-            if (await _authUserRepository.IsPhoneNumberRegisteredAsync(command.Phone, cancellationToken))
+            if (await _authUserRepository.IsPhoneNumberRegisteredAsync(command.Request.Phone, cancellationToken))
             {
-                _logger.LogWarning("[Auth Module(AddPhoneCommandHandler)] Phone {Phone} is already registered.", command.Phone);
-                throw new PhoneNumberAlreadyExistsException($"Phone {command.Phone} is already registered.");
+                _logger.LogWarning("[Auth Module(AddPhoneCommandHandler)] Phone {Phone} is already registered.", command.Request.Phone);
+                throw new PhoneNumberAlreadyExistsException($"Phone {command.Request.Phone} is already registered.");
             }
 
-            user.SetPhone(command.Phone);
+            user.SetPhone(command.Request.Phone);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[Auth Module(AddPhoneCommandHandler)] Phone {Phone} added for user with ID {UserId}.", command.Phone, command.UserId);
+            _logger.LogInformation("[Auth Module(AddPhoneCommandHandler)] Phone {Phone} added for user with ID {UserId}.", command.Request.Phone, command.UserId);
         }
     }
 }

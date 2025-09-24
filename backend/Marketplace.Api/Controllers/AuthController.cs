@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using SharedKernel.Authorization.Attributes;
 using SharedKernel.Authorization.Enums;
 using AuthModule.Application.Auth.Commands.SetPassword;
+using AuthModule.Application.Models;
 
 namespace Marketplace.Api.Controllers
 {
@@ -35,15 +36,9 @@ namespace Marketplace.Api.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(command.Password))
-                return BadRequest("Password cannot be empty or null");
-
-            if (string.IsNullOrWhiteSpace(command.Credential))
-                return BadRequest("Cretential must be provided");
-
             var result = await _mediator.Send(command, cancellationToken);
 
-            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            SetRefreshTokenCookieIfNotNull(result);
 
             return Ok(result.Response);
         }
@@ -51,16 +46,9 @@ namespace Marketplace.Api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(command.Password))
-                return BadRequest("Password cannot be empty or null");
-
-            if (string.IsNullOrWhiteSpace(command.Credential))
-                return BadRequest("Either email or phone number must be provided");
-
             var result = await _mediator.Send(command, cancellationToken);
 
-            if (result.RefreshToken != null)
-                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            SetRefreshTokenCookieIfNotNull(result);
 
             return Ok(result.Response);
         }
@@ -70,8 +58,7 @@ namespace Marketplace.Api.Controllers
         {
             var result = await _mediator.Send(new RestoreCommand(userId, request), cancellationToken);
 
-            if (result.RefreshToken != null)
-                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            SetRefreshTokenCookieIfNotNull(result);
 
             return Ok(result.Response);
         }
@@ -80,9 +67,8 @@ namespace Marketplace.Api.Controllers
         [HttpPost("{userId}/password")]
         public async Task<ActionResult> SetPassword([FromRoute] Guid userId, [FromBody] SetPasswordRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.NewPassword))
-                return BadRequest("New password cannot be empty");
             await _mediator.Send(new SetPasswordCommand(userId, request), cancellationToken);
+
             return Ok("Password set successfully");
         }
 
@@ -90,9 +76,6 @@ namespace Marketplace.Api.Controllers
         [HttpPut("{userId}/password/change")]
         public async Task<ActionResult> ChangePassword([FromRoute] Guid userId, [FromBody] ChangePasswordRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
-                return BadRequest("Old password and new password cannot be empty");
-
             await _mediator.Send(new ChangePasswordCommand(userId, request), cancellationToken);
 
             return Ok("Password changed successfully");
@@ -102,10 +85,8 @@ namespace Marketplace.Api.Controllers
         [HttpPut("{userId}/email")]
         public async Task<ActionResult> SetEmail([FromRoute] Guid userId, [FromBody] SetEmailRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Email))
-                return BadRequest("Email cannot be empty.");
-
             await _mediator.Send(new SetEmailCommand(userId, request), cancellationToken);
+
             return Ok("Email added successfully.");
         }
 
@@ -113,10 +94,8 @@ namespace Marketplace.Api.Controllers
         [HttpPut("{userId}/phone")]
         public async Task<ActionResult> SetPhone([FromRoute] Guid userId, [FromBody] SetPhoneRequest request, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Phone))
-                return BadRequest("Phone number cannot be empty.");
-
             await _mediator.Send(new SetPhoneCommand(userId, request), cancellationToken);
+
             return Ok("Phone number added successfully.");
         }
 
@@ -125,7 +104,9 @@ namespace Marketplace.Api.Controllers
         public async Task<ActionResult> LogoutAll([FromRoute] Guid userId, CancellationToken cancellationToken = default)
         {
             await _mediator.Send(new LogoutFromAllDevicesCommand(userId), cancellationToken);
-            _cookieService.Delete("refreshToken");
+
+            DeleteRefreshTokenCookie();
+
             return Ok("User logged out successfully");
         }
 
@@ -140,7 +121,8 @@ namespace Marketplace.Api.Controllers
 
             await _mediator.Send(new LogoutFromDeviceCommand(userId, refreshToken), cancellationToken);
 
-            _cookieService.Delete("refreshToken");
+            DeleteRefreshTokenCookie();
+
             return Ok("User logged out successfully");
         }
 
@@ -156,9 +138,20 @@ namespace Marketplace.Api.Controllers
             if (result == null)
                 return Forbid("Invalid refresh token");
 
-            _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            SetRefreshTokenCookieIfNotNull(result);
 
             return Ok(result.Response);
+        }
+
+        private void SetRefreshTokenCookieIfNotNull(AuthResult result)
+        {
+            if (result.RefreshToken != null)
+                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+        }
+
+        private void DeleteRefreshTokenCookie()
+        {
+            _cookieService.Delete("refreshToken");
         }
     }
 }

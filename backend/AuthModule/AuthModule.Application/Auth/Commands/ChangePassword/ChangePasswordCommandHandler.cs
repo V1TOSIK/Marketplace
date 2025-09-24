@@ -29,13 +29,13 @@ namespace AuthModule.Application.Auth.Commands.ChangePassword
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
             user.EnsureActive();
-            if (!_passwordHasher.VerifyHashedPassword(user.Password?.Value ?? string.Empty, command.CurrentPassword))
+            if (!_passwordHasher.VerifyHashedPassword(user.Password?.Value ?? string.Empty, command.Request.CurrentPassword))
             {
                 _logger.LogWarning("[Auth Module(ChangePasswordCommandHandler)] Invalid password attempt for user with ID {userId}.", user.Id);
                 throw new IncorrectCredentialsException("Invalid password.");
             }
 
-            var newHashedPassword = _passwordHasher.HashPassword(command.NewPassword);
+            var newHashedPassword = _passwordHasher.HashPassword(command.Request.NewPassword);
             user.UpdatePassword(newHashedPassword);
 
             _logger.LogInformation("[Auth Module(ChangePasswordCommandHanlder)] Password changed successfully for user with ID {userId}.", user.Id);
