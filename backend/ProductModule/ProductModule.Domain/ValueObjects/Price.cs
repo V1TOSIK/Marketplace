@@ -14,6 +14,9 @@ namespace ProductModule.Domain.ValueObjects
                 throw new ArgumentOutOfRangeException(nameof(amount), "Price amount cannot be negative.");
             if (string.IsNullOrWhiteSpace(currency))
                 throw new ArgumentException("Currency cannot be null or empty.", nameof(currency));
+            if (currency.Length != 3)
+                throw new ArgumentException("Currency must be a valid 3-letter ISO currency code.", nameof(currency));
+
             Amount = amount;
             Currency = currency;
         }

@@ -1,6 +1,5 @@
 ﻿using AuthModule.Application.Interfaces;
 using AuthModule.Application.Interfaces.Repositories;
-using AuthModule.Domain.Exceptions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -22,12 +21,6 @@ namespace AuthModule.Application.Auth.Commands.LoguotFromDevice
 
         public async Task Handle(LogoutFromDeviceCommand command, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(command.RefreshToken))
-            {
-                _logger.LogWarning("[Auth Module(LogoutFromDeviceCommandhandler)] Invalid refresh token provided for logout.");
-                throw new InvalidRefreshTokenException("RefreshToken is not valid");
-            }
-
             var token = await _refreshTokenRepository.GetByTokenAsync(command.RefreshToken, cancellationToken);
             token.Revoke();
             await _unitOfWork.SaveChangesAsync(cancellationToken);

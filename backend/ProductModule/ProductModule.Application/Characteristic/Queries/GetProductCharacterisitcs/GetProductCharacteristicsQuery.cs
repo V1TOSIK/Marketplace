@@ -5,7 +5,7 @@ namespace ProductModule.Application.Characteristic.Queries.GetProductCharacteris
 {
     public class GetProductCharacteristicsQuery : IRequest<IEnumerable<CharacteristicGroupDto>>
     {
-        public Guid ProductId { get; }
+        public Guid ProductId { get; set; }
         public GetProductCharacteristicsQuery(Guid productId)
         {
             if (productId == Guid.Empty)

@@ -18,17 +18,11 @@ namespace SharedKernel.Authorization.Filters
         public void OnAuthorization(AuthorizationFilterContext context)
         {
             var routeUserId = context.RouteData.Values["userId"]?.ToString();
-            if (!Guid.TryParse(routeUserId, out var userId))
-            {
-                context.Result = new BadRequestObjectResult("Invalid user ID");
-                return;
-            }
-
             var role = _currentUserService.Role;
 
             if (!_allowedRoles.Contains(role))
             {
-                context.Result = new ForbidResult(); // 403
+                context.Result = new ForbidResult();
             }
         }
     }

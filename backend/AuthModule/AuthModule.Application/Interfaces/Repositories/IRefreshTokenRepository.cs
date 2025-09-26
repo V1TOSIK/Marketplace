@@ -7,5 +7,6 @@ namespace AuthModule.Application.Interfaces.Repositories
         Task<RefreshToken> GetByTokenAsync(string token, CancellationToken cancellationToken);
         Task AddAsync(RefreshToken token, CancellationToken cancellationToken);
         Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken);
+        Task DeleteExpiredAsync(CancellationToken cancellationToken);
     }
 }

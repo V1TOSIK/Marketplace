@@ -24,7 +24,7 @@ namespace ProductModule.Application.Product.Queries.GetProductByCategory
 
             var paginatedProducts = await products.ToPaginatedListAsync(query.PageNumber, query.PageSize, cancellationToken);
 
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedProducts.Items.Select(p => p.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedProducts.Items.Select(p => p.Id).ToList()), cancellationToken);
             var items = paginatedProducts.Items.Select(p =>
             {
                 var media = mainMedias.TryGetValue(p.Id, out var result) ? result : new MediaDto();

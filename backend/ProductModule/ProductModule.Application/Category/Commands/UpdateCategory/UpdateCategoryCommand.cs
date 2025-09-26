@@ -4,12 +4,12 @@ namespace ProductModule.Application.Category.Commands.UpdateCategory
 {
     public class UpdateCategoryCommand : IRequest
     {
-        public UpdateCategoryCommand(int categoryId, string name)
+        public UpdateCategoryCommand(int categoryId, UpdateCategoryRequest request)
         {
             CategoryId = categoryId;
-            Name = name;
+            Request = request;
         }
         public int CategoryId { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public UpdateCategoryRequest Request { get; set; }
     }
 }

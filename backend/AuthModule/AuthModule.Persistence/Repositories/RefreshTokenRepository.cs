@@ -45,5 +45,12 @@ namespace AuthModule.Persistence.Repositories
                 cancellationToken
             );
         }
+
+        public async Task DeleteExpiredAsync(CancellationToken cancellationToken)
+        {
+            await _dbContext.RefreshTokens
+                .Where(rt => rt.ExpirationDate <= DateTime.UtcNow)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
     }
 }

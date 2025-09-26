@@ -58,7 +58,7 @@ namespace ProductModule.Application.Product.Queries.GetFilteredProducts
                 cancellationToken
             );
 
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedResult.Items.Select(r => r.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(paginatedResult.Items.Select(r => r.Id).ToList()), cancellationToken);
 
             var items = paginatedResult.Items.Select(p =>
             {

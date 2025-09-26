@@ -24,14 +24,14 @@ namespace AuthModule.Application.Auth.Commands.SetEmail
         {
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
-            if (await _authUserRepository.IsEmailRegisteredAsync(command.Email, cancellationToken))
+            if (await _authUserRepository.IsEmailRegisteredAsync(command.Request.Email, cancellationToken))
             {
-                _logger.LogWarning("[Auth Module(AddEmailCommandHandler)] Email {Email} is already registered.", command.Email);
-                throw new EmailAlreadyExistsException($"Email {command.Email} is already registered.");
+                _logger.LogWarning("[Auth Module(AddEmailCommandHandler)] Email {Email} is already registered.", command.Request.Email);
+                throw new EmailAlreadyExistsException($"Email {command.Request.Email} is already registered.");
             }
-            user.SetEmail(command.Email);
+            user.SetEmail(command.Request.Email);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[Auth Module(AddEmailCommandHandler)] Email {Email} added for user with ID {UserId}.", command.Email, command.UserId);
+            _logger.LogInformation("[Auth Module(AddEmailCommandHandler)] Email {Email} added for user with ID {UserId}.", command.Request.Email, command.UserId);
         }
     }
 }

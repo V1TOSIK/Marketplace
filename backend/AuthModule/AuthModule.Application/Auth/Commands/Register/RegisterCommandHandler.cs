@@ -33,12 +33,6 @@ namespace AuthModule.Application.Auth.Commands.Register
 
         public async Task<AuthResult> Handle(RegisterCommand command, CancellationToken cancellationToken = default)
         {
-            if (command.Credential == null)
-            {
-                _logger.LogWarning("[Auth Module(RegisterCommandHandler)] Credential can not be null.");
-                throw new MissingAuthCredentialException("Credential can not be null.");
-            }
-
             var existingUser = await _authUserRepository.GetByCredentialAsync(command.Credential, cancellationToken);
 
             if (existingUser != null)

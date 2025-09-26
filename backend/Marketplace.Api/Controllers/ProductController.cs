@@ -1,8 +1,4 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ProductModule.Application.Characteristic.Queries.GetProductCharacterisitcs;
-using ProductModule.Application.Dtos;
+﻿using ProductModule.Application.Characteristic.Queries.GetProductCharacterisitcs;
 using ProductModule.Application.Product.Commands.CreateProduct;
 using ProductModule.Application.Product.Commands.DeleteProduct;
 using ProductModule.Application.Product.Commands.PublishProduct;
@@ -12,8 +8,12 @@ using ProductModule.Application.Product.Queries.GetMyProducts;
 using ProductModule.Application.Product.Queries.GetProduct;
 using ProductModule.Application.Product.Queries.GetProductByCategory;
 using ProductModule.Application.Product.Queries.GetUserProducts;
+using ProductModule.Application.Dtos;
 using SharedKernel.Authorization.Attributes;
 using SharedKernel.Pagination;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 namespace Marketplace.Api.Controllers
 {
@@ -31,36 +31,28 @@ namespace Marketplace.Api.Controllers
         [HttpGet("user/{userId}/my")]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetMyProducts([FromRoute] Guid userId, [FromQuery] GetMyProductsRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetMyProductsQuery(userId, request);
-            var products = await _mediator.Send(query, cancellationToken);
+            var products = await _mediator.Send(new GetMyProductsQuery(userId, request), cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetUserProducts([FromRoute] Guid userId, [FromQuery] PaginationRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetUserProductsQuery(userId, request);
-            var products = await _mediator.Send(query, cancellationToken);
+            var products = await _mediator.Send(new GetUserProductsQuery(userId, request), cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("category/{categoryId}")]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategoryId([FromRoute] int categoryId, [FromQuery] PaginationRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetProductsByCategoryQuery(categoryId, request);
-            var products = await _mediator.Send(query, cancellationToken);
+            var products = await _mediator.Send(new GetProductsByCategoryQuery(categoryId, request), cancellationToken);
             return Ok(products);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDto>> GetProductById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            var query = new GetProductQuery(id);
-            var product = await _mediator.Send(query, cancellationToken);
-
-            if (product == null)
-                return NotFound("Product not found.");
-
+            var product = await _mediator.Send(new GetProductQuery(id), cancellationToken);
             return Ok(product);
         }
 
@@ -82,8 +74,7 @@ namespace Marketplace.Api.Controllers
         [HttpPatch("{productId}/publish")]
         public async Task<ActionResult> PublishProduct([FromRoute] Guid productId, CancellationToken cancellationToken)
         {
-            var command = new PublishProductCommand { ProductId = productId };
-            await _mediator.Send(command, cancellationToken);
+            await _mediator.Send(new PublishProductCommand(productId), cancellationToken);
             return Ok("Product published successfully.");
         }
 
@@ -107,8 +98,7 @@ namespace Marketplace.Api.Controllers
         [HttpDelete("user/{userId}/product/{productId}")]
         public async Task<ActionResult> DeleteProduct([FromRoute] Guid userId, [FromRoute] Guid productId, CancellationToken cancellationToken)
         {
-            var command = new DeleteProductCommand(userId, productId);
-            await _mediator.Send(command, cancellationToken);
+            await _mediator.Send(new DeleteProductCommand(userId, productId), cancellationToken);
             return Ok("Product deleted successfully.");
         }
     }

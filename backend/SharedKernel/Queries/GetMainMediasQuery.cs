@@ -5,10 +5,10 @@ namespace SharedKernel.Queries
 {
     public class GetMainMediasQuery : IRequest<Dictionary<Guid, MediaDto>>
     {
-        public GetMainMediasQuery(IEnumerable<Guid> entityIds)
+        public GetMainMediasQuery(List<Guid> entityIds)
         {
             EntityIds = entityIds;
         }
-        public IEnumerable<Guid> EntityIds { get; set; } = [];
+        public List<Guid> EntityIds { get; set; } = [];
     }
 }

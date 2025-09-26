@@ -15,25 +15,20 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("code/send")]
-        public async Task<ActionResult> SendVerificationCode([FromQuery] string destination, CancellationToken cancellationToken)
+        public async Task<ActionResult> SendVerificationCode([FromQuery] SendVerificationCodeRequest request, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(destination))
-                return BadRequest("Destination cannot be empty.");
-            await _verificationService.SendVerificationCode(destination, cancellationToken);
+            await _verificationService.SendVerificationCode(request.Destination, cancellationToken);
             return Ok("Verification code sent successfully.");
         }
 
         [HttpPut("code/verify")]
-        public async Task<ActionResult> VerifyCode([FromBody] VerificationRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult> VerifyCode([FromBody] VerifyCodeRequest request, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(request.Destination) || string.IsNullOrWhiteSpace(request.Code))
-                return BadRequest("Destination and code cannot be empty.");
-
             var isVerified = await _verificationService.VerifyCode(request, cancellationToken);
             if (isVerified)
                 return Ok("Verification successful.");
             else
-                return BadRequest("Invalid verification code or already used.");
+                return Conflict("Invalid verification code or already used.");
         }
     }
 }

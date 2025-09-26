@@ -5,7 +5,7 @@ namespace ProductModule.Application.Product.Queries.GetProduct
 {
     public class GetProductQuery : IRequest<ProductDto>
     {
-        public Guid ProductId { get; }
+        public Guid ProductId { get; set; }
         public GetProductQuery(Guid productId)
         {
             if (productId == Guid.Empty)

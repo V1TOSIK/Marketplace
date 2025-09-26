@@ -23,11 +23,6 @@ namespace ProductModule.Application.Category.Commands.AddCategory
 
         public async Task Handle(AddCategoryCommand command, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(command.Name))
-            {
-                _logger.LogError("[Product Module] Attempted to add a category with null or empty name.");
-                throw new ArgumentNullException(nameof(command.Name), "Category name cannot be null or empty.");
-            }
             var category = Domain.Entities.Category.Create(command.Name);
             _logger.LogInformation("[Product Module] Adding new category with name: {categoryName}", command.Name);
 

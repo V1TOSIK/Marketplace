@@ -7,6 +7,7 @@ using MediaModule.Composition.DependencyInjection;
 using StackExchange.Redis;
 using SharedKernel.ModuleInitializer;
 using SharedKernel.CurrentUser;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddUserModule(builder.Configuration);
 builder.Services.AddProductModule(builder.Configuration);
 builder.Services.AddMediaModule(builder.Configuration);
+builder.Services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

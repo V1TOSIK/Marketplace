@@ -1,4 +1,5 @@
-﻿using ProductModule.Application.Dtos;
+﻿using ProductModule.Application.Product.Commands.UpdateProduct.CharacteristicUpdates;
+using ProductModule.Application.Product.Commands.UpdateProduct.GroupUpdates;
 
 namespace ProductModule.Application.Product.Commands.UpdateProduct
 {

@@ -20,9 +20,6 @@ namespace Marketplace.Api.Controllers
         [HttpGet("{entityId}")]
         public async Task<ActionResult<IEnumerable<string>>> GetAllEntityMedias([FromRoute] Guid entityId, CancellationToken cancellationToken)
         {
-            if (entityId == Guid.Empty)
-                return BadRequest("Invalid request.");
-
             var mediaUrls = await _mediator.Send(new GetEntityMediasQuery(entityId), cancellationToken);
             if (mediaUrls == null || !mediaUrls.Any())
                 return NotFound("No media files found for the specified entity.");
@@ -35,19 +32,14 @@ namespace Marketplace.Api.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult> UploadMedia([FromForm] UploadMediaCommand command, CancellationToken cancellationToken)
         {
-            if (command == null || command.File == null)
-                return BadRequest("No files provided for upload.");
-
             await _mediator.Send(command, cancellationToken);
             return Ok("Files uploaded successfully.");
         }
 
+        // delete this endpoint and replace to worker service
         [HttpDelete("{mediaId}")]
         public async Task<ActionResult> DeleteMedia([FromRoute] Guid mediaId, CancellationToken cancellationToken)
         {
-            if (mediaId == Guid.Empty)
-                return BadRequest("Invalid media ID.");
-
             await _mediator.Send(new DeleteMediaCommand(mediaId), cancellationToken);
             return NoContent();
         }

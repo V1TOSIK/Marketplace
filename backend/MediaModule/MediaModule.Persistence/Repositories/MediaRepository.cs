@@ -43,7 +43,7 @@ namespace MediaModule.Persistence.Repositories
                 .ExecuteDeleteAsync(cancellationToken);
         }
 
-        public async Task<Dictionary<Guid, MediaDto>> GetMainMediaByEntityIdsAsync(IEnumerable<Guid> entityIds, CancellationToken cancellationToken)
+        public async Task<Dictionary<Guid, MediaDto>> GetMainMediaByEntityIdsAsync(List<Guid> entityIds, CancellationToken cancellationToken)
         {
             return await _dbContext.Medias
                 .Where(m => !m.IsDeleted && m.IsMain && entityIds.Contains(m.EntityId))

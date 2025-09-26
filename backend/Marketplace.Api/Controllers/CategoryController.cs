@@ -45,9 +45,9 @@ namespace Marketplace.Api.Controllers
 
         [AuthorizeRole(nameof(AccessPolicy.Admin), nameof(AccessPolicy.Moderator))]
         [HttpPut("{categoryId}")]
-        public async Task<ActionResult> UpdateCategory([FromRoute] int categoryId, [FromBody] string newName, CancellationToken cancellationToken)
+        public async Task<ActionResult> UpdateCategory([FromRoute] int categoryId, [FromBody] UpdateCategoryRequest request, CancellationToken cancellationToken)
         {
-            await _mediator.Send(new UpdateCategoryCommand(categoryId, newName), cancellationToken);
+            await _mediator.Send(new UpdateCategoryCommand(categoryId, request), cancellationToken);
             return Ok();
         }
     }

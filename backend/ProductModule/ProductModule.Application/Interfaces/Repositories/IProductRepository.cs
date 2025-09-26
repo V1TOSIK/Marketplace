@@ -10,7 +10,7 @@ namespace ProductModule.Application.Interfaces.Repositories
         Task<Domain.Entities.Product> GetByIdAsync(Guid productId, CancellationToken cancellationToken);
         Task<Domain.Entities.Product> GetByIdWithCharacteristicsAsync(Guid productId, CancellationToken cancellationToken);
         IQueryable<Domain.Entities.Product> AsQueryable(Specification<Domain.Entities.Product> spec, CancellationToken cancellationToken);
-        Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken);
+        Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, List<string> values)> filters, CancellationToken cancellationToken);
         IQueryable<Domain.Entities.Product> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken);
         IQueryable<Domain.Entities.Product> GetByUserIdAsync(Guid userId, IEnumerable<Status> statuses, CancellationToken cancellationToken);
         Task AddAsync(Domain.Entities.Product product, CancellationToken cancellationToken);

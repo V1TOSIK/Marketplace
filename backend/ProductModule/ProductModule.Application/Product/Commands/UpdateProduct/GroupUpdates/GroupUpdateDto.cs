@@ -1,4 +1,4 @@
-﻿namespace ProductModule.Application.Dtos
+﻿namespace ProductModule.Application.Product.Commands.UpdateProduct.GroupUpdates
 {
     public class GroupUpdateDto
     {

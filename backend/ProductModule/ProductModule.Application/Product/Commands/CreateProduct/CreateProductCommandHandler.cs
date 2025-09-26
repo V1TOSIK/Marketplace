@@ -5,7 +5,6 @@ using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using SharedKernel.CurrentUser;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {
@@ -13,19 +12,16 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductUnitOfWork _productUnitOfWork;
-        private readonly ICurrentUserService _currentUserService;
         private readonly ICharacteristicRepository _characteristicRepository;
         private readonly ILogger<CreateProductCommandHandler> _logger;
 
         public CreateProductCommandHandler(IProductRepository productRepository,
             IProductUnitOfWork productUnitOfWork,
-            ICurrentUserService currentUserService,
             ICharacteristicRepository characteristicRepository,
             ILogger<CreateProductCommandHandler> logger)
         {
             _productRepository = productRepository;
             _productUnitOfWork = productUnitOfWork;
-            _currentUserService = currentUserService;
             _characteristicRepository = characteristicRepository;
             _logger = logger;
         }
@@ -33,23 +29,23 @@ namespace ProductModule.Application.Product.Commands.CreateProduct
         {
             var product = Domain.Entities.Product.Create(
                 request.UserId,
-                request.Name,
-                request.PriceAmount,
-                request.PriceCurrency,
-                request.Location,
-                request.Description,
-                request.CategoryId,
+                request.Request.Name,
+                request.Request.PriceAmount,
+                request.Request.PriceCurrency,
+                request.Request.Location,
+                request.Request.Description,
+                request.Request.CategoryId,
                 Status.Draft.ToString());
 
-            if (request.CharacteristicGroups?.Any() == true)
+            if (request.Request.CharacteristicGroups?.Any() == true)
             {
-                foreach (var group in request.CharacteristicGroups)
+                foreach (var group in request.Request.CharacteristicGroups)
                 {
                     var characteristicGroup = CharacteristicGroup.Create(group.Name, product.Id);
                     await AddCharacteristics(
                         characteristicGroup,
                         group.Characteristics,
-                        request.CategoryId,
+                        request.Request.CategoryId,
                         cancellationToken);
 
                     product.AddCharacteristicGroup(characteristicGroup);
