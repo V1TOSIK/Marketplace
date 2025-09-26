@@ -26,7 +26,7 @@ namespace ProductModule.Application.Product.Queries.GetUserProducts
 
             var paginatedProducts = await products.ToPaginatedListAsync(query.PageNumber, query.PageSize, cancellationToken);
 
-            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id)), cancellationToken);
+            var mainMedias = await _mediator.Send(new GetMainMediasQuery(products.Select(p => p.Id).ToList()), cancellationToken);
 
             var items = paginatedProducts.Items.Select(p =>
             {

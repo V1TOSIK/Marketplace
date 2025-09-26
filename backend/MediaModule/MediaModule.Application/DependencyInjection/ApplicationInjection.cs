@@ -1,6 +1,4 @@
-﻿using FluentValidation;
-using MediaModule.Application.Interfaces.Services;
-using MediaModule.Application.Media.Commands.DeactivateMedia;
+﻿using MediaModule.Application.Interfaces.Services;
 using MediaModule.Application.Services;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +14,6 @@ namespace MediaModule.Application.DependencyInjection
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            services.AddValidatorsFromAssemblyContaining<DeactivateMediaCommandValidator>();
 
             return services;
         }

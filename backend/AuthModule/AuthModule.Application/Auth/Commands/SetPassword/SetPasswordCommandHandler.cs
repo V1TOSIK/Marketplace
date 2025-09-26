@@ -3,6 +3,7 @@ using AuthModule.Application.Interfaces.Repositories;
 using AuthModule.Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using MediatR;
+using AuthModule.Application.Exceptions;
 
 namespace AuthModule.Application.Auth.Commands.SetPassword
 {
@@ -30,7 +31,7 @@ namespace AuthModule.Application.Auth.Commands.SetPassword
             if (user.Password != null)
             {
                 _logger.LogWarning("[Auth Module(SetPasswordCommandHandler)] SetPasswordCommandHandler: User with ID {UserId} already has a password set.", command.UserId);
-                throw new InvalidOperationException("Password is already set.");
+                throw new AddPasswordException("Password is already set.");
             }
 
             var hashedPassword = _passwordHasher.HashPassword(command.Request.Password);

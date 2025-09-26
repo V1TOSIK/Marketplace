@@ -4,6 +4,7 @@ using AuthModule.Application.Interfaces;
 using AuthModule.Application.Models;
 using Microsoft.Extensions.Logging;
 using MediatR;
+using AuthModule.Application.Exceptions;
 
 namespace AuthModule.Application.Auth.Commands.Restore
 {
@@ -32,10 +33,10 @@ namespace AuthModule.Application.Auth.Commands.Restore
         {
             var user = await _authUserRepository.GetByIdAsync(command.UserId, cancellationToken);
 
-            if (_passwordHasher.VerifyHashedPassword(user.Password ?? "", command.Request.Password))
+            if (!_passwordHasher.VerifyHashedPassword(user.Password ?? "", command.Request.Password))
             {
                 _logger.LogWarning("[Auth Module(RestoreCommandHandler)] Invalid security stamp provided for user with ID {UserId}.", command.UserId);
-                throw new UnauthorizedAccessException("Invalid Password.");
+                throw new InvalidPasswordException("Invalid Password.");
             }
 
             AuthResult response = null!;

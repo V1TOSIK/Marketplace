@@ -29,18 +29,18 @@ namespace ProductModule.Application.Product.Commands.PublishProduct
             var product = await _productRepository.GetByIdAsync(command.ProductId, cancellationToken);
             if (product == null)
             {
-                _logger.LogWarning("[Product Module] Product with ID {ProductId} not found", command.ProductId);
+                _logger.LogWarning("[Product Module(PublishProductCommandHandler)] Product with ID {ProductId} not found", command.ProductId);
                 throw new KeyNotFoundException($"Product with ID {command.ProductId} not found.");
             }
             var userId = _currentUserService.UserId;
             if (product.UserId != userId)
             {
-                _logger.LogWarning("[Product Module] User {UserId} is not authorized to publish product {ProductId}", userId, command.ProductId);
+                _logger.LogWarning("[Product Module(PublishProductCommandHandler)] User {UserId} is not authorized to publish product {ProductId}", userId, command.ProductId);
                 throw new UnauthorizedAccessException("You are not authorized to publish this product.");
             }
             product.Publish();
             await _productUnitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[Product Module] Product '{ProductName}' (ID: {ProductId}) successfully published", product.Name, product.Id);
+            _logger.LogInformation("[Product Module(PublishProductCommandHandler)] Product '{ProductName}' (ID: {ProductId}) successfully published", product.Name, product.Id);
         }
     }
 }

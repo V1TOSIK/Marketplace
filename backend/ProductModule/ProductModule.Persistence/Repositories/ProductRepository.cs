@@ -62,7 +62,7 @@ namespace ProductModule.Persistence.Repositories
         }
 
 
-        public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, IEnumerable<string> values)> filters, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Guid>> GetProductIdsFilteredByCharacteristics(List<(int templateId, List<string> values)> filters, CancellationToken cancellationToken)
         {
             var productIds = await _dbContext.CharacteristicValues
              .Where(cv => filters.Any(f =>

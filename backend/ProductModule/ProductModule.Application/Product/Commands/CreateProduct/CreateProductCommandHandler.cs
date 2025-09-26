@@ -5,7 +5,6 @@ using ProductModule.Domain.Enums;
 using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using SharedKernel.CurrentUser;
 
 namespace ProductModule.Application.Product.Commands.CreateProduct
 {

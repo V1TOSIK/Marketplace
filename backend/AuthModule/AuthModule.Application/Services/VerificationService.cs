@@ -32,7 +32,7 @@ namespace AuthModule.Application.Services
                 await _smsService.SendAsync(destination, $"Your verification code is: {code}", cancellationToken);
         }
 
-        public async Task<bool> VerifyCode(VerificationRequest request, CancellationToken cancellationToken)
+        public async Task<bool> VerifyCode(VerifyCodeRequest request, CancellationToken cancellationToken)
         {
             if(await _store.VerifyCodeAsync(request.Destination, request.Code, cancellationToken))
             {

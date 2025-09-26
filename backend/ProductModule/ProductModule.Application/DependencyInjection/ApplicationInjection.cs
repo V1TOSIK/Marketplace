@@ -1,7 +1,5 @@
-﻿using FluentValidation;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using ProductModule.Application.Product.Commands.CreateProduct;
 using SharedKernel.Validations;
 
 namespace ProductModule.Application.DependencyInjection
@@ -14,7 +12,6 @@ namespace ProductModule.Application.DependencyInjection
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationInjection).Assembly));
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            services.AddValidatorsFromAssemblyContaining<CreateProductCommandValidator>();
 
             return services;
         }

@@ -1,8 +1,9 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
-using ProductModule.Application.Dtos;
 using ProductModule.Application.Interfaces;
 using ProductModule.Application.Interfaces.Repositories;
+using ProductModule.Application.Product.Commands.UpdateProduct.CharacteristicUpdates;
+using ProductModule.Application.Product.Commands.UpdateProduct.GroupUpdates;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
@@ -42,8 +43,13 @@ namespace ProductModule.Application.Product.Commands.UpdateProduct
             }
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                product.UpdateProduct(command.Name, command.PriceAmount, command.PriceCurrency, command.Location, command.Description, command.CategoryId);
-                await SyncProduct(product, command.Characteristics, command.Groups, cancellationToken);
+                product.UpdateProduct(command.Request.Name,
+                    command.Request.PriceAmount,
+                    command.Request.PriceCurrency,
+                    command.Request.Location,
+                    command.Request.Description,
+                    command.Request.CategoryId);
+                await SyncProduct(product, command.Request.Characteristics, command.Request.Groups, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
             _logger.LogInformation("Product with ID {ProductId} updated successfully.", command.ProductId);
@@ -51,33 +57,33 @@ namespace ProductModule.Application.Product.Commands.UpdateProduct
 
         public async Task SyncProduct(Domain.Entities.Product product, CharacteristicBatchDto characteristics, GroupBatchDto groups, CancellationToken cancellationToken)
         {
-            foreach (var groupId in groups.Deleted)
+            foreach (var groupId in groups.Deleted ?? [])
             {
                 product.RemoveCharacteristicGroup(groupId);
             }
 
-            foreach (var g in groups.Updated)
+            foreach (var g in groups.Updated ?? [])
             {
                 product.UpdateCharacteristicGroup(g.Id, g.Name);
             }
 
-            foreach (var g in groups.Added)
+            foreach (var g in groups.Added ?? [])
             {
                 product.AddCharacteristicGroup(new CharacteristicGroup(g.Name, product.Id));
             }
 
             // 🔹 Process characteristics
-            foreach (var charId in characteristics.Deleted)
+            foreach (var charId in characteristics.Deleted ?? [])
             {
                 product.RemoveCharacteristic(charId);
             }
 
-            foreach (var c in characteristics.Updated)
+            foreach (var c in characteristics.Updated ?? [])
             {
                 product.UpdateCharacteristic(c.Id, c.Value);
             }
 
-            foreach (var c in characteristics.Added)
+            foreach (var c in characteristics.Added ?? [])
             {
                 Func<Task<int>> getTemplateId = async () =>
                 {

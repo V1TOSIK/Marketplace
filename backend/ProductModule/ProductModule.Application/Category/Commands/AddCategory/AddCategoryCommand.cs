@@ -5,5 +5,10 @@ namespace ProductModule.Application.Category.Commands.AddCategory
     public class AddCategoryCommand : IRequest
     {
         public string Name { get; set; } = string.Empty;
+        
+        public AddCategoryCommand(string name)
+        {
+            Name = name;
+        }
     }
 }
