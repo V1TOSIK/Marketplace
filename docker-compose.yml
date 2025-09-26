@@ -60,6 +60,17 @@ services:
     env_file:
       - .env
 
+  delete_token_worker:
+    container_name: delete-token-worker
+    build:
+      context: ./backend
+      dockerfile: DeleteTokenWorker/Dockerfile
+    depends_on:
+      - backend
+      - db
+    env_file:
+      - .env
+
 volumes:
   db_data:
   minio_data:
