@@ -8,11 +8,17 @@ namespace AuthModule.Application.OAuth.Commands.OAuthLogin
         public string Provider { get; set; }
         public string ProviderUserId { get; set; }
         public string? Email { get; set; }
-        public OAuthLoginCommand(string provider, string providerUserId, string? email)
+        public Guid DeviceId { get; set; }
+
+        public OAuthLoginCommand(string provider,
+            string providerUserId,
+            string? email,
+            Guid deviceId)
         {
             Provider = provider;
             ProviderUserId = providerUserId;
             Email = email;
+            DeviceId = deviceId;
         }
     }
 }

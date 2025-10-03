@@ -33,7 +33,7 @@ namespace AuthModule.Application.Auth.Commands.Register
 
         public async Task<AuthResult> Handle(RegisterCommand command, CancellationToken cancellationToken = default)
         {
-            var existingUser = await _authUserRepository.GetByCredentialAsync(command.Credential, cancellationToken);
+            var existingUser = await _authUserRepository.GetByCredentialAsync(command.Request.Credential, cancellationToken);
 
             if (existingUser != null)
             {
@@ -41,18 +41,18 @@ namespace AuthModule.Application.Auth.Commands.Register
                 throw new UserAlreadyRegisteredException("User with this credential already exists.");
             }
 
-            var hashPassword = _passwordHasher.HashPassword(command.Password);
+            var hashPassword = _passwordHasher.HashPassword(command.Request.Password);
 
             AuthResult response = null!;
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                var user = command.Credential.Contains("@")
-                    ? AuthUser.Create(command.Credential, null, hashPassword)
-                    : AuthUser.Create(null, command.Credential, hashPassword);
+                var user = command.Request.Credential.Contains("@")
+                    ? AuthUser.Create(command.Request.Credential, null, hashPassword)
+                    : AuthUser.Create(null, command.Request.Credential, hashPassword);
                 await _authUserRepository.AddAsync(user, cancellationToken);
 
-                response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
+                response = await _authService.BuildAuthResult(user, command.DeviceId, cancellationToken: cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);
 

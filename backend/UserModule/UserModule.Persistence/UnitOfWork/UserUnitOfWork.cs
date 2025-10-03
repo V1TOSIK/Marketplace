@@ -1,4 +1,4 @@
-﻿using SharedKernel.Interfaces;
+﻿using SharedKernel.UnitOfWork;
 using UserModule.Application.Interfaces;
 
 namespace UserModule.Persistence.UnitOfWork

@@ -9,6 +9,7 @@ namespace AuthModule.Application.Interfaces.Repositories
         Task<AuthUser?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
         Task<AuthUser?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken = default);
         Task AddAsync(AuthUser user, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Guid>> GetIdsForDeleteAsync(CancellationToken cancellationToken = default);
         Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<bool> IsEmailRegisteredAsync(string email, CancellationToken cancellationToken = default);
         Task<bool> IsPhoneNumberRegisteredAsync(string phoneNumber, CancellationToken cancellationToken = default);

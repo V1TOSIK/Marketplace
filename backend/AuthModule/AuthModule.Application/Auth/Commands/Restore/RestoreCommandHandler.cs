@@ -51,7 +51,7 @@ namespace AuthModule.Application.Auth.Commands.Restore
                 }
                 else
                 {
-                    response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
+                    response = await _authService.BuildAuthResult(user, command.DeviceId, cancellationToken: cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
             }, cancellationToken);

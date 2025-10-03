@@ -28,21 +28,21 @@ namespace AuthModule.Application.Auth.Commands.Login
 
         public async Task<AuthResult> Handle(LoginCommand command, CancellationToken cancellationToken = default)
         {
-            var user = await _authUserRepository.GetByCredentialAsync(command.Credential, cancellationToken);
+            var user = await _authUserRepository.GetByCredentialAsync(command.Request.Credential, cancellationToken);
 
             if (user == null)
             {
-                _logger.LogWarning("[Auth Module(LoginCommandHandler)] User with this credential: {Credential} was not found.", command.Credential);
+                _logger.LogWarning("[Auth Module(LoginCommandHandler)] User with this credential: {Credential} was not found.", command.Request.Credential);
                 throw new UserNotFoundException("User with this credential was not found.");
             }
             if (user.Password == null)
             {
-                _logger.LogWarning("[Auth Module(LoginCommandHandler)] User with this credential: {Credential} has no password set.", command.Credential);
+                _logger.LogWarning("[Auth Module(LoginCommandHandler)] User with this credential: {Credential} has no password set.", command.Request.Credential);
                 throw new MissingPasswordException("User has no password set.");
             }
-            if (!_passwordHasher.VerifyHashedPassword(user.Password, command.Password))
+            if (!_passwordHasher.VerifyHashedPassword(user.Password, command.Request.Password))
             {
-                _logger.LogWarning("[Auth Module(LoginCommandHandler)] Invalid password for user with credential: {Credential}.", command.Credential);
+                _logger.LogWarning("[Auth Module(LoginCommandHandler)] Invalid password for user with credential: {Credential}.", command.Request.Credential);
                 throw new InvalidPasswordException("Invalid password.");
             }
 
@@ -50,7 +50,7 @@ namespace AuthModule.Application.Auth.Commands.Login
             if (failResponse != null)
                 return failResponse;
 
-            AuthResult response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
+            AuthResult response = await _authService.BuildAuthResult(user, command.DeviceId, cancellationToken: cancellationToken);
 
             _logger.LogInformation("[Auth Module(LoginCommandHandler)] User with Id: {UserId} logged in successfully.", user.Id);
             return response;

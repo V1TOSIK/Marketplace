@@ -4,7 +4,6 @@ using MediaModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MediaModule.Persistence;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 using SharedKernel.Extensions.DependencyInjection;
 

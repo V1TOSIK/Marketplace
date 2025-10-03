@@ -3,7 +3,6 @@ using AuthModule.Infrastructure.DependencyInjection;
 using AuthModule.Application.DependencyInjection;
 using AuthModule.Persistence.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 using AuthModule.Persistence;
 using SharedKernel.Extensions.DependencyInjection;

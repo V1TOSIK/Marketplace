@@ -1,5 +1,5 @@
 ﻿using ProductModule.Application.Interfaces;
-using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 
 namespace ProductModule.Persistence.UnitOfWork
 {

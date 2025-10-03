@@ -5,7 +5,13 @@ namespace AuthModule.Application.Auth.Commands.Login
 {
     public class LoginCommand : IRequest<AuthResult>
     {
-        public string Credential { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public Guid DeviceId { get; set; }
+        public LoginRequest Request { get; set; } = null!;
+
+        public LoginCommand(Guid deviceId, LoginRequest request)
+        {
+            DeviceId = deviceId;
+            Request = request;
+        }
     }
 }

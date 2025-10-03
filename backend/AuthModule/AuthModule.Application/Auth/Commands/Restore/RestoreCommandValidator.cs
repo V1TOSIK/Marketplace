@@ -7,8 +7,10 @@ namespace AuthModule.Application.Auth.Commands.Restore
         public RestoreCommandValidator()
         {
             RuleFor(x => x.UserId)
-                .NotEmpty().WithMessage("UserId is required.")
-                .Must(id => id != Guid.Empty).WithMessage("UserId must be a valid GUID.");
+                .NotEmpty().WithMessage("UserId is required.");
+
+            RuleFor(x => x.DeviceId)
+                .NotNull().WithMessage("DeviceId cannot be empty.");
 
             RuleFor(x => x.Request)
                 .NotNull().WithMessage("Request cannot be null.")

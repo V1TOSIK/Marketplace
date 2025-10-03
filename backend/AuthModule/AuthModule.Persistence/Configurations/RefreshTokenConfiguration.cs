@@ -55,6 +55,10 @@ namespace AuthModule.Persistence.Configurations
                 .HasColumnName("device")
                 .IsRequired();
 
+            builder.Property(rt => rt.DeviceId)
+                .HasColumnName("device_id")
+                .IsRequired();
+
             builder.Property(rt => rt.IpAddress)
                 .HasColumnName("ip_address")
                 .IsRequired();

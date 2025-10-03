@@ -108,7 +108,7 @@ namespace AuthModule.Domain.Entities
             if (string.IsNullOrWhiteSpace(emailValue))
                 throw new InvalidEmailFormatException("Email cannot be empty or null.");
             if (Email != null)
-                throw new UserOperationException("Email is already set. Use UpdateEmail method to change it.");
+                throw new UserOperationException("Email is already set.");
             Email = new Email(emailValue);
         }
 
@@ -118,7 +118,7 @@ namespace AuthModule.Domain.Entities
             if (string.IsNullOrWhiteSpace(phoneValue))
                 throw new InvalidPhoneNumberFormatException("Phone number cannot be empty or null.");
             if (PhoneNumber != null)
-                throw new UserOperationException("Phone number is already set. Use UpdatePhoneNumber method to change it.");
+                throw new UserOperationException("Phone number is already set.");
             PhoneNumber = new PhoneNumber(phoneValue);
         }
 

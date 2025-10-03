@@ -26,6 +26,12 @@ services:
       - db_data:/var/lib/postgresql/data
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   pgadmin:
     container_name: marketplace-pgadmin
@@ -44,6 +50,24 @@ services:
       - "6379:6379"
     env_file:
       - .env
+
+  rabbitmq:
+    container_name: marketplace-rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ__Username}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ__Password}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   minio:
     container_name: marketplace-minio
@@ -66,8 +90,46 @@ services:
       context: ./backend
       dockerfile: DeleteTokenWorker/Dockerfile
     depends_on:
-      - backend
       - db
+    env_file:
+      - .env
+
+  delete_user_worker:
+    container_name: delete-user-worker
+    build:
+      context: ./backend
+      dockerfile: DeleteUserWorker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  delete_product_worker:
+    container_name: delete-product-worker
+    build:
+      context: ./backend
+      dockerfile: DeleteProductWorker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  delete_media_worker:
+    container_name: delete-media-worker
+    build:
+      context: ./backend
+      dockerfile: DeleteMediaWorker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
 

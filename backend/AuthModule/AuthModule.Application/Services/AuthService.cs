@@ -34,11 +34,12 @@ namespace AuthModule.Application.Services
             _logger = logger;
         }
 
-        public async Task<AuthResult> BuildAuthResult(AuthUser user, Guid? tokenId = null, CancellationToken cancellationToken = default)
+        public async Task<AuthResult> BuildAuthResult(AuthUser user, Guid deviceId, Guid? tokenId = null, CancellationToken cancellationToken = default)
         {
             var refreshToken = await GenerateRefreshToken(
                 user.Id,
                 _currentUserService.Device ?? "",
+                deviceId,
                 _currentUserService.IpAddress ?? "",
                 tokenId,
                 cancellationToken: cancellationToken);
@@ -58,9 +59,14 @@ namespace AuthModule.Application.Services
             };
         }
 
-        public async Task<RefreshToken> GenerateRefreshToken(Guid userId, string device, string ipAddress, Guid? tokenId = null, CancellationToken cancellationToken = default)
+        public async Task<RefreshToken> GenerateRefreshToken(Guid userId, string device, Guid deviceId, string ipAddress, Guid? tokenId = null, CancellationToken cancellationToken = default)
         {
-            var refreshToken = RefreshToken.Create(userId, device, ipAddress, tokenId);
+            deviceId = deviceId == Guid.Empty ? Guid.NewGuid() : deviceId;
+
+            if (deviceId != Guid.Empty)
+                await _refreshTokenRepository.RevokeByDeviceIdAsync(deviceId, cancellationToken);
+
+            var refreshToken = RefreshToken.Create(userId, device, deviceId, ipAddress, tokenId);
             await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
             _logger.LogInformation($"[Auth Module(AuthService)] New refresh token created for user with ID {userId}.");
             return refreshToken;
@@ -102,7 +108,7 @@ namespace AuthModule.Application.Services
                         UserId = user.Id,
                         IsDeleted = user.IsDeleted,
                         IsBanned = user.IsBanned,
-                        Message = $"Ваш акаунт знаходиться на видаленні. До повного видалення акаунту залишилося днів: {timeLeft.Value.Days}"
+                        Message = $"Ваш акаунт знаходиться на видаленні. До повного видалення акаунту залишилося днів: { timeLeft.Value.Days }"
                     },
                     RefreshToken = null!
                 };

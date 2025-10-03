@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-DeleteUserWorker-2526dec5-6285-4a5c-84c6-81ed0548d644</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.17" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthModule\AuthModule.Application\AuthModule.Application.csproj" />
+    <ProjectReference Include="..\AuthModule\AuthModule.Persistence\AuthModule.Persistence.csproj" />
+    <ProjectReference Include="..\ProductModule\ProductModule.Application\ProductModule.Application.csproj" />
+    <ProjectReference Include="..\ProductModule\ProductModule.Persistence\ProductModule.Persistence.csproj" />
+    <ProjectReference Include="..\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

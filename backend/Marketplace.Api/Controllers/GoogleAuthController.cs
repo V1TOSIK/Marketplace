@@ -7,6 +7,7 @@ using AuthModule.Application.Interfaces.Services;
 using AuthModule.Application.Dtos.Responses;
 using MediatR;
 using AuthModule.Application.OAuth.Commands.OAuthLogin;
+using AuthModule.Application.Models;
 
 namespace Marketplace.Api.Controllers
 {
@@ -37,12 +38,39 @@ namespace Marketplace.Api.Controllers
 
             var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
 
-            var result = await _mediator.Send(new OAuthLoginCommand("Google", payload.Subject, payload.Email), cancellationToken);
+            var deviceId = GetDeviceId();
 
-            if (result.RefreshToken != null)
-                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            var result = await _mediator.Send(new OAuthLoginCommand("Google", payload.Subject, payload.Email, deviceId), cancellationToken);
+
+            SetCookiesIfNotNull(result, deviceId);
 
             return Ok(result.Response);
+        }
+        private Guid GetDeviceId()
+        {
+            var deviceIdString = _cookieService.Get("Device-Id");
+            if (deviceIdString == null || !Guid.TryParse(deviceIdString, out var deviceId))
+                return Guid.Empty;
+            return deviceId;
+        }
+
+        private void SetCookiesIfNotNull(AuthResult result, Guid deviceId)
+        {
+            SetRefreshTokenCookieIfNotNull(result);
+            if (deviceId == Guid.Empty)
+                SetDeviceIdCookieIfNotNull(result.RefreshToken?.DeviceId);
+        }
+
+        private void SetRefreshTokenCookieIfNotNull(AuthResult result)
+        {
+            if (result.RefreshToken != null)
+                _cookieService.Set("Refresh-Token", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+        }
+
+        private void SetDeviceIdCookieIfNotNull(Guid? deviceId)
+        {
+            if (deviceId != null)
+                _cookieService.Set("Device-Id", deviceId.ToString()!, DateTime.UtcNow.AddYears(1));
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using MediaModule.Application.Interfaces;
-using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 
 namespace MediaModule.Persistence.UnitOfWork
 {

@@ -7,6 +7,9 @@ namespace AuthModule.Application.Auth.Commands.Refresh
     {
         public RefreshCommandValidator()
         {
+            RuleFor(x => x.DeviceId)
+                .NotNull().WithMessage("DeviceId cannot be null.");
+
             RuleFor(x => x.RefreshToken)
                 .NotEmpty().WithMessage("Refresh token is required.");
         }

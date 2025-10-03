@@ -46,6 +46,17 @@ namespace AuthModule.Persistence.Repositories
             );
         }
 
+        public async Task RevokeByDeviceIdAsync(Guid deviceId, CancellationToken cancellationToken)
+        {
+            var affectedRows = await _dbContext.RefreshTokens
+                .Where(rt => rt.DeviceId == deviceId && !rt.IsRevoked)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(rt => rt.IsRevoked, true)
+                    .SetProperty(rt => rt.RevokedAt, DateTime.UtcNow),
+                    cancellationToken
+                );
+        }
+
         public async Task DeleteExpiredAsync(CancellationToken cancellationToken)
         {
             await _dbContext.RefreshTokens

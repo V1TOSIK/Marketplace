@@ -1,5 +1,5 @@
 ﻿using AuthModule.Application.Interfaces;
-using SharedKernel.Interfaces;
+using SharedKernel.UnitOfWork;
 
 namespace AuthModule.Persistence.UnitOfWork
 {

@@ -57,7 +57,7 @@ namespace AuthModule.Application.Auth.Commands.Refresh
             AuthResult response = null!;
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                response = await _authService.BuildAuthResult(user, token.Id, cancellationToken);
+                response = await _authService.BuildAuthResult(user, command.DeviceId, token.Id, cancellationToken);
                 token.Revoke();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }, cancellationToken);

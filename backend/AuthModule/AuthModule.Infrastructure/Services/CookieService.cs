@@ -1,5 +1,6 @@
 ﻿using AuthModule.Application.Exceptions;
 using AuthModule.Application.Interfaces.Services;
+using AuthModule.Application.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -62,5 +63,29 @@ namespace AuthModule.Infrastructure.Services
 
             _httpContextAccessor.HttpContext?.Response.Cookies.Delete(key);
         }
+
+        public void SetRefreshTokenCookieIfNotNull(string token, DateTime expiration)
+        {
+            if (token != null)
+                Set("Refresh-Token", token, expiration);
+        }
+
+        public void SetDeviceIdCookieIfNotNull(Guid? deviceId)
+        {
+            if (deviceId != null)
+                Set("Device-Id", deviceId.ToString()!, DateTime.UtcNow.AddYears(1));
+        }
+
+        public string? GetRefreshToken() => Get("Refresh-Token");
+
+        public Guid GetDeviceId()
+        {
+            var deviceIdString = Get("Device-Id");
+            if (deviceIdString == null || !Guid.TryParse(deviceIdString, out var deviceId))
+                return Guid.Empty;
+            return deviceId;
+        }
+
+        public void DeleteRefreshTokenCookie() => Delete("refreshToken");
     }
 }

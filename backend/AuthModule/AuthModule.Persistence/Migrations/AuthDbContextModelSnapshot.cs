@@ -129,6 +129,10 @@ namespace AuthModule.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("device");
 
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expiration_date");

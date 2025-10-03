@@ -4,7 +4,6 @@ using ProductModule.Application.DependencyInjection;
 using ProductModule.Persistence;
 using ProductModule.Persistence.DependencyInjection;
 using SharedKernel.Extensions.DependencyInjection;
-using SharedKernel.Interfaces;
 using SharedKernel.UnitOfWork;
 
 namespace ProductModule.Composition.DependencyInjection

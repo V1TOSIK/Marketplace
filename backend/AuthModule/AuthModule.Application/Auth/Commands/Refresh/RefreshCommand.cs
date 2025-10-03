@@ -5,10 +5,13 @@ namespace AuthModule.Application.Auth.Commands.Refresh
 {
     public class RefreshCommand : IRequest<AuthResult>
     {
-        public RefreshCommand(string refreshToken)
+        public Guid DeviceId { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
+
+        public RefreshCommand(Guid deviceId, string refreshToken)
         {
+            DeviceId = deviceId;
             RefreshToken = refreshToken;
         }
-        public string RefreshToken { get; set; } = string.Empty;
     }
 }

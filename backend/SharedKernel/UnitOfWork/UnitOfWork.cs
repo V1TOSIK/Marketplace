@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SharedKernel.Interfaces;
 
 namespace SharedKernel.UnitOfWork
 {

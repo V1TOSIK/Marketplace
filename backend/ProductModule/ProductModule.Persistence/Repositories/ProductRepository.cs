@@ -4,7 +4,6 @@ using ProductModule.Application.Interfaces.Repositories;
 using ProductModule.Domain.Entities;
 using ProductModule.Domain.Enums;
 using ProductModule.Domain.Exceptions;
-using SharedKernel.Pagination;
 using SharedKernel.Specification;
 
 namespace ProductModule.Persistence.Repositories
@@ -101,6 +100,14 @@ namespace ProductModule.Persistence.Repositories
             return query;
         }
 
+        public async Task<IEnumerable<Guid>> GetProductIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Products
+                .Where(p => p.UserId == userId)
+                .Select(p => p.Id)
+                .ToListAsync(cancellationToken);
+        }
+
         //only for command not for query
         public async Task<Product> GetByIdWithCharacteristicsAsync(Guid productId, CancellationToken cancellationToken)
         {
@@ -157,6 +164,19 @@ namespace ProductModule.Persistence.Repositories
             }
 
             _dbContext.Products.Remove(product);
+        }
+
+        public async Task DeleteProductsByIdsAsync(IEnumerable<Guid> productIds, CancellationToken cancellationToken)
+        {
+            var products = await _dbContext.Products
+                .Where(p => productIds.Contains(p.Id))
+                .ToListAsync(cancellationToken);
+            if (products.Count == 0)
+            {
+                _logger.LogInformation("[Product Module(Repository)] No products found for the provided IDs to delete.");
+                return;
+            }
+            _dbContext.Products.RemoveRange(products);
         }
 
         public async Task DeleteUserProductsAsync(Guid userId, CancellationToken cancellationToken)

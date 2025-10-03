@@ -41,7 +41,7 @@ namespace AuthModule.Application.OAuth.Commands.OAuthLogin
             if (failResponse != null)
                 return failResponse;
 
-            AuthResult response = await _authService.BuildAuthResult(user, cancellationToken: cancellationToken);
+            AuthResult response = await _authService.BuildAuthResult(user, command.DeviceId, cancellationToken: cancellationToken);
 
             _logger.LogInformation("[Auth Module(OAuthLoginCommandHandler)] User with Id: {UserId} logged in by OAuth successfully.", user.Id);
             return response;

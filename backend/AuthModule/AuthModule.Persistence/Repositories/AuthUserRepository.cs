@@ -104,9 +104,18 @@ namespace AuthModule.Persistence.Repositories
             await _dbContext.AuthUsers.AddAsync(user, cancellationToken);
         }
 
+        public async Task<IEnumerable<Guid>> GetIdsForDeleteAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.AuthUsers
+                .Where(u => u.IsDeleted && u.DeletedAt <= DateTime.UtcNow.AddDays(-7))
+                .Select(u => u.Id)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task HardDeleteAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             var user = await GetByIdAsync(userId, cancellationToken);
+
             _dbContext.AuthUsers.Remove(user);
         }
 

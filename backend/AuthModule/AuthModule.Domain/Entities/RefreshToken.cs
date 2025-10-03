@@ -7,7 +7,7 @@ namespace AuthModule.Domain.Entities
     public class RefreshToken : AggregateRoot<Guid>
     {
         public const byte EXPIRATION_DAYS = 10;
-        private RefreshToken(Guid userId, string device, string ipAddress, Guid? replacedByTokenId)
+        private RefreshToken(Guid userId, string device, Guid deviceId, string ipAddress, Guid? replacedByTokenId)
         {
             if (userId == Guid.Empty)
                 throw new InvalidRefreshTokenException("User ID cannot be empty.");
@@ -15,6 +15,7 @@ namespace AuthModule.Domain.Entities
             ExpirationDate = DateTime.UtcNow.AddDays(EXPIRATION_DAYS);
             ReplacedByTokenId = replacedByTokenId;
             Device = device;
+            DeviceId = deviceId;
             IpAddress = ipAddress;
 
             Token = GenerateToken();
@@ -29,11 +30,12 @@ namespace AuthModule.Domain.Entities
 
         public Guid? ReplacedByTokenId { get; set; }
         public string Device {  get; private set; }
+        public Guid DeviceId { get; private set; }
         public string IpAddress { get; private set; }
 
-        public static RefreshToken Create(Guid userId, string device, string ipAddress, Guid? replacedByTokenId = null)
+        public static RefreshToken Create(Guid userId, string device, Guid deviceId, string ipAddress, Guid? replacedByTokenId = null)
         {
-            return new RefreshToken(userId, device, ipAddress, replacedByTokenId);
+            return new RefreshToken(userId, device, deviceId, ipAddress, replacedByTokenId);
         }
 
         public void Revoke()

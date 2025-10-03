@@ -15,6 +15,7 @@ using SharedKernel.Authorization.Attributes;
 using SharedKernel.Authorization.Enums;
 using AuthModule.Application.Auth.Commands.SetPassword;
 using AuthModule.Application.Models;
+using Twilio.Jwt.AccessToken;
 
 namespace Marketplace.Api.Controllers
 {
@@ -34,21 +35,25 @@ namespace Marketplace.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<AuthorizeResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await _mediator.Send(command, cancellationToken);
+            var deviceId = _cookieService.GetDeviceId();
 
-            SetRefreshTokenCookieIfNotNull(result);
+            var result = await _mediator.Send(new RegisterCommand(deviceId, request), cancellationToken);
+
+            SetCookiesIfNotNull(result, deviceId);
 
             return Ok(result.Response);
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<AuthorizeResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await _mediator.Send(command, cancellationToken);
+            var deviceId = _cookieService.GetDeviceId();
 
-            SetRefreshTokenCookieIfNotNull(result);
+            var result = await _mediator.Send(new LoginCommand(deviceId, request), cancellationToken);
+
+            SetCookiesIfNotNull(result, deviceId);
 
             return Ok(result.Response);
         }
@@ -56,9 +61,11 @@ namespace Marketplace.Api.Controllers
         [HttpPut("{userId}/restore")]
         public async Task<ActionResult<AuthorizeResponse>> Restore([FromRoute] Guid userId, [FromBody] RestoreRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await _mediator.Send(new RestoreCommand(userId, request), cancellationToken);
+            var deviceId = _cookieService.GetDeviceId();
 
-            SetRefreshTokenCookieIfNotNull(result);
+            var result = await _mediator.Send(new RestoreCommand(userId, deviceId, request), cancellationToken);
+
+            SetCookiesIfNotNull(result, deviceId);
 
             return Ok(result.Response);
         }
@@ -105,7 +112,7 @@ namespace Marketplace.Api.Controllers
         {
             await _mediator.Send(new LogoutFromAllDevicesCommand(userId), cancellationToken);
 
-            DeleteRefreshTokenCookie();
+            _cookieService.DeleteRefreshTokenCookie();
 
             return Ok("User logged out successfully");
         }
@@ -114,14 +121,14 @@ namespace Marketplace.Api.Controllers
         [HttpDelete("{userId}/logout")]
         public async Task<ActionResult> Logout([FromRoute] Guid userId, CancellationToken cancellationToken = default)
         {
-            var refreshToken = _cookieService.Get("refreshToken");
+            var refreshToken = _cookieService.GetRefreshToken();
 
             if (refreshToken == null)
                 return BadRequest("Invalid request");
 
             await _mediator.Send(new LogoutFromDeviceCommand(userId, refreshToken), cancellationToken);
 
-            DeleteRefreshTokenCookie();
+            _cookieService.DeleteRefreshTokenCookie();
 
             return Ok("User logged out successfully");
         }
@@ -129,29 +136,26 @@ namespace Marketplace.Api.Controllers
         [HttpPost("token/refresh")]
         public async Task<ActionResult<AuthorizeResponse>> RefreshTokens(CancellationToken cancellationToken = default)
         {
-            var refreshToken = _cookieService.Get("refreshToken");
+            var refreshToken = _cookieService.GetRefreshToken();
 
             if (refreshToken == null)
                 return BadRequest("Invalid request");
 
-            var result = await _mediator.Send(new RefreshCommand(refreshToken), cancellationToken);
+            var deviceId = _cookieService.GetDeviceId();
+
+            var result = await _mediator.Send(new RefreshCommand(deviceId, refreshToken), cancellationToken);
             if (result == null)
                 return Forbid("Invalid refresh token");
 
-            SetRefreshTokenCookieIfNotNull(result);
+            _cookieService.SetRefreshTokenCookieIfNotNull(result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
 
             return Ok(result.Response);
         }
 
-        private void SetRefreshTokenCookieIfNotNull(AuthResult result)
+        private void SetCookiesIfNotNull(AuthResult result, Guid deviceId)
         {
-            if (result.RefreshToken != null)
-                _cookieService.Set("refreshToken", result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
-        }
-
-        private void DeleteRefreshTokenCookie()
-        {
-            _cookieService.Delete("refreshToken");
+            _cookieService.SetRefreshTokenCookieIfNotNull(result.RefreshToken.Token, result.RefreshToken.ExpirationDate);
+            _cookieService.SetDeviceIdCookieIfNotNull(deviceId == Guid.Empty ? result.RefreshToken.DeviceId : deviceId);
         }
     }
 }
